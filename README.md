@@ -1,6 +1,10 @@
 # Running
-1. Run: `cd flux && docker-compose up`
-2. Open your browser to `http://<dockerd host ip>`
+1. Run: `docker run -v $PWD/flux/node.server/flux.orion.integration:/data develar/nodejs-bower` to install the web app dependencies.
+2. Run: `docker-compose -f mqAndDb.yml up` to start a messaging broker and a database.
+3. Run: `docker-compose -f nodeAppAndWeb.yml up` to start the node server.
+4. Open your browser to `http://<dockerd host ip>`
+
+We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](https://youtrack.jetbrains.com/issue/IDEA-137765).
 
 # Setting up development environment
 1. Checkout flux — run getFlux.sh (Linux/Mac) or getFlux.bat (Windows).
@@ -9,3 +13,9 @@
 
 To maintain dependencies of the node.server, use [npm-check-updates](https://www.npmjs.com/package/npm-check-updates).
 
+# RabbitMQ
+Current implementation in the original Flux is not suitable for us — RabbitMQ [access control](https://www.rabbitmq.com/access-control.html) allows to manage access to exchanges or queues, but not to routing keys. Our authentication server uses [rabbitmq_auth_backend_http](https://github.com/simonmacmullen/rabbitmq-auth-backend-http).
+
+We create a topic exchange for a user ("t.$username") because we must broadcast events only to the user. Authentication server checks, that a user can use only own exchange.
+
+We create a direct exchange for a user ("d.$username"). We can prepend user name to queue name to control access, but it will be complicated.

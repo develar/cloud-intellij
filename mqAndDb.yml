@@ -1,0 +1,14 @@
+mq-auth:
+
+mq:
+  image: develar/rabbitmq-auth
+  # https://github.com/docker-library/rabbitmq/issues/6 I have no idea how it will be going in a Tutum.
+  hostname: flux
+  links:
+    - mq-auth
+  ports:
+    - "5672:5672"
+db:
+  image: mongo:3
+  ports:
+    - "27017:27017"

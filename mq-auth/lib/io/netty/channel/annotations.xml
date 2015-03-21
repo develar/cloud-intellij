@@ -1,0 +1,8 @@
+<root>
+  <item name='io.netty.channel.SimpleChannelInboundHandler void channelRead0(io.netty.channel.ChannelHandlerContext, I) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='io.netty.channel.SimpleChannelInboundHandler void channelRead0(io.netty.channel.ChannelHandlerContext, I) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

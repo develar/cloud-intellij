@@ -1,0 +1,36 @@
+app:
+  image: node:wheezy
+  external_links:
+   - cloudintellij_mq_1:mq
+   - cloudintellij_db_1:db
+  environment:
+    HOST: 0.0.0.0
+    PORT: 80
+    DB_HOST: db
+    #USE_IN_MEMORY_DB: true
+    DB_NAME: flux-db
+    MQ_HOST: mq
+    DEBUG: "express:*, socket.io:socket"
+    #DEBUG: "*"
+  volumes:
+    - flux/node.server:/app
+  expose:
+    - "3000"
+  ports:
+    - "8585:5858"
+  working_dir: /app
+  #command: /bin/sh -c "npm install && node --debug-brk=5858 startup-all-in-one.js"
+  command: /bin/sh -c "npm install && node startup-all-in-one.js"
+web:
+  image: develar/orion-client:nomin
+  links:
+     - app
+  ports:
+    - 80:80
+  volumes:
+    - flux/node.server/nginx-config:/config:ro
+    # all this stuff should be in one directory, but we want to mimize our fork changes
+    - flux/node.server/flux-static:/static1:ro
+    - flux/node.server/web-editor:/static2/client:ro
+    - flux/node.server/node_modules/URIjs/src:/static3/client/js/URIjs:ro
+    - flux/node.server/flux.orion.integration:/static4/orion-plugin:ro
