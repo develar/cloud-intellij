@@ -2,10 +2,13 @@
   <dictionary name="develar">
     <words>
       <w>cloudfoundry</w>
+      <w>dockerfile</w>
       <w>inboxes</w>
       <w>rabbitmq</w>
       <w>requeue</w>
       <w>routable</w>
+      <w>tutum</w>
+      <w>tutum's</w>
       <w>uninterruptibly</w>
       <w>vhost</w>
     </words>

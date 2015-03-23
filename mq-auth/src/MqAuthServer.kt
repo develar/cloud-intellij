@@ -39,8 +39,10 @@ public fun main(args: Array<String>) {
     }
   }).childOption<Boolean>(ChannelOption.SO_KEEPALIVE, true).childOption<Boolean>(ChannelOption.TCP_NODELAY, true)
 
-  val serverChannel = serverBootstrap.bind(InetSocketAddress(80)).syncUninterruptibly().channel()
+  val address = InetSocketAddress(80)
+  val serverChannel = serverBootstrap.bind(address).syncUninterruptibly().channel()
   channelRegistrar.addServerChannel(serverChannel)
+  System.out.println("Listening ${address.getHostName()}:${address.getPort()}")
   serverChannel.closeFuture().syncUninterruptibly()
 }
 
@@ -49,9 +51,11 @@ val deny = Unpooled.copiedBuffer("deny", CharsetUtil.UTF_8)
 
 ChannelHandler.Sharable
 class AuthRequestHandler() : SimpleChannelInboundHandler<FullHttpRequest>() {
-  override fun channelRead0(context: ChannelHandlerContext, message: FullHttpRequest) {
+  override fun channelRead0(context: ChannelHandlerContext, request: FullHttpRequest) {
+    System.out.println("In ${request.uri()}")
+
     val answer: ByteBuf
-    val urlDecoder = QueryStringDecoder(message.uri())
+    val urlDecoder = QueryStringDecoder(request.uri())
     answer = when (urlDecoder.path()) {
       "/user" -> {
         // todo verify user - we should use password as a token and verify it (github - call /user and pass the token as "Authorization: 'token ' + token")
@@ -80,7 +84,18 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<FullHttpRequest>() {
       else -> deny
     }
 
-    context.writeAndFlush(DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, answer))
+    System.out.println(if (answer == deny) "deny" else "allow")
+
+    val keepAlive = HttpHeaderUtil.isKeepAlive(request)
+    val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, answer)
+    response.headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
+    response.headers().add(HttpHeaderNames.PRAGMA, "no-cache")
+    HttpHeaderUtil.setKeepAlive(response, keepAlive)
+    HttpHeaderUtil.setContentLength(response, answer.readableBytes().toLong())
+    val future = context.writeAndFlush(response)
+    if (!keepAlive) {
+      future.addListener(ChannelFutureListener.CLOSE)
+    }
   }
 }
 

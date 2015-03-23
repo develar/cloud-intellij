@@ -1,0 +1,8 @@
+.DS_Store
+.idea
+*/src/*
+*.iml
+flux
+flux-core
+out/production/intellij-flux-client
+out/production/jvm-flux-client
