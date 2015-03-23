@@ -2,3 +2,4 @@ flux
 .idea/copyright
 .idea/inspectionProfiles
 out
+node_modules

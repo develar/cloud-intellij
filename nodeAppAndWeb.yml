@@ -1,14 +1,10 @@
 app:
   image: node:wheezy
   external_links:
-   - cloudintellij_mq_1:mq
-   - cloudintellij_db_1:db
+    - cloudintellij_mq_1:mq
   environment:
     HOST: 0.0.0.0
     PORT: 80
-    DB_HOST: db
-    #USE_IN_MEMORY_DB: true
-    DB_NAME: flux-db
     MQ_HOST: mq
     DEBUG: "express:*, socket.io:socket"
     #DEBUG: "*"
@@ -24,13 +20,14 @@ app:
 web:
   image: develar/orion-client:nomin
   links:
-     - app
+    - app
   ports:
     - 80:80
   volumes:
-    - flux/node.server/nginx-config:/config:ro
+    - flux/node.server/nginx-config:/config
     # all this stuff should be in one directory, but we want to mimize our fork changes
-    - flux/node.server/flux-static:/static1:ro
-    - flux/node.server/web-editor:/static2/client:ro
-    - flux/node.server/node_modules/URIjs/src:/static3/client/js/URIjs:ro
-    - flux/node.server/flux.orion.integration:/static4/orion-plugin:ro
+    - flux/node.server/flux-static:/s1
+    - flux/node.server/web-editor:/s2/client
+    - flux/node.server/node_modules/URIjs/src:/s3/client/js/URIjs
+    - flux/node.server/flux.orion.integration:/s4/orion-plugin
+    - web-client/out:/s5/orion-plugin

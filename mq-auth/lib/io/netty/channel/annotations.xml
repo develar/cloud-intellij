@@ -1,4 +1,13 @@
 <root>
+  <item name='io.netty.channel.ChannelInboundHandlerAdapter void channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='io.netty.channel.ChannelInboundHandlerAdapter void channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='io.netty.channel.ChannelInboundHandlerAdapter void channelReadComplete(io.netty.channel.ChannelHandlerContext) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='io.netty.channel.SimpleChannelInboundHandler void channelRead0(io.netty.channel.ChannelHandlerContext, I) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
