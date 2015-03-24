@@ -1,0 +1,12 @@
+<root>
+  <item
+      name='com.rabbitmq.client.impl.DefaultExceptionHandler void handleConsumerException(com.rabbitmq.client.Channel, java.lang.Throwable, com.rabbitmq.client.Consumer, java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='com.rabbitmq.client.impl.DefaultExceptionHandler void handleUnexpectedConnectionDriverException(com.rabbitmq.client.Connection, java.lang.Throwable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='com.rabbitmq.client.impl.DefaultExceptionHandler void handleUnexpectedConnectionDriverException(com.rabbitmq.client.Connection, java.lang.Throwable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

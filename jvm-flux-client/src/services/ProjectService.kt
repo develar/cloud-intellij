@@ -1,5 +1,6 @@
 package org.eclipse.flux.client.services
 
+import com.google.gson.stream.JsonReader
 import org.eclipse.flux.client.Result
 import org.eclipse.flux.client.Service
 
@@ -18,14 +19,27 @@ trait ProjectService : Service {
   override final val name: String
     get() = "projects"
 
-  protected fun getAll(request: Map<String, Any>, result: Result)
+  public fun getAll(result: Result)
 
-  protected fun get(request: Map<String, Any>, result: Result)
+  public fun get(projectName: String, result: Result)
 
-  override fun reply(methodName: String, request: Map<String, Any>, result: Result) {
+  override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {
-      "getAll" -> getAll(request, result)
-      "get" -> get(request, result)
+      "getAll" -> getAll(result)
+      "get" -> {
+        var project: String? = null
+        val reader = JsonReader(request.inputStream.reader())
+        reader.beginObject()
+        while (reader.hasNext()) {
+          when (reader.nextName()) {
+            "project" -> project = reader.nextString()
+            else -> reader.skipValue()
+          }
+        }
+        reader.endObject()
+
+        get(project!!, result)
+      }
       else -> {
         noMethod(methodName, result)
       }

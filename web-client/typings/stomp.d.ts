@@ -2,19 +2,27 @@ declare module "stomp" {
   function over(webSocket: any): Client
 
   export interface Client {
-    debug: (message: String) => void
+    debug: (message: string) => void
 
     heartbeat: any
 
-    connect(login: String, passcode: String, connectCallback: () => void, errorCallback?: (error: any) => void, host?: String): void
+    onreceive: (message: any) => void
 
-    subscribe(destination: String, callback: (data: any) => void, headers?: any): Subscription
+    connect(login: string, passcode: string, connectCallback: (frame: Frame) => void, errorCallback?: (error: any) => void, host?: string): void
 
-    send(destination: String, headers: any, data: String): void
+    subscribe(destination: string, callback: (frame: Frame) => void, headers?: any): Subscription
+
+    send(destination: string, headers: any, data: string): void
+  }
+
+  export interface Frame {
+    body: string
+    command: string
+    headers: { [key: string]: any; }
   }
 
   export interface Subscription {
-    id: String
+    id: string
 
     unsubscribe(): void
   }

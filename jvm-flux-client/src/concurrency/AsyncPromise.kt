@@ -206,7 +206,7 @@ public class AsyncPromise<T> : Promise<T> {
     }
 
     val promise = AsyncPromise<SUB_RESULT>()
-    val rejectedHandler = {(it: Throwable): Unit ->
+    val rejectedHandler = fun (it: Throwable): Unit {
       promise.setError(it)
     }
     addHandlers({

@@ -12,7 +12,7 @@ trait Service {
 
   val name: String
 
-  fun reply(methodName: String, request: Map<String, Any>, result: Result)
+  fun reply(methodName: String, request: ByteArray, result: Result)
 
   protected final fun noMethod(methodName: String, result: Result) {
     result.reject(NoSuchMethodException("No method $name.$methodName}"))
@@ -28,7 +28,7 @@ trait Topic {
     get() = null
 }
 
-trait Result {
+public trait Result {
   inline
   final fun write(writer: (JsonWriter) -> Unit) {
     writeIf({

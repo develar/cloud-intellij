@@ -1,5 +1,7 @@
 package org.eclipse.flux.client.services
 
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
 import org.eclipse.flux.client.Result
 import org.eclipse.flux.client.Service
 
@@ -20,9 +22,26 @@ trait ResourceService : Service {
 
   protected fun get(projectName: String, resourcePath: String, hash: String, result: Result)
 
-  override fun reply(methodName: String, request: Map<String, Any>, result: Result) {
+  override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {
-      "get" -> get(request.get("project") as String, request.get("resource") as String, request.get("hash") as String, result)
+      "get" -> {
+        var project: String? = null
+        var resource: String? = null
+        var hash: String? = null
+        val reader = JsonReader(request.inputStream.reader())
+        reader.beginObject()
+        while (reader.hasNext()) {
+          when (reader.nextName()) {
+            "project" -> project = reader.nextString()
+            "resource" -> resource = reader.nextString()
+            "hash" -> hash = reader.nextString()
+            else -> reader.skipValue()
+          }
+        }
+        reader.endObject()
+
+        get(project!!, resource!!, hash!!, result)
+      }
       else -> {
         noMethod(methodName, result)
       }
@@ -37,11 +56,28 @@ trait RenameService : Service {
   override val name: String
     get() = "rename"
 
-  protected fun renameInFile(request: Map<String, Any>, result: Result)
+  protected fun renameInFile(projectName: String, resourcePath: String, offset: Int, result: Result)
 
-  override fun reply(methodName: String, request: Map<String, Any>, result: Result) {
+  override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {
-      "renameInFile" -> renameInFile(request, result)
+      "renameInFile" -> {
+        var project: String? = null
+        var resource: String? = null
+        var offset: Int = -1
+        val reader = JsonReader(request.inputStream.reader())
+        reader.beginObject()
+        while (reader.hasNext()) {
+          when (reader.nextName()) {
+            "project" -> project = reader.nextString()
+            "resource" -> resource = reader.nextString()
+            "offset" -> offset = reader.nextInt()
+            else -> reader.skipValue()
+          }
+        }
+        reader.endObject()
+
+        renameInFile(project!!, resource!!, offset, result)
+      }
       else -> {
         noMethod(methodName, result)
       }
@@ -56,14 +92,48 @@ trait NavigationService : Service {
   override val name: String
     get() = "navigation"
 
-  protected fun navigate(request: Map<String, Any>, result: Result)
+  protected fun navigate(projectName: String, resourcePath: String, offset: Int, result: Result)
 
-  override fun reply(methodName: String, request: Map<String, Any>, result: Result) {
+  override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {
-      "navigate" -> navigate(request, result)
+      "navigate" -> {
+        var project: String? = null
+        var resource: String? = null
+        var offset: Int = -1
+        val reader = JsonReader(request.inputStream.reader())
+        reader.beginObject()
+        while (reader.hasNext()) {
+          when (reader.nextName()) {
+            "project" -> project = reader.nextString()
+            "resource" -> resource = reader.nextString()
+            "offset" -> offset = reader.nextInt()
+            else -> reader.skipValue()
+          }
+        }
+        reader.endObject()
+
+        navigate(project!!, resource!!, offset, result)
+      }
       else -> {
         noMethod(methodName, result)
       }
     }
   }
+}
+
+trait NavigationServiceBase : NavigationService {
+  override final fun navigate(projectName: String, resourcePath: String, offset: Int, result: Result) {
+    result.writeIf {
+      if (computeNavigation(projectName, resourcePath, offset, it)) {
+        it.name("project").value(projectName)
+        it.name("resource").value(resourcePath)
+        true
+      }
+      else {
+        false
+      }
+    }
+  }
+
+  protected fun computeNavigation(projectName: String, resourcePath: String, offset: Int, writer: JsonWriter): Boolean
 }

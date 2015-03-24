@@ -11,16 +11,23 @@ import io.netty.handler.codec.http.*
 ChannelHandler.Sharable
 class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
   private val allow: ByteBuf
+  private val allowMonitoring: ByteBuf
   private val deny: ByteBuf
+
+  private val managementUser: String?
 
   init {
     val allocator = ByteBufAllocator.DEFAULT
+    allow = ioBuffer(allocator, "allow")
+    allowMonitoring = ioBuffer(allocator, "allow monitoring")
+    deny = ioBuffer(allocator, "deny")
 
-    var b = "allow".toByteArray()
-    allow = allocator.ioBuffer(b.size()).writeBytes(b)
+    managementUser = System.getenv("MANAGEMENT_USER")
+  }
 
-    b = "deny".toByteArray()
-    deny = allocator.ioBuffer(b.size()).writeBytes(b)
+  private fun ioBuffer(allocator: ByteBufAllocator, string: String): ByteBuf {
+    val b = string.toByteArray()
+    return allocator.ioBuffer(b.size()).writeBytes(b)
   }
 
   fun dispose() {
@@ -34,9 +41,14 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
     val answer: ByteBuf
     val urlDecoder = QueryStringDecoder(request.uri())
     answer = when (urlDecoder.path()) {
+      // todo verify user - we should use password as a token and verify it (github - call /user and pass the token as "Authorization: 'token ' + token")
       "/user" -> {
-        // todo verify user - we should use password as a token and verify it (github - call /user and pass the token as "Authorization: 'token ' + token")
-        allow
+        if (getUsername(urlDecoder) == managementUser) {
+          allowMonitoring
+        }
+        else {
+          allow
+        }
       }
       "/vhost" -> allow
       "/resource" -> {
@@ -47,7 +59,7 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
         else {
           assert(type == "exchange")
           val exchangeName = urlDecoder.parameters().get("name")!![0]!!
-          val username = urlDecoder.parameters().get("username")!![0]!!
+          val username = getUsername(urlDecoder)
           if ((exchangeName.length() - username.length() == 2) &&
                   (exchangeName[1] == '.' && (exchangeName[0] == 'd' || exchangeName[0] == 't')) &&
                   exchangeName.regionMatches(false, 2, username, 0, username.length())) {
@@ -76,6 +88,8 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
       future.addListener(ChannelFutureListener.CLOSE)
     }
   }
+
+  private fun getUsername(urlDecoder: QueryStringDecoder) = urlDecoder.parameters().get("username")!![0]!!
 
   override fun channelReadComplete(context: ChannelHandlerContext) {
     context.flush()

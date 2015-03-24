@@ -78,7 +78,7 @@ public trait Promise<T> {
 
       val totalPromise = AsyncPromise<T>()
       val done = CountDownConsumer(promises.size(), totalPromise, totalResult)
-      val rejected = {(it: Throwable) -> Unit
+      val rejected = {it: Throwable -> Unit
         if (totalPromise.state == Promise.State.PENDING) {
           totalPromise.setError(it)
         }

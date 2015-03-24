@@ -43,7 +43,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
     }
 
     messageConnector.addService(object : ProjectService {
-      override fun getAll(request: Map<String, Any>, result: Result) {
+      override fun getAll(result: Result) {
         result.write {
           it.name("projects")
           it.beginArray()
@@ -56,8 +56,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
         }
       }
 
-      override fun get(request: Map<String, Any>, result: Result) {
-        val projectName = request.get("project") as String
+      override fun get(projectName: String, result: Result) {
         val project = findReferencedProject(projectName)
         if (project == null) {
           return

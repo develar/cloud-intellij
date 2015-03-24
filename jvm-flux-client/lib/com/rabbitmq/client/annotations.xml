@@ -2,10 +2,19 @@
   <item name='com.rabbitmq.client.Consumer void handleDelivery(java.lang.String, com.rabbitmq.client.Envelope, com.rabbitmq.client.AMQP.BasicProperties, byte[]) 2'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='com.rabbitmq.client.DefaultConsumer void handleDelivery(java.lang.String, com.rabbitmq.client.Envelope, com.rabbitmq.client.AMQP.BasicProperties, byte[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='com.rabbitmq.client.DefaultConsumer void handleDelivery(java.lang.String, com.rabbitmq.client.Envelope, com.rabbitmq.client.AMQP.BasicProperties, byte[]) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='com.rabbitmq.client.DefaultConsumer void handleDelivery(java.lang.String, com.rabbitmq.client.Envelope, com.rabbitmq.client.AMQP.BasicProperties, byte[]) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='com.rabbitmq.client.DefaultConsumer void handleShutdownSignal(java.lang.String, com.rabbitmq.client.ShutdownSignalException) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='com.rabbitmq.client.DefaultConsumer void handleShutdownSignal(java.lang.String, com.rabbitmq.client.ShutdownSignalException) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='com.rabbitmq.client.Envelope java.lang.String getRoutingKey()'>

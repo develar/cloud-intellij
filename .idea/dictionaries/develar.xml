@@ -4,6 +4,7 @@
       <w>cloudfoundry</w>
       <w>dockerfile</w>
       <w>inboxes</w>
+      <w>onreceive</w>
       <w>rabbitmq</w>
       <w>requeue</w>
       <w>routable</w>

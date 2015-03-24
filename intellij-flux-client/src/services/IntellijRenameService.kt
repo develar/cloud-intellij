@@ -13,11 +13,9 @@ import org.eclipse.flux.client.Result
 import org.eclipse.flux.client.services.RenameService
 
 class IntellijRenameService() : RenameService {
-  override fun renameInFile(request: Map<String, Any>, result: Result) {
-    val projectName = request.get("project") as String
-    val resourcePath = request.get("resource") as String
+  override fun renameInFile(projectName: String, resourcePath: String, offset: Int, result: Result) {
     result.writeIf {
-      if (computeReferences("$projectName/$resourcePath", request.get("offset") as Int, it)) {
+      if (computeReferences("$projectName/$resourcePath", offset, it)) {
         it.name("project").value(projectName)
         it.name("resource").value(resourcePath)
         true

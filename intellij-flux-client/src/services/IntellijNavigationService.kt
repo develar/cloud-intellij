@@ -9,43 +9,23 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiNameIdentifierOwner
-import org.eclipse.flux.client.Result
-import org.eclipse.flux.client.services.NavigationService
+import org.eclipse.flux.client.services.NavigationServiceBase
 
-class IntellijNavigationService() : NavigationService {
-  override fun navigate(request: Map<String, Any>, result: Result) {
-    val projectName = request.get("project") as String
-    val resourcePath = request.get("resource") as String
-    result.writeIf {
-      if (computeNavigation("$projectName/$resourcePath", request.get("offset") as Int, it)) {
-        it.name("project").value(projectName)
-        it.name("resource").value(resourcePath)
-        it.name("callback_id").value(request.get("callback_id") as Int)
-        it.name("requestSenderID").value(request.get("requestSenderID") as String)
-        true
-      }
-      else {
-        false
-      }
-    }
-  }
-
-  private fun computeNavigation(requestorResourcePath: String, offset: Int, writer: JsonWriter): Boolean {
-    val projectName = requestorResourcePath.substring(0, requestorResourcePath.indexOf('/'))
-    val relativeResourcePath = requestorResourcePath.substring(projectName.length() + 1)
+class IntellijNavigationService() : NavigationServiceBase {
+  override fun computeNavigation(projectName: String, resourcePath: String, offset: Int, writer: JsonWriter): Boolean {
     val referencedFile: VirtualFile?
     val referencedProject: Project?
 
     val accessToken = ReadAction.start()
 
     try {
-      if (relativeResourcePath.startsWith("classpath:/")) {
-        val typeName = relativeResourcePath.substring("classpath:/".length())
+      if (resourcePath.startsWith("classpath:/")) {
+        val typeName = resourcePath.substring("classpath:/".length())
         referencedFile = JarFileSystem.getInstance().findFileByPath(typeName)
         referencedProject = findReferencedProject(projectName)
       }
       else {
-        referencedFile = findReferencedFile(relativeResourcePath, projectName)
+        referencedFile = findReferencedFile(resourcePath, projectName)
         if (referencedFile == null) {
           return false
         }

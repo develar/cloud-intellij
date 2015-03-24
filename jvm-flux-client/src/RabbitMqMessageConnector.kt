@@ -4,12 +4,13 @@ import com.google.gson.GsonBuilder
 import com.google.gson.stream.JsonWriter
 import com.rabbitmq.client.*
 import com.rabbitmq.client.AMQP.BasicProperties
+import com.rabbitmq.client.impl.DefaultExceptionHandler
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 
-class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitMqFluxConfig) : BaseMessageConnector(executor) {
+class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitMqFluxConfig) : BaseMessageConnector() {
   private val connection: Connection
   private val commandProcessor = CommandProcessor<Map<String, Any>>()
 
@@ -22,6 +23,11 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
     val connectionFactory = ConnectionFactory()
     configuration.applyTo(connectionFactory)
     connectionFactory.setSharedExecutor(executor)
+    connectionFactory.setExceptionHandler(object : DefaultExceptionHandler() {
+      override fun handleUnexpectedConnectionDriverException(conn: Connection, exception: Throwable) {
+        LOG.error(exception.getMessage(), exception)
+      }
+    })
 
     connection = connectionFactory.newConnection()
     LOG.info("Connected to rabbitMQ: " + configuration.uri)
@@ -48,20 +54,21 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
     channel.basicConsume(queue, object : DefaultConsumer(channel) {
       private val gson = GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create()
 
-      override fun handleDelivery(consumerTag: String?, envelope: Envelope, properties: BasicProperties, body: ByteArray) {
-        try {
-          [suppress("UNCHECKED_CAST")]
-          val obj = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
-          [suppress("UNCHECKED_CAST")]
-          val map = obj.get("data") as Map<String, Any>
+      override fun handleShutdownSignal(consumerTag: String, signal: ShutdownSignalException) {
+        LOG.info(signal.getMessage())
+      }
 
+      override fun handleDelivery(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: ByteArray) {
+        try {
           val correlationId = properties.getCorrelationId()
           if (correlationId == null) {
             // notification
             //  Tests whether an incoming message originated from the same MessageConnector that
             // todo is it really needed - maybe rabbitmq does it
             if (properties.getAppId() != queue) {
-              handleEvent(envelope.getRoutingKey(), properties.getReplyTo(), properties.getCorrelationId(), map)
+              [suppress("UNCHECKED_CAST")]
+              val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
+              handleEvent(envelope.getRoutingKey(), properties.getReplyTo(), properties.getCorrelationId(), data)
             }
           }
           else if (properties.getReplyTo() != null) {
@@ -69,7 +76,7 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
             // we must not answer to yourself - we ask message broker to requeue request
             var rejected = properties.getAppId() == queue
             if (!rejected) {
-              rejected = !reply(envelope.getRoutingKey(), properties.getType(), map, RabbitMqResult(properties.getReplyTo(), correlationId, envelope.getDeliveryTag()))
+              rejected = !reply(envelope.getRoutingKey(), properties.getType(), body, RabbitMqResult(properties.getReplyTo(), correlationId, envelope.getDeliveryTag()))
             }
 
             if (rejected) {
@@ -81,16 +88,22 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
           else if (properties.getType() == "eventResponse") {
             // response to broadcast request
             // todo real handler will not use it replyTo and correlationId, should be asserted somehow
-            handleEvent(correlationId, "will be ignored in any case", "will be ignored in any case", map)
+            [suppress("UNCHECKED_CAST")]
+            val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
+            handleEvent(correlationId, "will be ignored in any case", "will be ignored in any case", data)
           }
           else {
             // response
-            commandProcessor.getPromiseAndRemove(correlationId.toInt())?.setResult(map)
+            [suppress("UNCHECKED_CAST")]
+            val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
+            commandProcessor.getPromiseAndRemove(correlationId.toInt())?.setResult(data)
           }
 
           channel.basicAck(envelope.getDeliveryTag(), false)
         }
         catch (e: Throwable) {
+          // RabbitMQ also handle consumer exceptions and we can provide our own implementation of com.rabbitmq.client.ExceptionHandler,
+          // but it is more correct in our case (we delegate consuming) to handle it here
           try {
             LOG.error(e.getMessage(), e)
           }
