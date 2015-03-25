@@ -57,13 +57,13 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
       }
 
       override fun get(projectName: String, result: Result) {
-        val project = findReferencedProject(projectName)
-        if (project == null) {
-          return
-        }
-
         result.write { writer ->
-          writer.name("project").value(projectName)
+          val project = findReferencedProject(projectName)
+          if (project == null) {
+            writer.name("error").value("not found")
+            return
+          }
+
           writer.name("files").beginArray()
           val baseDir = project.getBaseDir()
           ProjectRootManager.getInstance(project).getFileIndex().iterateContent(object : ContentIterator {

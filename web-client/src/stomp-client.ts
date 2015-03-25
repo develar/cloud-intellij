@@ -12,6 +12,7 @@ export class StompConnector {
   private client: Stomp.Client
 
   private exchangeCommands: string
+  private exchangeEvents: string
   private queue: string
 
   private messageIdCounter = 0
@@ -25,6 +26,7 @@ export class StompConnector {
     this.client.heartbeat.outgoing = 0
     this.client.heartbeat.incoming = 0
     this.exchangeCommands = "/exchange/d." + user
+    this.exchangeEvents = "/exchange/t." + user
 
     this.client.debug = (message) => {
       console.log(message)
@@ -76,10 +78,18 @@ export class StompConnector {
 
   request<T>(service: string, method: string, message: any = {}): Promise<T> {
     return new Promise((resolve: (value: T) => void, reject: (error?: any) => void) => {
+      if (this.messageIdCounter === Number.MAX_VALUE) {
+        this.messageIdCounter = 0;
+      }
       var id = this.messageIdCounter++;
       this.callbacks[id] = new PromiseCallback(resolve, reject)
       this.client.send(this.exchangeCommands + "/" + service, {"reply-to": this.queue, "correlation-id": id, type: method}, JSON.stringify(message))
     })
+  }
+
+  notify(topic: string, message: any = {}) {
+    this.client.send(this.exchangeEvents + "/" + topic, {"app-id": this.queue}, JSON.stringify(message))
+    throw new Error("todo")
   }
 }
 

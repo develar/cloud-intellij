@@ -20,7 +20,7 @@ trait ResourceService : Service {
   override val name: String
     get() = "resources"
 
-  protected fun get(projectName: String, resourcePath: String, hash: String, result: Result)
+  public fun get(projectName: String, resourcePath: String, hash: String, result: Result)
 
   override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {

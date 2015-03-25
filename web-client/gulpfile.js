@@ -24,7 +24,8 @@ gulp.task("compile", function () {
       //.pipe(newer(outDir + '/' + outFile))
       .pipe(ts(tsProject));
 
-  tsResult.js.pipe(concat(outFile))
+  tsResult.js
+      //.pipe(concat(outFile))
       //.pipe(uglify({
       //        output: {
       //          beautify: true,

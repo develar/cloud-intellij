@@ -2,6 +2,7 @@
   <dictionary name="develar">
     <words>
       <w>cloudfoundry</w>
+      <w>cryptojs</w>
       <w>dockerfile</w>
       <w>inboxes</w>
       <w>onreceive</w>
