@@ -20,7 +20,7 @@ trait ResourceService : Service {
   override val name: String
     get() = "resources"
 
-  public fun get(projectName: String, resourcePath: String, hash: String, result: Result)
+  public fun get(projectName: String, resourcePath: String, hash: String?, result: Result)
 
   override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {
@@ -40,7 +40,7 @@ trait ResourceService : Service {
         }
         reader.endObject()
 
-        get(project!!, resource!!, hash!!, result)
+        get(project!!, resource!!, hash, result)
       }
       else -> {
         noMethod(methodName, result)

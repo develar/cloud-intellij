@@ -1,7 +1,7 @@
 flux
 .idea/copyright
 .idea/inspectionProfiles
+.idea/workspace.xml
 out
 node_modules
 dependencies
-ideaSdk

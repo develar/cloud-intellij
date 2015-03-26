@@ -49,7 +49,7 @@
     <mkdir dir="dependencies/download"/>
 
     <!-- ant contrib -->
-    <get src="http://heanet.dl.sourceforge.net/project/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.zip" dest="dependencies/download/ant-contrib-1.0b3-bin.zip" usetimestamp="true" verbose="true"/>
+    <get src="http://heanet.dl.sourceforge.net/project/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.zip" dest="dependencies/download/ant-contrib-1.0b3-bin.zip" usetimestamp="true"/>
 
     <delete file="dependencies/ant-contrib.jar" failonerror="false"/>
     <unzip src="dependencies/download/ant-contrib-1.0b3-bin.zip" dest="dependencies">
@@ -58,6 +58,14 @@
       </patternset>
       <mapper type="merge" to="ant-contrib.jar"/>
     </unzip>
+  </target>
+
+
+  <target name="fetch-js-libs">
+    <get src="https://raw.githubusercontent.com/petkaantonov/bluebird/v2.9.14/js/browser/bluebird.min.js" dest="web-client/lib/bluebird.min-2.9.14.js" usetimestamp="true"/>
+    <get src="https://raw.githubusercontent.com/sockjs/sockjs-client/master/dist/sockjs-0.3.4.min.js" dest="web-client/lib/" usetimestamp="true"/>
+    <get src="https://cdn.socket.io/socket.io-1.3.4.js" dest="web-client/lib/" usetimestamp="true"/>
+    <get src="https://raw.githubusercontent.com/jmesnil/stomp-websocket/master/lib/stomp.min.js" dest="web-client/lib/stomp.min-2.3.4.js" usetimestamp="true"/>
   </target>
 
   <macrodef name="execute_update_with_id_resolve">
@@ -120,7 +128,7 @@
 
           <mkdir dir="${jps}"/>
 
-          <get src="${content.base.url}/jps/standalone-jps-IC-${idea.build.number}.zip" dest="dependencies/download/standalone-jps.zip" usetimestamp="true" verbose="true"/>
+          <get src="${content.base.url}/jps/standalone-jps-IC-${idea.build.number}.zip" dest="dependencies/download/standalone-jps.zip" usetimestamp="true"/>
 
           <property name="jps.extracted.dir" value="dependencies/download/standalone-jps"/>
           <unzip src="dependencies/download/standalone-jps.zip" dest="${jps.extracted.dir}"/>
@@ -143,8 +151,8 @@
             </resources>
           </copy>
 
-          <get src="${content.base.url}/${idea.archive.name}" dest="dependencies/download/${idea.archive.name}" usetimestamp="true" verbose="true"/>
-          <get src="${content.base.url}/sources.zip" dest="dependencies/idea-sdk-sources.zip" usetimestamp="true" verbose="true"/>
+          <get src="${content.base.url}/${idea.archive.name}" dest="dependencies/download/${idea.archive.name}" usetimestamp="true"/>
+          <get src="${content.base.url}/sources.zip" dest="dependencies/idea-sdk-sources.zip" usetimestamp="true"/>
         </then>
       </if>
 
@@ -185,6 +193,10 @@
       </if>
 
       <delete file="${ideaSdk}/lib/junit.jar"/>
+      <delete dir="${ideaSdk}/plugins/xslt-debugger" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/editorconfig" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/eclipse" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/cvsIntegration" failonerror="false"/>
     </sequential>
   </macrodef>
 

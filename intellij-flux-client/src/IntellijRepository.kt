@@ -26,8 +26,11 @@ import java.util.concurrent.ConcurrentLinkedDeque
 private val LOG = Logger.getInstance("flux-intellij")
 
 trait RepositoryListener {
-  fun projectConnected(project: Project) {}
-  fun projectDisconnected(project: Project) {}
+  fun projectConnected(project: Project) {
+  }
+
+  fun projectDisconnected(project: Project) {
+  }
 }
 
 class IntellijRepository(private val messageConnector: MessageConnector, private val username: String) {
@@ -98,7 +101,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
     })
 
     messageConnector.addService(object : ResourceService {
-      override fun get(projectName: String, resourcePath: String, hash: String, result: Result) {
+      override fun get(projectName: String, resourcePath: String, hash: String?, result: Result) {
         if (resourcePath.startsWith("classpath:")) {
           getClasspathResource(projectName, resourcePath, hash, result)
         }
@@ -266,7 +269,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
         }*/
   }
 
-  private fun getResource(projectName: String, resourcePath: String, hash: String, result: Result) {
+  private fun getResource(projectName: String, resourcePath: String, hash: String?, result: Result) {
     //                Module project = connectedProject.getProject();
     //
     //                if (request.has("timestamp") && request.getLong("timestamp") != connectedProject.getTimestamp(resourcePath)) {
@@ -274,13 +277,13 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
     //                }
     //
     //                IResource resource = project.findMember(resourcePath);
-    val resource = findReferencedFile(resourcePath, projectName)
-    if (resource == null) {
-      result.reject()
-      return
-    }
-
     result.write {writer ->
+      val resource = findReferencedFile(resourcePath, projectName)
+      if (resource == null) {
+        writer.name("error").value("not found")
+        return
+      }
+
       val token = ReadAction.start()
       try {
         val document = FileDocumentManager.getInstance().getDocument(resource)
@@ -309,7 +312,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
     }
   }
 
-  private fun getClasspathResource(projectName: String, resourcePath: String, hash: String, result: Result) {
+  private fun getClasspathResource(projectName: String, resourcePath: String, hash: String?, result: Result) {
     //ConnectedProject connectedProject = this.syncedProjects.get(projectName);
     val typeName = resourcePath.substring("classpath:/".length())
     val fileByPath = JarFileSystem.getInstance().findFileByPath(typeName)

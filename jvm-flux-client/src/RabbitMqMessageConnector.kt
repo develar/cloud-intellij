@@ -51,6 +51,9 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
   }
 
   private fun setupConsumer() {
+    // we confirm delivery before user handlers logic, except request.
+    // if user handler cannot handle event/response - it is not our issue, the event/response was delivered correctly
+    // we cannot use auto ack, because we have the one queue for all types of messages.
     channel.basicConsume(queue, object : DefaultConsumer(channel) {
       private val gson = GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create()
 
@@ -62,6 +65,8 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
         try {
           val correlationId = properties.getCorrelationId()
           if (correlationId == null) {
+            channel.basicAck(envelope.getDeliveryTag(), false)
+
             // notification
             //  Tests whether an incoming message originated from the same MessageConnector that
             // todo is it really needed - maybe rabbitmq does it
@@ -74,18 +79,17 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
           else if (properties.getReplyTo() != null) {
             // request
             // we must not answer to yourself - we ask message broker to requeue request
-            var rejected = properties.getAppId() == queue
-            if (!rejected) {
-              rejected = !reply(envelope.getRoutingKey(), properties.getType(), body, RabbitMqResult(properties.getReplyTo(), correlationId, envelope.getDeliveryTag()))
-            }
-
-            if (rejected) {
+            if (properties.getAppId() == queue) {
               // we must not answer to yourself - we ask message broker to requeue request
               channel.basicReject(envelope.getDeliveryTag(), true)
-              return
+            }
+            else {
+              reply(envelope.getRoutingKey(), properties.getType(), body, RabbitMqResult(properties.getReplyTo(), correlationId, envelope.getDeliveryTag()))
             }
           }
           else if (properties.getType() == "eventResponse") {
+            channel.basicAck(envelope.getDeliveryTag(), false)
+
             // response to broadcast request
             // todo real handler will not use it replyTo and correlationId, should be asserted somehow
             [suppress("UNCHECKED_CAST")]
@@ -93,13 +97,19 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
             handleEvent(correlationId, "will be ignored in any case", "will be ignored in any case", data)
           }
           else {
+            channel.basicAck(envelope.getDeliveryTag(), false)
+
             // response
             [suppress("UNCHECKED_CAST")]
             val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
-            commandProcessor.getPromiseAndRemove(correlationId.toInt())?.setResult(data)
+            val promise = commandProcessor.getPromiseAndRemove(correlationId.toInt())
+            try {
+              promise?.setResult(data)
+            }
+            catch (e: Throwable) {
+              LOG.error(e.getMessage(), e)
+            }
           }
-
-          channel.basicAck(envelope.getDeliveryTag(), false)
         }
         catch (e: Throwable) {
           // RabbitMQ also handle consumer exceptions and we can provide our own implementation of com.rabbitmq.client.ExceptionHandler,
@@ -117,17 +127,22 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
 
   inner class RabbitMqResult(private val replyTo: String, private val messageId: String, private val deliveryTag: Long) : Result {
     override fun write(writer: JsonWriter, byteOut: ByteArrayOutputStream) {
+      channel.basicAck(deliveryTag, false)
       channel.basicPublish(exchangeCommands, replyTo, BasicProperties.Builder().appId(queue).correlationId(messageId).build(), encode(writer, byteOut))
     }
 
-    override fun reject(error: Throwable?) {
+    override fun reject(reason: String) {
       try {
-        if (error == null) {
-          LOG.warn("$messageId rejected")
-        }
-        else {
-          LOG.error("$messageId rejected, ${error.getMessage()}", error)
-        }
+        LOG.warn("$messageId rejected, reason: $reason")
+      }
+      finally {
+        channel.basicReject(deliveryTag, true)
+      }
+    }
+
+    override fun reject(error: Throwable) {
+      try {
+        LOG.error("$messageId rejected, ${error.getMessage()}", error)
       }
       finally {
         channel.basicReject(deliveryTag, true)

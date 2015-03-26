@@ -1,7 +1,7 @@
 # Building
-1. Run: `ant -f update_dependencies.xml` (append ` jb_update` if you have access to internal JetBrains server (could be faster)).
+1. Run: `ant -f update_dependencies.xml` (append ` jb_update` if you have access to internal JetBrains server (could be faster)). (todo: use ant from docker).
 2. Open project in IntelliJ IDEA and make (Build -> Make Project).
-  3. Run: `docker run --rm -v $PWD/flux/node.server/flux.orion.integration:/data develar/nodejs-bower` to install the web app dependencies.
+3. Run: `cd web-client && npm install && gulp compile` to install the web app dependencies. (todo: use gulp from docker).
 
 # Running
 1. Run: `docker-compose -f mqAndDb.yml up` to start a messaging broker and a database.

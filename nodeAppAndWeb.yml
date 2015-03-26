@@ -31,3 +31,4 @@ web:
     - flux/node.server/node_modules/URIjs/src:/s3/client/js/URIjs
     - flux/node.server/flux.orion.integration:/s4/orion-plugin
     - web-client/out:/webClientOut/orion-plugin
+    - web-client/lib:/app_lib

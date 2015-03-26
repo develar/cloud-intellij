@@ -10,11 +10,11 @@ public abstract class BaseMessageConnector() : MessageConnector {
   private val services: ConcurrentHashMap<String, Service> = ConcurrentHashMap()
   private val eventHandlers = ConcurrentHashMap<String, MutableCollection<(replyTo: String, correlationId: String, message: Map<String, Any>) -> Unit>>()
 
-  protected fun reply(serviceName: String, methodName: String, message: ByteArray, result: Result): Boolean {
+  protected fun reply(serviceName: String, methodName: String, message: ByteArray, result: Result) {
     val service = services.get(serviceName)
     if (service == null) {
-      LOG.warn("No service $serviceName")
-      return false
+      result.reject(reason = "No service $serviceName")
+      return
     }
 
     try {
@@ -23,7 +23,6 @@ public abstract class BaseMessageConnector() : MessageConnector {
     catch (e: Throwable) {
       result.reject(e)
     }
-    return true
   }
 
   protected fun handleEvent(topic: String, replyTo: String, correlationId: String, message: Map<String, Any>) {

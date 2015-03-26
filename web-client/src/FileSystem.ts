@@ -3,7 +3,7 @@
 
 //import ignored = require("CryptoJS")
 import Deferred = require("Deferred")
-import stompClient = require("stomp-client")
+import stompClient = require("stompClient")
 
 /**
  * An implementation of the file service that understands the Orion
@@ -297,7 +297,7 @@ class FileSystem implements FileClient {
       .then((data: Projects.ProjectsGetAllResponse) => {
               var requests = new Array<Promise<Entry>>(data.projects.length);
               for (var i = 0, n = data.projects.length; i < n; i++) {
-                requests.push(this.getProject(data.projects[i].name))
+                requests[i] = this.getProject(data.projects[i].name)
               }
 
               if (requests.length == 0) {

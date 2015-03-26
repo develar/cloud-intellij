@@ -15,7 +15,7 @@ trait Service {
   fun reply(methodName: String, request: ByteArray, result: Result)
 
   protected final fun noMethod(methodName: String, result: Result) {
-    result.reject(NoSuchMethodException("No method $name.$methodName}"))
+    result.reject(reason = "No method $name.$methodName}")
   }
 }
 
@@ -46,7 +46,7 @@ public trait Result {
       jsonWriter = JsonWriter(byteOut.writer())
       jsonWriter.beginObject()
       if (!writer(jsonWriter)) {
-        reject()
+        reject("consumer condition")
         return
       }
     }
@@ -60,7 +60,9 @@ public trait Result {
 
   fun write(writer: JsonWriter, byteOut: ByteArrayOutputStream)
 
-  fun reject(error: Throwable? = null)
+  fun reject(error: Throwable)
+
+  fun reject(reason: String)
 }
 
 /**
