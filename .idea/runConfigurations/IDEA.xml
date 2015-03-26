@@ -1,9 +1,16 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="IDEA" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
-    <module name="intellij-flux-client" />
-    <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -ea -Ddocker.host.as.mq.host" />
+  <configuration default="false" name="Idea" type="Application" factoryName="Application" singleton="true">
+    <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
+    <option name="VM_PARAMETERS" value="-Xmx500m -XX:ReservedCodeCacheSize=64m -XX:+HeapDumpOnOutOfMemoryError -XX:SoftRefLRUPolicyMSPerMB=50 -ea -Dsun.io.useCanonCaches=false -Didea.system.path=../../system-idea -Didea.config.path=../../config-idea -Dplugin.path=../../../out/production/intellij-flux-client" />
     <option name="PROGRAM_PARAMETERS" value="" />
-    <log_file path="$USER_HOME$/Library/Preferences/IJ/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="IDEA LOG" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/dependencies/ideaSdk/bin" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+    <option name="ALTERNATIVE_JRE_PATH" value="" />
+    <option name="ENABLE_SWING_INSPECTOR" value="false" />
+    <option name="ENV_VARIABLES" />
+    <option name="PASS_PARENT_ENVS" value="true" />
+    <module name="idea-runner" />
+    <envs />
     <method />
   </configuration>
 </component>

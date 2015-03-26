@@ -3,9 +3,11 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/cloud-intellij.iml" filepath="$PROJECT_DIR$/cloud-intellij.iml" />
+      <module fileurl="file://$PROJECT_DIR$/idea-runner/idea-runner.iml" filepath="$PROJECT_DIR$/idea-runner/idea-runner.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij-flux-client/intellij-flux-client.iml" filepath="$PROJECT_DIR$/intellij-flux-client/intellij-flux-client.iml" />
       <module fileurl="file://$PROJECT_DIR$/jvm-flux-client/jvm-flux-client.iml" filepath="$PROJECT_DIR$/jvm-flux-client/jvm-flux-client.iml" />
       <module fileurl="file://$PROJECT_DIR$/mq-auth/mq-auth.iml" filepath="$PROJECT_DIR$/mq-auth/mq-auth.iml" />
+      <module fileurl="file://$PROJECT_DIR$/web-client/web-client.iml" filepath="$PROJECT_DIR$/web-client/web-client.iml" />
     </modules>
   </component>
 </project>

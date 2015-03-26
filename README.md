@@ -1,10 +1,17 @@
+# Building
+1. Run: `ant -f update_dependencies.xml` (append ` jb_update` if you have access to internal JetBrains server (could be faster)).
+2. Open project in IntelliJ IDEA and make (Build -> Make Project).
+  3. Run: `docker run --rm -v $PWD/flux/node.server/flux.orion.integration:/data develar/nodejs-bower` to install the web app dependencies.
+
 # Running
-1. Run: `docker run -v $PWD/flux/node.server/flux.orion.integration:/data develar/nodejs-bower` to install the web app dependencies.
-2. Run: `docker-compose -f mqAndDb.yml up` to start a messaging broker and a database.
-3. Run: `docker-compose -f nodeAppAndWeb.yml up` to start the node server.
-4. Open your browser to `http://<dockerd host ip>`
+1. Run: `docker-compose -f mqAndDb.yml up` to start a messaging broker and a database.
+2. Run: `docker-compose -f nodeAppAndWeb.yml up` to start the node server.
+3. Open your browser to `http://<dockerd host ip>`
 
 We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](https://youtrack.jetbrains.com/issue/IDEA-137765).
+
+# Running IDEA to develop plugin
+2. Use run configuration "Idea".
 
 # Setting up development environment
 1. Checkout flux — run getFlux.sh (Linux/Mac) or getFlux.bat (Windows).

@@ -1,0 +1,13 @@
+<idea-plugin version="2">
+  <id>org.intellij.FluxConnector</id>
+  <name>IntelliJ in the Cloud</name>
+  <version>0.1</version>
+  <description>IntelliJ in the Cloud</description>
+  <idea-version since-build="141.0"/>
+
+  <application-components>
+    <component>
+      <implementation-class>org.intellij.flux.FluxApplicationComponent</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>

@@ -24,10 +24,10 @@ web:
   ports:
     - 80:80
   volumes:
-    - flux/node.server/nginx-config:/config
+    - web-client/nginx-config:/config
     # all this stuff should be in one directory, but we want to mimize our fork changes
     - flux/node.server/flux-static:/s1
     - flux/node.server/web-editor:/s2/client
     - flux/node.server/node_modules/URIjs/src:/s3/client/js/URIjs
     - flux/node.server/flux.orion.integration:/s4/orion-plugin
-    - web-client/out:/s5/orion-plugin
+    - web-client/out:/webClientOut/orion-plugin

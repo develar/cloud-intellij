@@ -1,0 +1,196 @@
+<project name="Update Dependencies" default="update">
+  <property name="ideaVersion" value="141.175.3"/>
+
+  <condition property="os.tag" value="win.zip">
+    <os family="windows"/>
+  </condition>
+
+  <condition property="os.tag" value="mac.zip">
+    <os family="mac"/>
+  </condition>
+
+  <condition property="os.tag" value="tar.gz">
+    <and>
+      <os family="unix"/>
+      <not>
+        <os family="mac"/>
+      </not>
+    </and>
+  </condition>
+
+  <property name="idea.sdk.fetch.needed" value="true"/>
+
+  <target name="update" depends="fetch-third-party,fetch-annotations" description="Update dependencies from public server">
+    <execute_update_with_id_resolve
+        teamcity.server.url="https://teamcity.jetbrains.com"
+        build.locator.request="buildType:bt410,status:SUCCESS,branch:idea/${ideaVersion}"/>
+  </target>
+
+  <target name="jb_update" depends="fetch-third-party,fetch-annotations" description="Update dependencies from internal server">
+    <execute_update_with_id_resolve
+        teamcity.server.url="http://buildserver.labs.intellij.net"
+        build.locator.request="buildType:bt3498,status:SUCCESS,branch:/idea/${ideaVersion}"/>
+  </target>
+
+  <target name="jb_update_continuous_139" depends="fetch-third-party,fetch-annotations">
+    <execute_update base.url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:ijplatform_IjPlatformMaster_IdeaTrunk_CommunityDist,status:SUCCESS"/>
+  </target>
+
+  <target name="jb_update_continuous_141" depends="fetch-third-party,fetch-annotations">
+    <execute_update base.url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:ijplatform_IjPlatform141_IdeaTrunk_CommunityDist,status:SUCCESS"/>
+  </target>
+
+  <target name="jb_update_continuous_142" depends="fetch-third-party,fetch-annotations">
+    <execute_update base.url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:bt662,status:SUCCESS"/>
+  </target>
+
+  <target name="fetch-third-party">
+    <mkdir dir="dependencies"/>
+    <mkdir dir="dependencies/download"/>
+
+    <!-- ant contrib -->
+    <get src="http://heanet.dl.sourceforge.net/project/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.zip" dest="dependencies/download/ant-contrib-1.0b3-bin.zip" usetimestamp="true" verbose="true"/>
+
+    <delete file="dependencies/ant-contrib.jar" failonerror="false"/>
+    <unzip src="dependencies/download/ant-contrib-1.0b3-bin.zip" dest="dependencies">
+      <patternset>
+        <include name="ant-contrib/ant-contrib-1.0b3.jar"/>
+      </patternset>
+      <mapper type="merge" to="ant-contrib.jar"/>
+    </unzip>
+  </target>
+
+  <macrodef name="execute_update_with_id_resolve">
+    <attribute name="teamcity.server.url"/>
+    <attribute name="build.locator.request"/>
+
+    <sequential>
+      <loadresource property="execute.build.id">
+        <url url="@{teamcity.server.url}/guestAuth/app/rest/builds/?locator=@{build.locator.request}"/>
+        <filterchain>
+          <tokenfilter>
+            <filetokenizer/>
+            <replaceregex pattern="^(.*)\sid=&quot;(\d+)&quot;(.*)$" replace="\2" flags="s"/>
+          </tokenfilter>
+        </filterchain>
+      </loadresource>
+
+      <echo message="IDEA build id: ${execute.build.id}"/>
+
+      <execute_update base.url="@{teamcity.server.url}/guestAuth/app/rest/builds/id:${execute.build.id}"/>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="execute_update">
+    <attribute name="base.url"/>
+
+    <sequential>
+      <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${basedir}/dependencies/ant-contrib.jar"/>
+
+      <loadresource property="idea.build.number">
+        <url url="@{base.url}/artifacts/children"/>
+        <filterchain>
+          <tokenfilter>
+            <filetokenizer/>
+
+            <replaceregex pattern="^(.*)ideaIC-([\w\.]+)\.win\.zip(.*)$" replace="\2" flags="s"/>
+          </tokenfilter>
+        </filterchain>
+      </loadresource>
+
+      <property name="idea.archive.name" value="ideaIC-${idea.build.number}.${os.tag}"/>
+
+      <echo message="IDEA build number: ${idea.build.number}"/>
+      <echo message="IDEA archive file: ${idea.archive.name}"/>
+
+      <property name="content.base.url" value="@{base.url}/artifacts/content"/>
+
+      <property name="ideaSdk" value="dependencies/ideaSdk"/>
+      <property name="jps" value="${ideaSdk}/jps"/>
+      <property name="jps-test" value="${jps}/test"/>
+
+      <if>
+        <istrue value="${idea.sdk.fetch.needed}"/>
+
+        <then>
+          <delete dir="${ideaSdk}" failonerror="false">
+            <exclude name="config-idea/**"/>
+            <exclude name="system-idea/**"/>
+          </delete>
+
+          <mkdir dir="${jps}"/>
+
+          <get src="${content.base.url}/jps/standalone-jps-IC-${idea.build.number}.zip" dest="dependencies/download/standalone-jps.zip" usetimestamp="true" verbose="true"/>
+
+          <property name="jps.extracted.dir" value="dependencies/download/standalone-jps"/>
+          <unzip src="dependencies/download/standalone-jps.zip" dest="${jps.extracted.dir}"/>
+
+          <copy todir="${jps}" flatten="true">
+            <resources>
+              <file file="${jps.extracted.dir}/groovy-jps-plugin.jar"/>
+              <file file="${jps.extracted.dir}/groovy_rt.jar"/>
+              <file file="${jps.extracted.dir}/jdom.jar"/>
+              <file file="${jps.extracted.dir}/jgoodies-forms.jar"/>
+              <file file="${jps.extracted.dir}/jna.jar"/>
+              <file file="${jps.extracted.dir}/jps-builders.jar"/>
+              <file file="${jps.extracted.dir}/jps-model.jar"/>
+              <file file="${jps.extracted.dir}/log4j.jar"/>
+              <file file="${jps.extracted.dir}/nanoxml-2.2.3.jar"/>
+              <file file="${jps.extracted.dir}/protobuf-2.5.0.jar"/>
+              <file file="${jps.extracted.dir}/trove4j.jar"/>
+              <file file="${jps.extracted.dir}/ui-designer-jps-plugin.jar"/>
+              <file file="${jps.extracted.dir}/util.jar"/>
+            </resources>
+          </copy>
+
+          <get src="${content.base.url}/${idea.archive.name}" dest="dependencies/download/${idea.archive.name}" usetimestamp="true" verbose="true"/>
+          <get src="${content.base.url}/sources.zip" dest="dependencies/idea-sdk-sources.zip" usetimestamp="true" verbose="true"/>
+        </then>
+      </if>
+
+      <if>
+        <matches pattern=".+\.win\.zip" string="${idea.archive.name}"/>
+        <then>
+          <unzip src="dependencies/download/${idea.archive.name}" dest="${ideaSdk}"/>
+        </then>
+        <elseif>
+          <matches pattern=".+\.mac\.zip" string="${idea.archive.name}"/>
+          <then>
+            <unzip src="dependencies/download/${idea.archive.name}" dest="${ideaSdk}">
+              <cutdirsmapper dirs="2"/>
+            </unzip>
+            <!-- Java can't manipulate permissions -->
+            <exec executable="chmod">
+              <arg value="a+x"/>
+              <arg path="${ideaSdk}/bin/fsnotifier"/>
+              <arg path="${ideaSdk}/bin/inspect.sh"/>
+              <arg path="${ideaSdk}/bin/printenv.py"/>
+              <arg path="${ideaSdk}/bin/restarter"/>
+            </exec>
+          </then>
+        </elseif>
+        <else>
+          <untar src="dependencies/download/${idea.archive.name}" dest="${ideaSdk}" compression="gzip">
+            <cutdirsmapper dirs="1"/>
+          </untar>
+          <!-- Java can't manipulate permissions -->
+          <exec executable="chmod">
+            <arg value="a+x"/>
+            <arg path="${ideaSdk}/bin/fsnotifier"/>
+            <arg path="${ideaSdk}/bin/fsnotifier64"/>
+            <arg path="${ideaSdk}/bin/inspect.sh"/>
+            <arg path="${ideaSdk}/bin/idea.sh"/>
+          </exec>
+        </else>
+      </if>
+
+      <delete file="${ideaSdk}/lib/junit.jar"/>
+    </sequential>
+  </macrodef>
+
+  <target name="fetch-annotations">
+    <mkdir dir="dependencies/annotations"/>
+    <get src="https://teamcity.jetbrains.com/guestAuth/repository/download/Kotlin_KAnnotator_InferJdkAnnotations/shipWithKotlin.tcbuildtag/kotlin-jdk-annotations.jar"
+        dest="dependencies/annotations/kotlin-jdk-annotations.jar" usetimestamp="true"/>
+  </target>
+</project>

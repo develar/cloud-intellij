@@ -1,0 +1,27 @@
+<component name="libraryTable">
+  <library name="idea-full">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/annotations.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/log4j.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/idea.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/openapi.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/trove4j.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/util.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/commons-codec-1.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/picocontainer.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/extensions.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/core-api/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/core-impl/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/lang-api/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/lang-impl/gen" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/lang-impl/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/platform-api/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/platform-impl/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/util-rt/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/util/src" />
+    </SOURCES>
+  </library>
+</component>

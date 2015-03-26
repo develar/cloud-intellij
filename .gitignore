@@ -3,3 +3,5 @@ flux
 .idea/inspectionProfiles
 out
 node_modules
+dependencies
+ideaSdk
