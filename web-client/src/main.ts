@@ -1,20 +1,15 @@
 import Promise = require("bluebird")
 import stompClient = require("stompClient")
 import FileSystem = require("FileSystem")
+import Editor = require("Editor")
 
 import PluginProvider = require("orion/plugin")
 
 var host = window.location.hostname
 var port: number = <number>(window.location.port || 80)
-var wsPort: number = port
-if (host.indexOf("cfapps.io") > 0) {
-  // Cloudfoundry weirdness: all websocket traffic re-routed on this port.
-  wsPort = 4443
-}
-
 var stompConnector = new stompClient.StompConnector()
 stompConnector.connect(host, "dev", "dev").done(() => {
-  var base = "flux://" + host + ":" + wsPort + "/";
+  var base = "flux://" + host + ":" + port + "/";
   var headers = {
     'Name': "Flux",
     'Version': "0.1",
@@ -26,7 +21,8 @@ stompConnector.connect(host, "dev", "dev").done(() => {
   }
 
   var provider = new PluginProvider(headers)
-  provider.registerService("orion.core.file", new FileSystem(stompConnector, base), headers)
+  var fileSystem = new FileSystem(stompConnector, base);
+  provider.registerService("orion.core.file", fileSystem, headers)
 
   provider.registerServiceProvider("orion.page.link.category", null, {
     id: "flux",
@@ -37,17 +33,33 @@ stompConnector.connect(host, "dev", "dev").done(() => {
     order: 5
   })
 
-  var editorService = new FluxEditor(wsUrl, base);
+  var editorService = new Editor(stompConnector, fileSystem)
 
-  provider.registerService([
-      "orion.edit.validator",
-    ],
-    editorService,
-    {
-      'pattern': base + ".*",
-      'contentType': ["text/x-java-source"]
+  provider.registerService("orion.edit.validator", editorService, {
+    'pattern': base + ".*",
+    'contentType': ["text/x-java-source"]
+  })
+  provider.registerService(["orion.edit.model", "orion.edit.live"], editorService, {'contentType': ["text/plain"]})
+  provider.registerService(["orion.edit.contentAssist", "orion.edit.hover"], editorService, {'contentType': ["text/x-java-source"]})
+
+  provider.registerService("orion.edit.command", {
+    execute: function (editorContext: any, context: any): void {
+      if (!context.annotation) {
+        return
+      }
+      if (context.annotation.id) {
+        editorService.applyQuickfix(editorContext, context)
+      }
     }
-  );
+  }, {
+    id: "orion.css.quickfix.zeroQualifier",
+    image: "../images/compare-addition.gif",
+    scopeId: "orion.edit.quickfix",
+    name: "Apply quickfix",
+    contentType: ["text/x-java-source"],
+    tooltip: "Apply Quick Fix",
+    validationProperties: []
+  })
 
   provider.connect()
 })

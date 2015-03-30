@@ -5,6 +5,7 @@ import Deferred = require("Deferred")
 import stompClient = require("stompClient")
 import service = require("service")
 import Promise = require("bluebird")
+import orion = require("orion-api")
 
 import FileSystem = require("FileSystem")
 
@@ -12,7 +13,7 @@ var SERVICE_TO_REGEXP = {
   "org.eclipse.flux.jdt": new RegExp(".*\\.java|.*\\.class")
 };
 
-var editSession
+var editSession: any = null
 
 var callbacksCache = {};
 
@@ -21,8 +22,8 @@ function generateCallbackId() {
   return counter++;
 }
 
-function createResourceMetadata(data) {
-  var resourceMetadata = {};
+function createResourceMetadata(data: any) {
+  var resourceMetadata: any = {};
   for (var key in data) {
     resourceMetadata[key] = data[key];
   }
@@ -44,9 +45,10 @@ function createResourceMetadata(data) {
 /**
  * Provides operations on files, folders, and projects.
  */
-class Editor {
+class Editor implements orion.Validator {
   private _resourceMetadata: any = null
   private _resourceUrl: string = null
+  private _editorContext: any = null
 
   constructor(private stompClient: stompClient.StompConnector, private fileSystem: FileSystem) {
   }
@@ -215,45 +217,7 @@ class Editor {
     //});
   }
 
-  sendMessage(type, message, callbacks) {
-    console.log('sendMessage: ', type, message);
-//			if (this._connectedToChannel) {
-    if (callbacks) {
-      message.callback_id = generateCallbackId();
-      callbacksCache[message.callback_id] = callbacks;
-    }
-    else if (!message.callback_id) {
-      message.callback_id = 0;
-    }
-    this.socket.emit(type, message);
-    return true;
-//			} else {
-//				return false;
-//			}
-  }
-
-  _handleMessage(data) {
-    var callbacks = callbacksCache[data.callback_id];
-    if (callbacks) {
-      if (Array.isArray(callbacks)) {
-        var fn = callbacks[0];
-        fn.call(this, data);
-        callbacks.shift();
-        if (callbacks.length === 0) {
-          delete callbacksCache[data.callback_id];
-        }
-        return true;
-      }
-      else if (callbacks.call) {
-        callbacks.call(this, data);
-        delete callbacksCache[data.callback_id];
-        return true;
-      }
-    }
-    return false;
-  }
-
-  _getResourceData(): Promise {
+  _getResourceData(): Promise<any> {
     if (this._resourceMetadata != null) {
       return Promise.resolve(this._resourceMetadata);
     }
@@ -268,71 +232,63 @@ class Editor {
     }
   }
 
-  _setEditorInput(resourceUrl, editorContext) {
-    var self = this;
+  _setEditorInput(resourceUrl: string, editorContext: any) {
     if (this._resourceUrl !== resourceUrl) {
-      this._resourceUrl = null;
-      this._editorContext = null;
-      this._resourceMetadata = null;
+      this._resourceUrl = null
+      this._editorContext = null
+      this._resourceMetadata = null
       if (editSession) {
-        editSession.resolve();
+        editSession.resolve()
       }
       if (this.fileSystem.isFluxResource(resourceUrl)) {
-        this._resourceUrl = resourceUrl;
-        editSession = new Deferred();
-        this._editorContext = editorContext;
+        this._resourceUrl = resourceUrl
+        editSession = new Deferred()
+        this._editorContext = editorContext
 
-        this._getResourceData().then(function (resourceMetadata) {
-          self.sendMessage('liveResourceStarted', {
-            'callback_id': 0,
-            'username': resourceMetadata.username,
+        this._getResourceData().then((resourceMetadata: any) => {
+          this.stompClient.notify(service.LiveEditTopics.liveResourceStarted, {
             'project': resourceMetadata.project,
             'resource': resourceMetadata.resource,
             'hash': resourceMetadata.hash,
             'timestamp': resourceMetadata.timestamp
-          });
-        });
+          })
+        })
       }
     }
-    return editSession;
+    return editSession
   }
 
-  onModelChanging(evt) {
-    console.log("Editor changing: " + JSON.stringify(evt));
-    var self = this;
-    this._getResourceData().then(function (resourceMetadata) {
+  onModelChanging(event: any) {
+    console.log("Editor changing: " + JSON.stringify(event))
+    this._getResourceData().then((resourceMetadata: any) => {
       if (resourceMetadata._canLiveEdit()) {
-        var changeData = {
+        this.stompClient.notify(service.LiveEditTopics.liveResourceChanged, {
           'username': resourceMetadata.username,
           'project': resourceMetadata.project,
           'resource': resourceMetadata.resource,
-          'offset': evt.start,
-          'removedCharCount': evt.removedCharCount,
-          'addedCharacters': evt.text
-        };
-
-        self.sendMessage('liveResourceChanged', changeData);
+          'offset': event.start,
+          'removedCharCount': event.removedCharCount,
+          'addedCharacters': event.text
+        })
       }
-    });
+    })
   }
 
-  computeContentAssist(editorContext, options) {
+  computeContentAssist(editorContext: any, options: any) {
     var request = new Deferred();
-    var self = this;
-    this._getResourceData().then(function (resourceMetadata) {
-      self.sendMessage("contentassistrequest", {
-        'username': resourceMetadata.username,
+    this._getResourceData().then((resourceMetadata: any) => {
+      this.stompClient.request(service.EditorService.contentAssist, {
         'project': resourceMetadata.project,
         'resource': resourceMetadata.resource,
         'offset': options.offset,
         'prefix': options.prefix,
         'selection': options.selection
-      }, function (data) {
-        var proposals = [];
+      }).done((data: any) => {
+        var proposals: any = []
         if (data.proposals) {
-          data.proposals.forEach(function (proposal) {
-            var name;
-            var description;
+          data.proposals.forEach((proposal: any) => {
+            var name: string
+            var description: string
             if (proposal.description
               && proposal.description.segments
               && (Array.isArray && Array.isArray(proposal.description.segments) || proposal.description.segments instanceof Array)) {
@@ -361,112 +317,91 @@ class Editor {
                 'additionalEdits': proposal.additionalEdits,
                 'style': "emphasis",
                 'escapePosition': proposal.escapePosition
-              });
+              })
             }
-          });
+          })
         }
         console.log("Editor content assist: " + JSON.stringify(proposals));
         request.resolve(proposals);
-      });
-    });
-    return request;
+      })
+    })
+    return request
   }
 
-  computeProblems(editorContext, options) {
+  computeProblems(editorContext: any, options: any) {
     console.log("Validator (Problems): " + JSON.stringify(options));
-    var self = this;
     var problemsRequest = new Deferred();
 //			this._setEditorInput(options.title, editorContext);
 
-    this._getResourceData().then(function (resourceMetadata) {
-      if (self._resourceUrl === options.title) {
-        self.sendMessage("getMetadataRequest", {
-          'username': resourceMetadata.username,
+    this._getResourceData().then((resourceMetadata: any) => {
+      if (this._resourceUrl === options.title) {
+        this.stompClient.request(service.EditorService.metadata, {
           'project': resourceMetadata.project,
           'resource': resourceMetadata.resource
-        }, function (data) {
-          if (data.username === resourceMetadata.username
-            && data.project === resourceMetadata.project
-            && data.resource === resourceMetadata.resource) {
-
-            resourceMetadata.markers = [];
-            for (var i = 0; i < data.metadata.length; i++) {
-              resourceMetadata.markers[i] = {
-                'id': data.metadata[i].id,
-                'description': data.metadata[i].description,
-                'severity': data.metadata[i].severity,
-                'start': data.metadata[i].start,
-                'end': data.metadata[i].end
-              };
-            }
+        }).done((data: any) => {
+          resourceMetadata.markers = [];
+          for (var i = 0; i < data.metadata.length; i++) {
+            resourceMetadata.markers[i] = {
+              'id': data.metadata[i].id,
+              'description': data.metadata[i].description,
+              'severity': data.metadata[i].severity,
+              'start': data.metadata[i].start,
+              'end': data.metadata[i].end
+            };
           }
-          problemsRequest.resolve(resourceMetadata.markers);
-        });
+          problemsRequest.resolve(resourceMetadata.markers)
+        })
       }
       else {
-        problemsRequest.reject();
+        problemsRequest.reject()
       }
-    });
-
-    return problemsRequest;
+    })
+    return problemsRequest
   }
 
-  startEdit(editorContext, options) {
-    this.jdtInitializer = this._initializeJDT(editorContext);
-    var url = options ? options.title : null;
-    return this._setEditorInput(url, editorContext);
+  startEdit(editorContext: any, options: any) {
+    var url = options ? options.title : null
+    return this._setEditorInput(url, editorContext)
   }
 
-  endEdit(resourceUrl) {
-    if (this.jdtInitializer) {
-      this.jdtInitializer.dispose();
-      delete this.jdtInitializer;
-    }
-    this._setEditorInput(null, null);
+  endEdit(resourceUrl: any) {
+    this._setEditorInput(null, null)
   }
 
-  computeHoverInfo(editorContext, ctxt) {
-    var self = this;
+  computeHoverInfo(editorContext: any, ctxt: any) {
     var request = new Deferred();
-    this._getResourceData().then(function (resourceMetadata) {
-      self.sendMessage("javadocrequest", {
-          'username': self.user,
+    this._getResourceData().then((resourceMetadata: any) => {
+      this.stompClient.request(service.EditorService.javadoc, {
+        'project': resourceMetadata.project,
+        'resource': resourceMetadata.resource,
+        'offset': ctxt.offset,
+        'length': 0
+      }).done((data: any) => {
+        if (data.javadoc != null) {
+          request.resolve({type: 'html', content: data.javadoc.javadoc});
+        }
+        else {
+          request.resolve(false);
+        }
+      })
+    })
+    return request
+  }
+
+  public applyQuickfix(editorContext: any, context: any) {
+    var request = new Deferred();
+    this._getResourceData().then((resourceMetadata: any) => {
+      this.stompClient.request(service.EditorService.quickfix, {
           'project': resourceMetadata.project,
           'resource': resourceMetadata.resource,
-          'offset': ctxt.offset,
-          'length': 0
-        }, function (data) {
-                         if (self.user === data.username && resourceMetadata.project === data.project
-                           && data.javadoc !== undefined) {
-                           request.resolve({type: 'html', content: data.javadoc.javadoc});
-                         }
-                         else {
-                           request.resolve(false);
-                         }
-                       }
-      );
-    });
-    return request;
-  }
-
-  applyQuickfix(editorContext, ctxt) {
-    var self = this;
-    var request = new Deferred();
-    this._getResourceData().then(function (resourceMetadata) {
-      self.sendMessage("quickfixrequest", {
-          'project': resourceMetadata.project,
-          'resource': resourceMetadata.resource,
-          'id': ctxt.annotation.id,
-          'offset': ctxt.annotation.start,
-          'length': (ctxt.annotation.end - ctxt.annotation.start + 1),
+          'id': context.annotation.id,
+          'offset': context.annotation.start,
+          'length': (context.annotation.end - context.annotation.start + 1),
           'apply-fix': true
-        }, function (data) {
-                         console.log(data);
-                       }
-      );
-    });
+        })
+    })
     return request;
   }
 }
 
-export = FileSystem
+export = Editor

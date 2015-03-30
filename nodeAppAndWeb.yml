@@ -21,6 +21,8 @@ web:
   image: develar/orion-client:nomin
   links:
     - app
+  external_links:
+    - cloudintellij_mq_1:mq
   ports:
     - 80:80
   volumes:
@@ -31,4 +33,4 @@ web:
     - flux/node.server/node_modules/URIjs/src:/s3/client/js/URIjs
     - flux/node.server/flux.orion.integration:/s4/orion-plugin
     - web-client/out:/webClientOut/orion-plugin
-    - web-client/lib:/app_lib
+    - web-client/lib:/_lib

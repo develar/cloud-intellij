@@ -287,21 +287,18 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
       val token = ReadAction.start()
       try {
         val document = FileDocumentManager.getInstance().getDocument(resource)
-        writer.name("project").value(projectName)
-        writer.name("resource").value(resourcePath)
         writer.name("timestamp").value(if (document != null) document.getModificationStamp() else resource.getModificationStamp())
         //message.put("hash", connectedProject.getHash(resourcePath));
-        val shaHex = if (document != null) DigestUtils.sha1Hex(document.getText()) else if (resource.isDirectory()) "0" else DigestUtils.sha1Hex(resource.getInputStream())
-        writer.name("hash").value(shaHex) // cache hash
-
         if (resource.isDirectory()) {
           writer.name("type").value("folder")
         }
         else {
+          val shaHex = if (document != null) DigestUtils.sha1Hex(document.getText()) else DigestUtils.sha1Hex(resource.getInputStream())
           if (hash == shaHex) {
             return
           }
 
+          writer.name("hash").value(shaHex)
           writer.name("content").value(if (document != null) document.getText() else "")
           writer.name("type").value("file")
         }

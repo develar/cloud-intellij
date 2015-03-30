@@ -5,7 +5,9 @@ declare class PluginProvider {
 
   connect(): void;
 
-  registerServiceProvider(id: string, b: any, c: any);
+  registerServiceProvider(id: string, b: any, c: any): any;
+
+  registerService(names: string | string[], implementation: any, properties?: { [key: string]: any; }): any;
 }
 
 declare module "orion/plugin" {

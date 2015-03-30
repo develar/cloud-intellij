@@ -15,13 +15,15 @@ export class StompConnector {
   private messageIdCounter = 0
   private callbacks: { [key: number]: PromiseCallback; } = {}
 
+  private eventHandlers: { [key: string]: Array<any>; } = {}
+
   connect(host: string, user: string, password: string): Promise<void> {
-    var url = "http://" + host + ":15674/stomp"
+    var url = "http://" + host + "/stomp"
     var ws = new SockJS(url)
     this.client = Stomp.over(ws)
     // SockJS does not support heart-beat: disable heart-beats
-    this.client.heartbeat.outgoing = 0
-    this.client.heartbeat.incoming = 0
+    //this.client.heartbeat.outgoing = 0
+    //this.client.heartbeat.incoming = 0
     this.exchangeCommands = "/exchange/d." + user
     this.exchangeEvents = "/exchange/t." + user
 
@@ -73,20 +75,30 @@ export class StompConnector {
     })
   }
 
-  request<T>(service: service.Service, message: any = {}): Promise<T> {
-    return new Promise((resolve: (value: T) => void, reject: (error?: any) => void) => {
-      if (this.messageIdCounter === Number.MAX_VALUE) {
+  request<R>(service: service.Service<R>, message: any = {}): Promise<R> {
+    return new Promise((resolve: (result: R) => void, reject: (error?: any) => void) => {
+      var id = this.messageIdCounter++;
+      if (id === Number.MAX_VALUE) {
         this.messageIdCounter = 0;
       }
-      var id = this.messageIdCounter++;
       this.callbacks[id] = new PromiseCallback(resolve, reject)
       this.client.send(this.exchangeCommands + "/" + service.serviceName, {"reply-to": this.queue, "correlation-id": id, type: service.name}, JSON.stringify(message))
     })
   }
 
-  notify(topic: string, message: any = {}) {
-    this.client.send(this.exchangeEvents + "/" + topic, {"app-id": this.queue}, JSON.stringify(message))
-    throw new Error("todo")
+  notify(topic: service.Topic, message: any = {}): void {
+    var headers = topic.responseName == null ? {"app-id": this.queue} : {"app-id": this.queue, "reply-to": this.queue}
+    this.client.send(this.exchangeEvents + "/" + topic.name, headers, JSON.stringify(message))
+  }
+
+  on(topic: service.Topic, handler: (data: any) => void) {
+    var list = this.eventHandlers[topic.name]
+    if (list == null) {
+      this.eventHandlers[topic.name] = [handler]
+    }
+    else {
+      list.push(handler)
+    }
   }
 }
 

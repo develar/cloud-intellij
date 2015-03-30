@@ -1,5 +1,3 @@
-/// <reference path="../lib.d/orion.d.ts" />
-
 "use strict"
 
 import sha1 = require("sha1")
@@ -7,10 +5,14 @@ import Deferred = require("Deferred")
 import stompClient = require("stompClient")
 import service = require("service")
 import Promise = require("bluebird")
+import orion = require("orion-api")
 
 import ProjectService = service.ProjectService
 import ResourceService = service.ResourceService
+import ResourceTopics = service.ResourceTopics
+import ProjectTopics = service.ProjectTopics
 import Projects = service.Projects
+
 /**
  * An implementation of the file service that understands the Orion
  * server file API. This implementation is suitable for invocation by a remote plugin.
@@ -64,7 +66,7 @@ function promiseToDeferred<T>(promise: Promise<T>): Deferred {
   return deferred
 }
 
-class FileSystem implements FileClient {
+class FileSystem implements orion.FileClient {
   private workspace: any
   private saves: { [key: string]: Saved; } = {};
   
@@ -96,7 +98,7 @@ class FileSystem implements FileClient {
     }))
   }
 
-  private createOrionProject(data: Projects.ProjectsGetResponse, projectName: string): Entry //noinspection UnterminatedStatementJS
+  private createOrionProject(data: Projects.GetResponse, projectName: string): Entry //noinspection UnterminatedStatementJS
   {
     var result = new Entry(projectName, projectName + '/', true, projectName, data.timestamp)
     result.Id = projectName
@@ -151,7 +153,7 @@ class FileSystem implements FileClient {
     return this.stompClient.request(ProjectService.get, {
       'project': projectName
     })
-      .then((data: Projects.ProjectsGetResponse) => {
+      .then((data: Projects.GetResponse) => {
               return this.createOrionProject(data, projectName)
             })
   }
@@ -182,7 +184,7 @@ class FileSystem implements FileClient {
 
     var workspace = new Entry(this.rootLocation, this.rootLocation, true)
     return <Promise<Entry>>this.stompClient.request(ProjectService.getAll)
-      .then((data: Projects.ProjectsGetAllResponse) => {
+      .then((data: Projects.GetAllResponse) => {
               var requests = new Array<Promise<Entry>>(data.projects.length);
               for (var i = 0, n = data.projects.length; i < n; i++) {
                 requests[i] = this.getProject(data.projects[i].name)
@@ -239,7 +241,7 @@ class FileSystem implements FileClient {
         };
 
         this.saves[location] = new Saved(normalizedPath.project, normalizedPath.path, type, hash, timestamp, contents ? contents : "", deferred);
-        this.stompClient.notify("resourceCreated", data);
+        this.stompClient.notify(ResourceTopics.resourceCreated, data);
         //This deferred is not resolved, but that is intentional.
         // It is resolved later when we get a response back for our message.
       }
@@ -276,17 +278,15 @@ class FileSystem implements FileClient {
           Id: projectName
         };
         if (!workspace._childrenCache) {
-          workspace._childrenCache = {};
+          workspace._childrenCache = {}
         }
-        workspace._childrenCache[projectName] = project;
+        workspace._childrenCache[projectName] = project
         if (!workspace.Children) {
-          workspace.Children = [];
+          workspace.Children = []
         }
-        workspace.Children.push(project);
-        this.stompClient.notify("projectCreated", {
-          'project': projectName
-        });
-        deferred.resolve(project);
+        workspace.Children.push(project)
+        this.stompClient.notify(ProjectTopics.projectCreated, {"project": projectName})
+        deferred.resolve(project)
       }
     });
     return deferred;
@@ -328,7 +328,7 @@ class FileSystem implements FileClient {
           parent.Children.splice(idx, 1);
         }
         var normalizedPath = self.normalizeLocation(location);
-        this.stompClient.notify("resourceDeleted", {
+        this.stompClient.notify(service.ResourceTopics.resourceDeleted, {
           'project': normalizedPath.project,
           'resource': normalizedPath.path,
           'timestamp': Date.now(),
@@ -370,9 +370,9 @@ class FileSystem implements FileClient {
     return deferred;
   }
   
-  public getResource(location: string): Promise {
+  public getResource(location: string): Promise<service.GetResourceResponse> {
     var normalizedPath = this.normalizeLocation(location);
-    return this.stompClient.request(ResourceService.get, {
+    return this.stompClient.request<service.GetResourceResponse>(ResourceService.get, {
       'project': normalizedPath.project,
       'resource': normalizedPath.path
     })
@@ -385,7 +385,7 @@ class FileSystem implements FileClient {
     var timestamp = Date.now()
 
     this.saves[location] = new Saved(normalizedPath.project, normalizedPath.path, ResourceType.file, hash, timestamp, contents, deferred)
-    this.stompClient.notify("resourceChanged", {
+    this.stompClient.notify(service.ResourceTopics.resourceChanged, {
       'project': normalizedPath.project,
       'resource': normalizedPath.path,
       'hash': hash,
