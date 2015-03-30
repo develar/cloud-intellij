@@ -1,15 +1,20 @@
-/// <reference path="../typings/stomp.d.ts" />
-/// <reference path="../typings/cryptojs/cryptojs.d.ts" />
+/// <reference path="../lib.d/orion.d.ts" />
 
-//import ignored = require("CryptoJS")
+"use strict"
+
+import sha1 = require("sha1")
 import Deferred = require("Deferred")
 import stompClient = require("stompClient")
+import service = require("service")
+import Promise = require("bluebird")
 
+import ProjectService = service.ProjectService
+import ResourceService = service.ResourceService
+import Projects = service.Projects
 /**
  * An implementation of the file service that understands the Orion
  * server file API. This implementation is suitable for invocation by a remote plugin.
  */
-
 function assignAncestry(parents: { [key: string]: any; }, childrenDepthMap: { [key: number]: Array<Entry>; }, depth: number): void {
   if (!childrenDepthMap[depth]) {
     return
@@ -17,13 +22,13 @@ function assignAncestry(parents: { [key: string]: any; }, childrenDepthMap: { [k
 
   var newParents: { [key: string]: Entry; } = {};
   for (var i in childrenDepthMap[depth]) {
-    var child = childrenDepthMap[depth][i];
+    var child = childrenDepthMap[depth][i]
     if (depth > 0) {
-      var parentLocation = child.Location.substr(0, child.Location.lastIndexOf('/'));
+      var parentLocation = child.Location.substr(0, child.Location.lastIndexOf('/'))
       if (parents[parentLocation]) {
-        var parent = parents[parentLocation];
+        var parent = parents[parentLocation]
         if (!parent.Children) {
-          parent.Children = [];
+          parent.Children = []
         }
         parent.Children.push(child);
         if (!parent._childrenCache) {
@@ -59,145 +64,27 @@ function promiseToDeferred<T>(promise: Promise<T>): Deferred {
   return deferred
 }
 
-// see fileClient.js
-interface FileClient {
-  /**
-   * Obtains the children of a remote resource
-   * @param location The location of the item to obtain children for
-   * @return A deferred that will provide the array of child objects when complete
-   */
-  fetchChildren(location: string): Deferred
-
-  /**
-   * Loads the workspace with the given id and sets it to be the current
-   * workspace for the IDE. The workspace is created if none already exists.
-   * @param {String} location the location of the workspace to load
-   */
-  loadWorkspace(location: string): Deferred
-
-  /**
-   * Loads all the user's workspaces. Returns a deferred that will provide the loaded
-   * workspaces when ready.
-   */
-  loadWorkspaces(): Deferred
-
-  /**
-   * Adds a project to a workspace.
-   * @param {String} url The workspace location
-   * @param {String} projectName the human-readable name of the project
-   * @param {String} serverPath The optional path of the project on the server.
-   * @param {Boolean} create If true, the project is created on the server file system if it doesn't already exist
-   */
-  createProject(url: string, projectName: string, serverPath: string, create: boolean): void
-
-  /**
-   * Creates a folder.
-   * @param {String} parentLocation The location of the parent folder
-   * @param {String} folderName The name of the folder to create
-   * @return {Object} JSON representation of the created folder
-   */
-  createFolder(parentLocation: string, folderName: string): any
-
-  /**
-   * Create a new file in a specified location. Returns a deferred that will provide
-   * The new file object when ready.
-   * @param {String} parentLocation The location of the parent folder
-   * @param {String} fileName The name of the file to create
-   * @return {Object} A deferred that will provide the new file object
-   */
-  createFile(parentLocation: string, fileName: string): Deferred
-
-  /**
-   * Deletes a file, directory, or project.
-   * @param {String} location The location of the file or directory to delete.
-   */
-  deleteFile(location: string): void
-
-  /**
-   * Moves a file or directory.
-   * @param {String} sourceLocation The location of the file or directory to move.
-   * @param {String} targetLocation The location of the target folder.
-   * @param {String} [name] The name of the destination file or directory in the case of a rename
-   */
-  moveFile(sourceLocation: string, targetLocation: string, name: string): void
-
-  /**
-   * Copies a file or directory.
-   * @param {String} sourceLocation The location of the file or directory to copy.
-   * @param {String} targetLocation The location of the target folder.
-   * @param {String} [name] The name of the destination file or directory in the case of a rename
-   */
-  copyFile(sourceLocation: string, targetLocation: string, name: string): void
-
-  /**
-   * Writes the contents or metadata of the file at the given location.
-   *
-   * @param {String} location The location of the file to set contents for
-   * @param {String|Object} contents The content string, or metadata object to write
-   * @param {String|Object} args Additional arguments used during write operation (i.e. ETag)
-   * @return A deferred for chaining events after the write completes with new metadata object
-   */
-  write(location: string, contents: any, args: any): Deferred
-
-
-  /**
-   * Returns the contents or metadata of the file at the given location.
-   *
-   * @param {String} location The location of the file to get contents for
-   * @param {Boolean} [isMetadata] If defined and true, returns the file metadata,
-   *   otherwise file contents are returned
-   * @return A deferred that will be provided with the contents or metadata when available
-   */
-  read(location: string, isMetadata: boolean): Deferred
-
-  /**
-   * Returns the blob contents of the file at the given location.
-   *
-   * @param {String} location The location of the file to get contents for
-   * @return A deferred that will be provided with the blob contents when available
-   */
-  //readBlob(location)
-
-  /**
-   * Imports file and directory contents from another server
-   *
-   * @param {String} targetLocation The location of the folder to import into
-   * @param {Object} options An object specifying the import parameters
-   * @return A deferred for chaining events after the import completes
-   */
-  remoteImport(targetLocation: string, options: any): Deferred
-
-  /**
-   * Exports file and directory contents to another server
-   *
-   * @param {String} sourceLocation The location of the folder to export from
-   * @param {Object} options An object specifying the export parameters
-   * @return A deferred for chaining events after the export completes
-   */
-  remoteExport(sourceLocation: string, options: any): Deferred
-}
-
 class FileSystem implements FileClient {
   private workspace: any
   private saves: { [key: string]: Saved; } = {};
-
-  /**
-   * @class Provides operations on files, folders, and projects.
-   * @name FileServiceImpl
-   */
-  constructor(private stompClient: stompClient.StompConnector, private _rootLocation: string) {}
+  
+  constructor(private stompClient: stompClient.StompConnector, private rootLocation: string) {}
 
   private normalizeLocation(location: string) {
     if (!location) {
       location = "/"
     }
     else {
-      location = location.replace(this._rootLocation, "")
+      location = location.replace(this.rootLocation, "")
     }
     var indexOfDelimiter = location.indexOf('/');
     var project = indexOfDelimiter < 0 ? location : location.substr(0, indexOfDelimiter);
     location = indexOfDelimiter < 0 ? undefined : location.substr(indexOfDelimiter + 1);
     return {'project': project, 'path': location};
+  }
+
+  public isFluxResource(resourceUrl: string) {
+    return resourceUrl != null && resourceUrl.indexOf(this.rootLocation) === 0;
   }
 
   fetchChildren(location: string): Deferred {
@@ -209,7 +96,8 @@ class FileSystem implements FileClient {
     }))
   }
 
-  private createOrionProject(data: Projects.ProjectsGetResponse, projectName: string): Entry {
+  private createOrionProject(data: Projects.ProjectsGetResponse, projectName: string): Entry //noinspection UnterminatedStatementJS
+  {
     var result = new Entry(projectName, projectName + '/', true, projectName, data.timestamp)
     result.Id = projectName
     result.ETag = data.hash
@@ -251,7 +139,7 @@ class FileSystem implements FileClient {
     assignAncestry({}, childrenDepthMap, 0)
     for (var i = 0, n = entries.length; i < n; i++) {
       var entry = entries[i];
-      entry.Location = this._rootLocation + entry.Location;
+      entry.Location = this.rootLocation + entry.Location;
       if (entry.Directory) {
         entry.ChildrenLocation = entry.Location + '/';
       }
@@ -260,7 +148,7 @@ class FileSystem implements FileClient {
   }
 
   private getProject(projectName: string): Promise<Entry> {
-    return this.stompClient.request("projects", "get", {
+    return this.stompClient.request(ProjectService.get, {
       'project': projectName
     })
       .then((data: Projects.ProjectsGetResponse) => {
@@ -292,8 +180,8 @@ class FileSystem implements FileClient {
       return Promise.resolve(this.workspace)
     }
 
-    var workspace = new Entry(this._rootLocation, this._rootLocation, true)
-    return <Promise<Entry>>this.stompClient.request("projects", "getAll")
+    var workspace = new Entry(this.rootLocation, this.rootLocation, true)
+    return <Promise<Entry>>this.stompClient.request(ProjectService.getAll)
       .then((data: Projects.ProjectsGetAllResponse) => {
               var requests = new Array<Promise<Entry>>(data.projects.length);
               for (var i = 0, n = data.projects.length; i < n; i++) {
@@ -321,7 +209,7 @@ class FileSystem implements FileClient {
   private findFromLocation(location: string) {
     return this.getWorkspace().then((workspace: any) => {
       var result = workspace;
-      var relativeLocation = location.replace(this._rootLocation, "");
+      var relativeLocation = location.replace(this.rootLocation, "");
       if (relativeLocation) {
         var path = relativeLocation.split('/');
         for (var i = 0; i < path.length && result; i++) {
@@ -335,7 +223,7 @@ class FileSystem implements FileClient {
   createResource(location: string, type: ResourceType, contents?: string) {
     var deferred = new Deferred()
     var normalizedPath = this.normalizeLocation(location);
-    var hash = CryptoJS.SHA1(contents).toString(CryptoJS.enc.Hex);
+    var hash = sha1(contents)
     var timestamp = Date.now();
     this.findFromLocation(location).then((resource: any) => {
       if (resource) {
@@ -366,7 +254,7 @@ class FileSystem implements FileClient {
         deferred.reject("Project with name \'" + projectName + "\' already exists!");
       }
       else {
-        var hash = CryptoJS.SHA1(projectName).toString(CryptoJS.enc.Hex);
+        var hash = sha1(projectName);
         var timestamp = Date.now();
         var location = url + projectName;
         var project = {
@@ -471,9 +359,9 @@ class FileSystem implements FileClient {
       return promiseToDeferred(this.findFromLocation(location))
     }
 
-    var normalizedPath = this.normalizeLocation(location);
     var deferred = new Deferred();
-    this.stompClient.request("resources", "get", {
+    var normalizedPath = this.normalizeLocation(location);
+    this.stompClient.request(ResourceService.get, {
       'project': normalizedPath.project,
       'resource': normalizedPath.path
     }).done((data: any) => {
@@ -481,11 +369,19 @@ class FileSystem implements FileClient {
     })
     return deferred;
   }
+  
+  public getResource(location: string): Promise {
+    var normalizedPath = this.normalizeLocation(location);
+    return this.stompClient.request(ResourceService.get, {
+      'project': normalizedPath.project,
+      'resource': normalizedPath.path
+    })
+  }
 
   write(location: string, contents: any, args: any) {
     var deferred = new Deferred()
     var normalizedPath = this.normalizeLocation(location)
-    var hash = CryptoJS.SHA1(contents).toString(CryptoJS.enc.Hex)
+    var hash = sha1(contents)
     var timestamp = Date.now()
 
     this.saves[location] = new Saved(normalizedPath.project, normalizedPath.path, ResourceType.file, hash, timestamp, contents, deferred)
@@ -532,24 +428,4 @@ class Saved {
   constructor(public project: string, public resource: string, public type: ResourceType, hash: string, timestamp: number, content: string, deferred: any) {}
 }
 
-declare module Projects {
-  interface ProjectsGetResponse {
-    files: Array<FileItem>
-
-    timestamp: number
-    hash: string
-  }
-
-  interface FileItem {
-    timestamp: number
-    path: string
-    hash: string
-    type: string
-  }
-
-  interface ProjectsGetAllResponse {
-    projects: Array<any>
-  }
-}
-
-export = FileSystem;
+export = FileSystem

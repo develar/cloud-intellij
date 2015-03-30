@@ -314,12 +314,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
 
   private fun getClasspathResource(projectName: String, resourcePath: String, hash: String?, result: Result) {
     //ConnectedProject connectedProject = this.syncedProjects.get(projectName);
-    val typeName = resourcePath.substring("classpath:/".length())
-    val fileByPath = JarFileSystem.getInstance().findFileByPath(typeName)
-    if (fileByPath == null) {
-      result.reject()
-      return
-    }
+
 
     //                IJavaProject javaProject = JavaCore.create(connectedProject.getProject());
     //                if (javaProject != null) {
@@ -327,8 +322,15 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
     //                    IClassFile classFile = type.getClassFile();
     //                    if (classFile != null && classFile.getSourceRange() != null) {
 
-    val content = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileByPath.getFileType()).decompile(fileByPath).toString()
     result.write {
+      val typeName = resourcePath.substring("classpath:/".length())
+      val fileByPath = JarFileSystem.getInstance().findFileByPath(typeName)
+      if (fileByPath == null) {
+        it.name("error").value("not found")
+        return
+      }
+
+      val content = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileByPath.getFileType()).decompile(fileByPath).toString()
       it.name("project").value(projectName)
       it.name("resource").value(resourcePath)
       it.name("readonly").value(true)

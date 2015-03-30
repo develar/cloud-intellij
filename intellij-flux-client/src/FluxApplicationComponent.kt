@@ -28,7 +28,7 @@ class FluxApplicationComponent : ApplicationComponent {
 
   public override fun initComponent() {
     ApplicationManager.getApplication().executeOnPooledThread {
-      fluxService = FluxIntellijServiceManager(System.getProperty("flux.user", "defaultuser"))
+      fluxService = FluxIntellijServiceManager(System.getProperty("flux.user", "dev"))
     }
   }
 

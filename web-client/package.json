@@ -1,8 +1,10 @@
 {
   "name": "stomp-client",
   "version": "0.0.1",
+  "private": true,
   "description": "stomp-client",
   "devDependencies": {
+    "amd-optimize": "^0.4.3",
     "gulp": "^3.8.11",
     "gulp-concat": "^2.5.2",
     "gulp-newer": "^0.5.0",

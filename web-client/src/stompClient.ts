@@ -1,12 +1,9 @@
-/// <reference path="../typings/sockjs/sockjs.d.ts" />
-/// <reference path="../typings/stomp.d.ts" />
-/// <reference path="../typings/bluebird/bluebird.d.ts" />
-
 "use strict"
 
 import SockJS = require("sockjs")
 import Stomp = require("stomp")
 import Promise = require("bluebird")
+import service = require("service")
 
 export class StompConnector {
   private client: Stomp.Client
@@ -76,14 +73,14 @@ export class StompConnector {
     })
   }
 
-  request<T>(service: string, method: string, message: any = {}): Promise<T> {
+  request<T>(service: service.Service, message: any = {}): Promise<T> {
     return new Promise((resolve: (value: T) => void, reject: (error?: any) => void) => {
       if (this.messageIdCounter === Number.MAX_VALUE) {
         this.messageIdCounter = 0;
       }
       var id = this.messageIdCounter++;
       this.callbacks[id] = new PromiseCallback(resolve, reject)
-      this.client.send(this.exchangeCommands + "/" + service, {"reply-to": this.queue, "correlation-id": id, type: method}, JSON.stringify(message))
+      this.client.send(this.exchangeCommands + "/" + service.serviceName, {"reply-to": this.queue, "correlation-id": id, type: service.name}, JSON.stringify(message))
     })
   }
 

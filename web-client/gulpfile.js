@@ -7,19 +7,19 @@ var sourcemaps = require('gulp-sourcemaps')
 var path = require('path')
 
 var outDir = 'out'
-var outFile = 'stomp-client.js'
-var sources = "src/*.ts";
+var sources = "src/**/*.ts";
 
 var tsProject = ts.createProject({
   target: "ES5",
   noImplicitAny: true,
   removeComments: true,
   sortOutput: true,
+  noExternalResolve: true,
   module: "amd"
 });
 
 gulp.task("compile", function () {
-  var tsResult = gulp.src(sources)
+  var tsResult = gulp.src([sources, "lib.d/**/*.d.ts"])
       .pipe(sourcemaps.init())
       //.pipe(newer(outDir + '/' + outFile))
       .pipe(ts(tsProject));
@@ -34,10 +34,26 @@ gulp.task("compile", function () {
       //      }))
       .pipe(sourcemaps.write('.', {includeContent: true, sourceRoot: path.resolve('src')}))
       .pipe(gulp.dest(outDir))
-});
+})
 
-gulp.task('watch', function () {
-  gulp.watch(sources, ['compile']);
+gulp.task("package", ['compile'], function () {
+  var amdOptimize = require("amd-optimize")
+  gulp.src(["out/*.js"])
+      .pipe(amdOptimize("main", {
+              configFile: "out/requireConfig.js",
+              exclude: ["Deferred", "sockjs", "stomp", "bluebird", "sha1", "orion/plugin"],
+              loader: amdOptimize.loader(function (moduleName) {
+                return "lib/empty.js"
+              })
+            }))
+      .pipe(sourcemaps.init({loadMaps: true}))
+      .pipe(concat("main.js"))
+      .pipe(sourcemaps.write('.', {includeContent: true, sourceRoot: path.resolve('src')}))
+      .pipe(gulp.dest(outDir + "/dist"))
+})
+
+gulp.task('watch', ['compile'], function () {
+  gulp.watch([sources, "lib.d/**/*.d.ts"], ['compile']);
 });
 
 gulp.task('default', ['compile']);

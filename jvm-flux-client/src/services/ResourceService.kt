@@ -8,7 +8,7 @@ import org.eclipse.flux.client.Service
 trait ResourceService : Service {
   enum class Methods : Service.Method {
     override final val serviceName: String
-      get() = "resources"
+      get() = "resource"
 
     override final val name: String
       get() = name()
@@ -18,7 +18,7 @@ trait ResourceService : Service {
   }
 
   override val name: String
-    get() = "resources"
+    get() = "resource"
 
   public fun get(projectName: String, resourcePath: String, hash: String?, result: Result)
 
