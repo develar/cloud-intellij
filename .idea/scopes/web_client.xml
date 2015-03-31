@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="web-client" pattern="file[cloud-intellij]:web-client/lib.d//*||file[cloud-intellij]:web-client/src//*" />
+</component>
