@@ -64,50 +64,53 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
       override fun handleDelivery(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: ByteArray) {
         try {
           val correlationId = properties.getCorrelationId()
-          if (correlationId == null) {
-            channel.basicAck(envelope.getDeliveryTag(), false)
+          val type = properties.getType()
+          val replyTo = properties.getReplyTo()
+          if (type != null) {
+            if (type == "eventResponse") {
+              channel.basicAck(envelope.getDeliveryTag(), false)
 
-            // notification
-            //  Tests whether an incoming message originated from the same MessageConnector that
-            // todo is it really needed - maybe rabbitmq does it
-            if (properties.getAppId() != queue) {
+              // response to broadcast request
+              // todo real handler will not use it replyTo and correlationId, should be asserted somehow
               [suppress("UNCHECKED_CAST")]
               val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
-              handleEvent(envelope.getRoutingKey(), properties.getReplyTo(), properties.getCorrelationId(), data)
-            }
-          }
-          else if (properties.getReplyTo() != null) {
-            // request
-            // we must not answer to yourself - we ask message broker to requeue request
-            if (properties.getAppId() == queue) {
-              // we must not answer to yourself - we ask message broker to requeue request
-              channel.basicReject(envelope.getDeliveryTag(), true)
+              handleEvent(correlationId, "will be ignored in any case", "will be ignored in any case", data)
             }
             else {
-              reply(envelope.getRoutingKey(), properties.getType(), body, RabbitMqResult(properties.getReplyTo(), correlationId, envelope.getDeliveryTag()))
+              // request
+              // we must not answer to yourself - we ask message broker to requeue request
+              if (properties.getAppId() == queue) {
+                // we must not answer to yourself - we ask message broker to requeue request
+                channel.basicReject(envelope.getDeliveryTag(), true)
+              }
+              else {
+                reply(envelope.getRoutingKey(), type, body, RabbitMqResult(replyTo!!, correlationId, envelope.getDeliveryTag()))
+              }
             }
-          }
-          else if (properties.getType() == "eventResponse") {
-            channel.basicAck(envelope.getDeliveryTag(), false)
-
-            // response to broadcast request
-            // todo real handler will not use it replyTo and correlationId, should be asserted somehow
-            [suppress("UNCHECKED_CAST")]
-            val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
-            handleEvent(correlationId, "will be ignored in any case", "will be ignored in any case", data)
           }
           else {
             channel.basicAck(envelope.getDeliveryTag(), false)
-
-            // response
-            [suppress("UNCHECKED_CAST")]
-            val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
-            val promise = commandProcessor.getPromiseAndRemove(correlationId.toInt())
-            try {
-              promise?.setResult(data)
+            if (correlationId == null || replyTo != null) {
+              // event
+              //  Tests whether an incoming message originated from the same MessageConnector that
+              // todo is it really needed - maybe rabbitmq does it
+              if (properties.getAppId() != queue) {
+                [suppress("UNCHECKED_CAST")]
+                val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
+                handleEvent(envelope.getRoutingKey(), replyTo ?: "not a broadcast event", correlationId ?: "not a broadcast event", data)
+              }
             }
-            catch (e: Throwable) {
-              LOG.error(e.getMessage(), e)
+            else {
+              // response
+              [suppress("UNCHECKED_CAST")]
+              val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
+              val promise = commandProcessor.getPromiseAndRemove(correlationId.toInt())
+              try {
+                promise?.setResult(data)
+              }
+              catch (e: Throwable) {
+                LOG.error(e.getMessage(), e)
+              }
             }
           }
         }
@@ -153,7 +156,9 @@ class RabbitMqMessageConnector(executor: ExecutorService, configuration: RabbitM
   override fun notify(topic: Topic, writer: JsonWriter, byteOut: ByteArrayOutputStream) {
     val propertiesBuilder = BasicProperties.Builder().appId(queue)
     if (topic.responseName != null) {
-      propertiesBuilder.correlationId(topic.responseName).replyTo(queue)
+      propertiesBuilder
+              .correlationId(topic.responseName)
+              .replyTo(queue)
     }
     channel.basicPublish(exchangeEvents, topic.name, propertiesBuilder.build(), encode(writer, byteOut))
   }

@@ -18,7 +18,7 @@ app:
   #command: /bin/sh -c "npm install && node --debug-brk=5858 startup-all-in-one.js"
   command: /bin/sh -c "npm install && node startup-all-in-one.js"
 web:
-  image: develar/orion-client:nomin
+  image: develar/orion-client
   links:
     - app
   external_links:

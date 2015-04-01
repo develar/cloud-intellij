@@ -1,6 +1,8 @@
 declare module "stomp" {
   function over(webSocket: any): Client
 
+  function client(url: string, protocols?: Array<string>): Client
+
   export interface Client {
     debug: (message: string) => void
 
@@ -12,7 +14,7 @@ declare module "stomp" {
 
     subscribe(destination: string, callback: (frame: Frame) => void, headers?: any): Subscription
 
-    send(destination: string, headers: any, data: string): void
+    send(destination: string, headers: { [key: string]: any; }, data: string): void
   }
 
   export interface Frame {

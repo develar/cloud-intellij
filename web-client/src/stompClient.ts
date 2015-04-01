@@ -22,8 +22,8 @@ export class StompConnector {
     var ws = new SockJS(url)
     this.client = Stomp.over(ws)
     // SockJS does not support heart-beat: disable heart-beats
-    //this.client.heartbeat.outgoing = 0
-    //this.client.heartbeat.incoming = 0
+    this.client.heartbeat.outgoing = 0
+    this.client.heartbeat.incoming = 0
     this.exchangeCommands = "/exchange/d." + user
     this.exchangeEvents = "/exchange/t." + user
 
@@ -41,19 +41,23 @@ export class StompConnector {
           try {
             var properties = frame.headers;
             var correlationId = properties["correlation-id"]
-            if (correlationId == null) {
-              // notification
-              if (properties["app-id"] != this.queue) {
-                // todo
+            var type = properties["type"]
+            if (type != null) {
+              if (type == "eventResponse") {
+                // response to broadcast request
+                console.error("Unsupported, todo")
+              }
+              else {
+                // request
+                console.error("Unsupported, todo")
               }
             }
-            else if (properties["reply-to"] != null) {
-              // request
-              // todo
-            }
-            else if (properties["type"] == "eventResponse") {
-              // response to broadcast request
-              // todo
+            else if (correlationId == null || properties["reply-to"] != null) {
+              // event
+              if (properties["app-id"] != this.queue) {
+                //this.eventHandlers[topic.name]
+                console.error("Unsupported, todo")
+              }
             }
             else {
               // response
@@ -63,7 +67,7 @@ export class StompConnector {
             }
           }
           catch (e) {
-            console.log(e)
+            console.error(e)
           }
         })
 
@@ -87,11 +91,25 @@ export class StompConnector {
   }
 
   notify(topic: service.Topic, message: any = {}): void {
-    var headers = topic.responseName == null ? {"app-id": this.queue} : {"app-id": this.queue, "reply-to": this.queue}
+    var headers: { [key: string]: any; }
+    if (topic.responseTopic == null) {
+      headers = {"app-id": this.queue};
+    }
+    else {
+      headers = {
+        "app-id": this.queue,
+        "reply-to": this.queue,
+        "correlation-id": topic.responseTopic
+      }
+    }
     this.client.send(this.exchangeEvents + "/" + topic.name, headers, JSON.stringify(message))
   }
 
-  on(topic: service.Topic, handler: (data: any) => void) {
+  on(topic: service.Topic, handler: (data: any) => void): void {
+    this.replyOn(topic, handler)
+  }
+
+  replyOn(topic: service.Topic, handler: (replyTo: string, correlationId: string, data: any) => void) {
     var list = this.eventHandlers[topic.name]
     if (list == null) {
       this.eventHandlers[topic.name] = [handler]
@@ -99,6 +117,10 @@ export class StompConnector {
     else {
       list.push(handler)
     }
+  }
+
+  replyToEvent(replyTo: string, correlationId: string, response: any): void {
+
   }
 }
 

@@ -1,19 +1,20 @@
 "use strict"
 
 import sha1 = require("sha1")
-import Deferred = require("Deferred")
+import Deferred = require("orion/Deferred")
 import stompClient = require("stompClient")
 import service = require("service")
 import Promise = require("bluebird")
 import orion = require("orion-api")
 
-import FileSystem = require("FileSystem")
+import fileSystem = require("FileSystem")
+
+import EditorTopics = service.EditorTopics
+import GetResourceResponse = service.GetResourceResponse
 
 var SERVICE_TO_REGEXP = {
   "org.eclipse.flux.jdt": new RegExp(".*\\.java|.*\\.class")
 };
-
-var editSession: any = null
 
 var callbacksCache = {};
 
@@ -22,42 +23,91 @@ function generateCallbackId() {
   return counter++;
 }
 
-function createResourceMetadata(data: any) {
-  var resourceMetadata: any = {};
-  for (var key in data) {
-    resourceMetadata[key] = data[key];
+class ResourceMetadata {
+  public liveMarkers: Array<any> = []
+  public markers: Array<any> = []
+
+  private muteRequests = 0
+
+  public modificationCount = 0
+
+  constructor(public resource: GetResourceResponse) {
   }
-  resourceMetadata.liveMarkers = [];
-  resourceMetadata.markers = [];
-  resourceMetadata._muteRequests = 0;
-  resourceMetadata._queueMuteRequest = function () {
-    this._muteRequests++;
-  };
-  resourceMetadata._dequeueMuteRequest = function () {
-    this._muteRequests--;
-  };
-  resourceMetadata._canLiveEdit = function () {
-    return this._muteRequests === 0;
-  };
-  return resourceMetadata;
+
+  public _queueMuteRequest() {
+    this.muteRequests++
+  }
+
+  public _dequeueMuteRequest() {
+    this.muteRequests--
+  }
+
+  public canLiveEdit() {
+    return this.muteRequests === 0
+  }
 }
 
-/**
- * Provides operations on files, folders, and projects.
- */
-class Editor implements orion.Validator {
-  private _resourceMetadata: any = null
-  private _resourceUrl: string = null
-  private _editorContext: any = null
+class Editor implements orion.Validator, orion.LiveEditor {
+  private resourceMetadataPromise: Promise<ResourceMetadata> = null
+  private resourceMetadata: ResourceMetadata = null
+  private resourceUri: fileSystem.ResourceUri = null
+  private editorContext: orion.EditorContext = null
 
-  constructor(private stompClient: stompClient.StompConnector, private fileSystem: FileSystem) {
+  constructor(private stompClient: stompClient.StompConnector, private fileService: fileSystem.FileService) {
+    stompClient.on(EditorTopics.startedResponse, (data: service.EditorStartedResponse) => {
+      var resourceMetadata = this.resourceMetadata
+      if (resourceMetadata == null || resourceMetadata.modificationCount > 0) {
+        return
+      }
+
+      var resourceUri = this.resourceUri;
+      if (resourceUri == null || resourceUri.path !== data.resource || resourceUri.project !== data.project) {
+        return
+      }
+
+      resourceMetadata.resource.content = data.content
+      resourceMetadata.resource.hash = data.hash
+
+      resourceMetadata._queueMuteRequest();
+      this.editorContext.setText(data.content).then(() => {
+        resourceMetadata._dequeueMuteRequest();
+      }, () => {
+        resourceMetadata._dequeueMuteRequest();
+      })
+    })
+
+    stompClient.replyOn(EditorTopics.started, (replyTo: string, correlationId: string, editorStarted: service.EditorStarted) => {
+      if (this.resourceMetadata == null) {
+        return
+      }
+
+      this.editorContext.getText().then((contents) => {
+        var resourceMetadata = this.resourceMetadata
+        if (resourceMetadata == null) {
+          return
+        }
+
+        var resourceUri = this.resourceUri;
+        if (resourceUri == null || resourceUri.path !== editorStarted.resource || resourceUri.project !== editorStarted.project) {
+          return
+        }
+
+        var hash = sha1(contents)
+        if (hash === editorStarted.hash) {
+          return
+        }
+
+        this.stompClient.replyToEvent(replyTo, correlationId, {
+          project: resourceUri.project,
+          resource: resourceUri.path,
+          hash: hash,
+          content: contents
+        })
+      })
+    })
   }
 
   _createSocket() {
-    //this.socket.on('getResourceResponse', function (data) {
-    //  self._handleMessage(data);
-    //});
-    //
     //this.socket.on('getMetadataResponse', function (data) {
     //  self._handleMessage(data);
     //});
@@ -66,59 +116,8 @@ class Editor implements orion.Validator {
     //  self._handleMessage(data);
     //});
     //
-    //this.socket.on('liveResourceStartedResponse', function (data) {
-    //  self._getResourceData().then(function (resourceMetadata) {
-    //    if (data.username === resourceMetadata.username &&
-    //      data.project === resourceMetadata.project &&
-    //      data.resource === resourceMetadata.resource &&
-    //      data.callback_id !== undefined &&
-    //      resourceMetadata.timestamp === data.savePointTimestamp &&
-    //      resourceMetadata.hash === data.savePointHash
-    //    ) {
-    //      resourceMetadata._queueMuteRequest();
-    //      self._editorContext.setText(data.liveContent).then(function () {
-    //        resourceMetadata._dequeueMuteRequest();
-    //      }, function () {
-    //        resourceMetadata._dequeueMuteRequest();
-    //      });
-    //    }
-    //  }, function (err) {
-    //    console.log(err);
-    //  });
-    //});
-    //
-    //this.socket.on('liveResourceStarted', function (data) {
-    //  Deferred.all([self._getResourceData(), self._editorContext.getText()]).then(function (results) {
-    //    var resourceMetadata = results[0];
-    //    var contents = results[1];
-    //    if (resourceMetadata &&
-    //      data.username === resourceMetadata.username &&
-    //      data.project === resourceMetadata.project &&
-    //      data.resource === resourceMetadata.resource &&
-    //      data.callback_id !== undefined &&
-    //      data.hash === resourceMetadata.hash &&
-    //      data.timestamp === resourceMetadata.timestamp
-    //    ) {
-    //      var livehash = CryptoJS.SHA1(contents).toString(CryptoJS.enc.Hex);
-    //
-    //      if (livehash !== data.hash) {
-    //        self.sendMessage('liveResourceStartedResponse', {
-    //          'callback_id': data.callback_id,
-    //          'requestSenderID': data.requestSenderID,
-    //          'username': data.username,
-    //          'project': data.project,
-    //          'resource': data.resource,
-    //          'savePointTimestamp': resourceMetadata.timestamp,
-    //          'savePointHash': resourceMetadata.hash,
-    //          'liveContent': contents
-    //        });
-    //      }
-    //    }
-    //  });
-    //});
-    //
     //this.socket.on('getLiveResourcesRequest', function (data) {
-    //  self._getResourceData().then(function (resourceMetadata) {
+    //  self.getResourceData().then(function (resourceMetadata) {
     //    if ((!data.projectRegEx || new RegExp(data.projectRegEx).test(resourceMetadata.project))
     //      && (!data.resourceRegEx || new RegExp(data.resourceRegEx).test(resourceMetadata.resource))) {
     //
@@ -148,7 +147,7 @@ class Editor implements orion.Validator {
     //});
     //
     //this.socket.on('serviceRequiredRequest', function (data) {
-    //  self._getResourceData().then(function (resourceMetadata) {
+    //  self.getResourceData().then(function (resourceMetadata) {
     //    if (data.username === resourceMetadata.username
     //      && SERVICE_TO_REGEXP[data.service]
     //      && SERVICE_TO_REGEXP[data.service].test(resourceMetadata.resource)) {
@@ -163,7 +162,7 @@ class Editor implements orion.Validator {
     //});
     //
     //this.socket.on('liveResourceChanged', function (data) {
-    //  self._getResourceData().then(function (resourceMetadata) {
+    //  self.getResourceData().then(function (resourceMetadata) {
     //    if (data.username === resourceMetadata.username
     //      && data.project === resourceMetadata.project
     //      && data.resource === resourceMetadata.resource
@@ -182,7 +181,7 @@ class Editor implements orion.Validator {
     //});
     //
     //this.socket.on('liveMetadataChanged', function (data) {
-    //  self._getResourceData().then(function (resourceMetadata) {
+    //  self.getResourceData().then(function (resourceMetadata) {
     //    if (resourceMetadata.username === data.username
     //      && resourceMetadata.project === data.project
     //      && resourceMetadata.resource === data.resource
@@ -217,58 +216,38 @@ class Editor implements orion.Validator {
     //});
   }
 
-  _getResourceData(): Promise<any> {
-    if (this._resourceMetadata != null) {
-      return Promise.resolve(this._resourceMetadata);
+  private getResourceData(): Promise<ResourceMetadata> {
+    if (this.resourceMetadataPromise != null) {
+      return this.resourceMetadataPromise
     }
-    else if (this._resourceUrl != null) {
-      return this.fileSystem.getResource(this._resourceUrl).then((data: any) => {
-        this._resourceMetadata = createResourceMetadata(data)
-        return this._resourceMetadata
-      })
+    else if (this.resourceUri != null) {
+      return this.resourceMetadataPromise = this.fileService.getResourceByUri(this.resourceUri)
+        .then((data: GetResourceResponse) => {
+                this.resourceMetadata = new ResourceMetadata(data)
+                return (this.resourceMetadata = new ResourceMetadata(data))
+              })
+        .cancellable()
     }
     else {
       return Promise.reject("No resource URL")
     }
   }
 
-  _setEditorInput(resourceUrl: string, editorContext: any) {
-    if (this._resourceUrl !== resourceUrl) {
-      this._resourceUrl = null
-      this._editorContext = null
-      this._resourceMetadata = null
-      if (editSession) {
-        editSession.resolve()
-      }
-      if (this.fileSystem.isFluxResource(resourceUrl)) {
-        this._resourceUrl = resourceUrl
-        editSession = new Deferred()
-        this._editorContext = editorContext
-
-        this._getResourceData().then((resourceMetadata: any) => {
-          this.stompClient.notify(service.LiveEditTopics.liveResourceStarted, {
-            'project': resourceMetadata.project,
-            'resource': resourceMetadata.resource,
-            'hash': resourceMetadata.hash,
-            'timestamp': resourceMetadata.timestamp
-          })
-        })
-      }
+  onModelChanging(event: orion.ModelChangingEvent): void {
+    if (this.resourceUri == null) {
+      console.log("onModelChanging called before startEdit")
+      return
     }
-    return editSession
-  }
 
-  onModelChanging(event: any) {
-    console.log("Editor changing: " + JSON.stringify(event))
-    this._getResourceData().then((resourceMetadata: any) => {
-      if (resourceMetadata._canLiveEdit()) {
-        this.stompClient.notify(service.LiveEditTopics.liveResourceChanged, {
-          'username': resourceMetadata.username,
-          'project': resourceMetadata.project,
-          'resource': resourceMetadata.resource,
-          'offset': event.start,
-          'removedCharCount': event.removedCharCount,
-          'addedCharacters': event.text
+    this.getResourceData().then((resourceMetadata: ResourceMetadata) => {
+      if (resourceMetadata.canLiveEdit()) {
+        var resourceUri = this.resourceUri
+        this.stompClient.notify(service.EditorTopics.changed, {
+          project: resourceUri.project,
+          resource: resourceUri.path,
+          offset: event.start,
+          removedCharCount: event.removedCharCount,
+          addedCharacters: event.text
         })
       }
     })
@@ -276,7 +255,7 @@ class Editor implements orion.Validator {
 
   computeContentAssist(editorContext: any, options: any) {
     var request = new Deferred();
-    this._getResourceData().then((resourceMetadata: any) => {
+    this.getResourceData().then((resourceMetadata: any) => {
       this.stompClient.request(service.EditorService.contentAssist, {
         'project': resourceMetadata.project,
         'resource': resourceMetadata.resource,
@@ -333,8 +312,8 @@ class Editor implements orion.Validator {
     var problemsRequest = new Deferred();
 //			this._setEditorInput(options.title, editorContext);
 
-    this._getResourceData().then((resourceMetadata: any) => {
-      if (this._resourceUrl === options.title) {
+    this.getResourceData().then((resourceMetadata: any) => {
+      if (this.resourceUri === options.title) {
         this.stompClient.request(service.EditorService.metadata, {
           'project': resourceMetadata.project,
           'resource': resourceMetadata.resource
@@ -359,18 +338,53 @@ class Editor implements orion.Validator {
     return problemsRequest
   }
 
-  startEdit(editorContext: any, options: any) {
-    var url = options ? options.title : null
-    return this._setEditorInput(url, editorContext)
+  startEdit(editorContext: orion.EditorContext, options: any): Deferred {
+    var location: string = options == null ? null : options.title
+    if (!this.fileService.isOurResource(location)) {
+      return
+    }
+
+    var resourceUri = this.fileService.toResourceUri(location)
+    if (resourceUri.equals(this.resourceUri)) {
+      return
+    }
+
+    if (this.resourceMetadataPromise != null) {
+      this.resourceMetadataPromise.cancel()
+    }
+
+    this.resourceUri = resourceUri
+    this.resourceMetadata = null
+    this.editorContext = editorContext
+    this.resourceMetadataPromise = new Promise((resolve: (result: ResourceMetadata) => void, reject: (error: any) => void) => {
+      this.fileService.getResourceByUri(resourceUri).done((result: GetResourceResponse) => {
+        if (resourceUri !== this.resourceUri) {
+          reject("outdated")
+          return
+        }
+
+        this.resourceMetadata = new ResourceMetadata(result)
+        resolve(this.resourceMetadata)
+        this.stompClient.notify(service.EditorTopics.started, {
+          project: resourceUri.project,
+          resource: resourceUri.path,
+          hash: result.hash
+        })
+      }, reject)
+    }).cancellable()
+    return null
   }
 
-  endEdit(resourceUrl: any) {
-    this._setEditorInput(null, null)
+  endEdit(resource: string): void {
+    this.resourceMetadataPromise = null
+    this.resourceUri = null
+    this.editorContext = null
+    this.resourceMetadata = null
   }
 
   computeHoverInfo(editorContext: any, ctxt: any) {
     var request = new Deferred();
-    this._getResourceData().then((resourceMetadata: any) => {
+    this.getResourceData().then((resourceMetadata: any) => {
       this.stompClient.request(service.EditorService.javadoc, {
         'project': resourceMetadata.project,
         'resource': resourceMetadata.resource,
@@ -390,7 +404,7 @@ class Editor implements orion.Validator {
 
   public applyQuickfix(editorContext: any, context: any) {
     var request = new Deferred();
-    this._getResourceData().then((resourceMetadata: any) => {
+    this.getResourceData().then((resourceMetadata: any) => {
       this.stompClient.request(service.EditorService.quickfix, {
           'project': resourceMetadata.project,
           'resource': resourceMetadata.resource,

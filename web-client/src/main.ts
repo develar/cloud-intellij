@@ -1,6 +1,6 @@
 import Promise = require("bluebird")
 import stompClient = require("stompClient")
-import FileSystem = require("FileSystem")
+import fileSystem = require("FileSystem")
 import Editor = require("Editor")
 
 import PluginProvider = require("orion/plugin")
@@ -21,8 +21,8 @@ stompConnector.connect(host, "dev", "dev").done(() => {
   }
 
   var provider = new PluginProvider(headers)
-  var fileSystem = new FileSystem(stompConnector, base);
-  provider.registerService("orion.core.file", fileSystem, headers)
+  var fileService = new fileSystem.FileService(stompConnector, base);
+  provider.registerService("orion.core.file", fileService, headers)
 
   provider.registerServiceProvider("orion.page.link.category", null, {
     id: "flux",
@@ -33,7 +33,7 @@ stompConnector.connect(host, "dev", "dev").done(() => {
     order: 5
   })
 
-  var editorService = new Editor(stompConnector, fileSystem)
+  var editorService = new Editor(stompConnector, fileService)
 
   provider.registerService("orion.edit.validator", editorService, {
     'pattern': base + ".*",

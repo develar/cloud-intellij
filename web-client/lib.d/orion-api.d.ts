@@ -120,4 +120,28 @@ declare module "orion-api" {
   export interface Validator {
     computeProblems(editorContext: any, options: any): any
   }
+
+  export interface EditorContext {
+    setText(value: string): Deferred
+
+    getText(): Deferred
+  }
+
+  export interface ModelChangingEvent {
+    text: string
+    start: number
+    removedCharCount: number
+    addedCharCount: number
+    removedLineCount: number
+    addedLineCount: number
+  }
+
+  export interface LiveEditor {
+    // returned result is not used currently by orion, null could be returned
+    startEdit(editorContext: EditorContext, context: any): Deferred
+
+    endEdit(resource: string): void
+
+    onModelChanging(event: ModelChangingEvent): void
+  }
 }

@@ -1,7 +1,7 @@
 "use strict"
 
 import sha1 = require("sha1")
-import Deferred = require("Deferred")
+import Deferred = require("orion/Deferred")
 import stompClient = require("stompClient")
 import service = require("service")
 import Promise = require("bluebird")
@@ -66,27 +66,35 @@ function promiseToDeferred<T>(promise: Promise<T>): Deferred {
   return deferred
 }
 
-class FileSystem implements orion.FileClient {
+export class ResourceUri {
+  constructor(public project: string, public path?: string) {
+  }
+
+  public equals(other?: ResourceUri): boolean {
+    return other != null && other.project === this.project && other.path === this.path
+  }
+}
+
+export class FileService implements orion.FileClient {
   private workspace: any
   private saves: { [key: string]: Saved; } = {};
   
   constructor(private stompClient: stompClient.StompConnector, private rootLocation: string) {}
 
-  private normalizeLocation(location: string) {
-    if (!location) {
+  public toResourceUri(location: string): ResourceUri {
+    if (location == null) {
       location = "/"
     }
     else {
       location = location.replace(this.rootLocation, "")
     }
-    var indexOfDelimiter = location.indexOf('/');
-    var project = indexOfDelimiter < 0 ? location : location.substr(0, indexOfDelimiter);
-    location = indexOfDelimiter < 0 ? undefined : location.substr(indexOfDelimiter + 1);
-    return {'project': project, 'path': location};
+    var indexOfDelimiter = location.indexOf('/')
+    var project = indexOfDelimiter < 0 ? location : location.substr(0, indexOfDelimiter)
+    return new ResourceUri(project, indexOfDelimiter < 0 ? null : location.substr(indexOfDelimiter + 1))
   }
 
-  public isFluxResource(resourceUrl: string) {
-    return resourceUrl != null && resourceUrl.indexOf(this.rootLocation) === 0;
+  public isOurResource(location?: string) {
+    return location != null && location.indexOf(this.rootLocation) === 0
   }
 
   fetchChildren(location: string): Deferred {
@@ -224,7 +232,7 @@ class FileSystem implements orion.FileClient {
 
   createResource(location: string, type: ResourceType, contents?: string) {
     var deferred = new Deferred()
-    var normalizedPath = this.normalizeLocation(location);
+    var normalizedPath = this.toResourceUri(location);
     var hash = sha1(contents)
     var timestamp = Date.now();
     this.findFromLocation(location).then((resource: any) => {
@@ -241,7 +249,7 @@ class FileSystem implements orion.FileClient {
         };
 
         this.saves[location] = new Saved(normalizedPath.project, normalizedPath.path, type, hash, timestamp, contents ? contents : "", deferred);
-        this.stompClient.notify(ResourceTopics.resourceCreated, data);
+        this.stompClient.notify(ResourceTopics.created, data);
         //This deferred is not resolved, but that is intentional.
         // It is resolved later when we get a response back for our message.
       }
@@ -285,7 +293,7 @@ class FileSystem implements orion.FileClient {
           workspace.Children = []
         }
         workspace.Children.push(project)
-        this.stompClient.notify(ProjectTopics.projectCreated, {"project": projectName})
+        this.stompClient.notify(ProjectTopics.created, {"project": projectName})
         deferred.resolve(project)
       }
     });
@@ -318,7 +326,6 @@ class FileSystem implements orion.FileClient {
    * @param {String} location The location of the file or directory to delete.
    */
   deleteFile(location: string) {
-    var self = this;
     return this.findFromLocation(location).then((resource: any) => {
       if (resource) {
         var parent = resource.Parents[0];
@@ -327,10 +334,10 @@ class FileSystem implements orion.FileClient {
         if (idx >= 0) {
           parent.Children.splice(idx, 1);
         }
-        var normalizedPath = self.normalizeLocation(location);
-        this.stompClient.notify(service.ResourceTopics.resourceDeleted, {
-          'project': normalizedPath.project,
-          'resource': normalizedPath.path,
+        var resourceUri = this.toResourceUri(location)
+        this.stompClient.notify(service.ResourceTopics.deleted, {
+          'project': resourceUri.project,
+          'resource': resourceUri.path,
           'timestamp': Date.now(),
           'hash': resource.ETag
         });
@@ -360,32 +367,35 @@ class FileSystem implements orion.FileClient {
     }
 
     var deferred = new Deferred();
-    var normalizedPath = this.normalizeLocation(location);
+    var resourceUri = this.toResourceUri(location);
     this.stompClient.request(ResourceService.get, {
-      'project': normalizedPath.project,
-      'resource': normalizedPath.path
+      'project': resourceUri.project,
+      'resource': resourceUri.path
     }).done((data: any) => {
       deferred.resolve(data.content)
     })
-    return deferred;
+    return deferred
   }
   
   public getResource(location: string): Promise<service.GetResourceResponse> {
-    var normalizedPath = this.normalizeLocation(location);
+    return this.getResourceByUri(this.toResourceUri(location))
+  }
+
+  public getResourceByUri(uri: ResourceUri): Promise<service.GetResourceResponse> {
     return this.stompClient.request<service.GetResourceResponse>(ResourceService.get, {
-      'project': normalizedPath.project,
-      'resource': normalizedPath.path
+      project: uri.project,
+      resource: uri.path
     })
   }
 
   write(location: string, contents: any, args: any) {
     var deferred = new Deferred()
-    var normalizedPath = this.normalizeLocation(location)
+    var normalizedPath = this.toResourceUri(location)
     var hash = sha1(contents)
     var timestamp = Date.now()
 
     this.saves[location] = new Saved(normalizedPath.project, normalizedPath.path, ResourceType.file, hash, timestamp, contents, deferred)
-    this.stompClient.notify(service.ResourceTopics.resourceChanged, {
+    this.stompClient.notify(service.ResourceTopics.changed, {
       'project': normalizedPath.project,
       'resource': normalizedPath.path,
       'hash': hash,
@@ -427,5 +437,3 @@ class Entry {
 class Saved {
   constructor(public project: string, public resource: string, public type: ResourceType, hash: string, timestamp: number, content: string, deferred: any) {}
 }
-
-export = FileSystem

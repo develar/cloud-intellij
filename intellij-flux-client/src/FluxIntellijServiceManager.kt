@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiDocumentManager
 import org.apache.commons.codec.digest.DigestUtils
-import org.eclipse.flux.client.LiveEditTopics
+import org.eclipse.flux.client.EditorTopics
 import org.eclipse.flux.client.RabbitMqFluxConfig
 import org.jetbrains.ide.PooledThreadExecutor
 
@@ -25,7 +25,7 @@ class FluxIntellijServiceManager(userName: String) {
   init {
     repository.addRepositoryListener(object : RepositoryListener {
       override fun projectConnected(project: Project) {
-        messageConnector.notify(LiveEditTopics.liveResourcesRequested) {
+        messageConnector.notify(EditorTopics.allRequested) {
           it.name("project").value(project.getName())
         }
       }
@@ -67,7 +67,7 @@ class FluxIntellijServiceManager(userName: String) {
             token.finish()
           }
 
-          errorAnalyzerService.sendProblems(referencedProject.getName(), resourcePath, LiveEditTopics.liveMetadataChanged)
+          errorAnalyzerService.sendProblems(referencedProject.getName(), resourcePath, EditorTopics.metadataChanged)
         })
       }
     })

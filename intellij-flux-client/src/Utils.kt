@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -22,22 +21,20 @@ fun findReferencedProject(projectName: String): Project? {
 }
 
 fun findReferencedFile(resourcePath: String, projectName: String): VirtualFile? {
-  var resource: VirtualFile? = null
-  @out for (project in ProjectManager.getInstance().getOpenProjects()) {
-    if (!Comparing.equal(project.getName(), projectName)) {
-      continue
-    }
+  val project = findReferencedProject(projectName)
+  return if (project == null) null else findReferencedFile(resourcePath, project)
+}
 
-    for (module in ModuleManager.getInstance(project).getModules()) {
-      for (contentRoot in ModuleRootManager.getInstance(module).getContentRoots()) {
-        resource = VfsUtilCore.findRelativeFile(resourcePath, contentRoot!!)
-        if (resource != null) {
-          break@out
-        }
+fun findReferencedFile(resourcePath: String, project: Project): VirtualFile? {
+  for (module in ModuleManager.getInstance(project).getModules()) {
+    for (contentRoot in ModuleRootManager.getInstance(module).getContentRoots()) {
+      val resource = VfsUtilCore.findRelativeFile(resourcePath, contentRoot!!)
+      if (resource != null) {
+        return resource
       }
     }
   }
-  return resource
+  return null
 }
 
 fun findReferencedProject(file: VirtualFile): Project? {

@@ -20,12 +20,9 @@ trait Service {
 }
 
 
-trait Topic {
-  val name: String
-
+class Topic(val name: String, responseExpected: Boolean = false) {
   // broadcast request (liveResourcesRequested -> n liveResources direct messages)
-  val responseName: String?
-    get() = null
+  val responseName = if (responseExpected) "$name.response" else null
 }
 
 public trait Result {

@@ -29,7 +29,14 @@ export interface GetResourceResponse {
   type: string
 
   // if file
+  /**
+   * Last saved time. It is not last modified time - client in most cases cannot provide it.
+   */
+  lastSaved: number
   hash: string
+  /**
+   * Actual content. Could be not last saved content, but live content.
+   */
   content: string
 }
 
@@ -46,28 +53,46 @@ export class EditorService<R> extends Service<R> {
 }
 
 export class Topic {
-  constructor(public name: string) {
+  public responseTopic: string
+
+  // responseName could be specified - broadcast request (liveResourcesRequested -> n liveResources direct messages)
+  constructor(public name: string, responseExpected: boolean = false) {
+    this.responseTopic = responseExpected ? name + ".response" : null
   }
-
-  // broadcast request (liveResourcesRequested -> n liveResources direct messages)
-  get responseName(): string {
-    return null
-  }
 }
 
-export class LiveEditTopics extends Topic {
-  public static liveResourceStarted = new LiveEditTopics("liveResourceStarted")
-  public static liveResourceChanged = new LiveEditTopics("liveResourceChanged")
+export class EditorTopics {
+  public static started = new Topic("editor.started", true)
+  public static startedResponse = new Topic(EditorTopics.started.responseTopic)
+
+  public static changed = new Topic("editor.changed")
+
+  public static metadataChanged = new Topic("editor.metadataChanged")
 }
 
-export class ResourceTopics extends Topic {
-  public static resourceChanged = new ResourceTopics("resourceChanged")
-  public static resourceDeleted = new ResourceTopics("resourceDeleted")
-  public static resourceCreated = new ResourceTopics("resourceCreated")
+// contains project and resource because it is a broadcast response (we subscribe to event, we don't use Promise) - we need to identify resource
+export interface EditorStartedResponse {
+  project: string
+  resource: string
+  content: string
+  hash: string
 }
 
-export class ProjectTopics extends Topic {
-  public static projectCreated = new ResourceTopics("projectCreated")
+// contains project and resource because it is a broadcast response (we subscribe to event, we don't use Promise) - we need to identify resource
+export interface EditorStarted {
+  project: string
+  resource: string
+  hash: string
+}
+
+export class ResourceTopics {
+  public static changed = new Topic("resource.changed")
+  public static deleted = new Topic("resource.deleted")
+  public static created = new Topic("resource.created")
+}
+
+export class ProjectTopics {
+  public static created = new Topic("project.created")
 }
 
 export declare module Projects {

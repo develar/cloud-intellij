@@ -35,13 +35,13 @@ trait RepositoryListener {
 
 class IntellijRepository(private val messageConnector: MessageConnector, private val username: String) {
   init {
-    messageConnector.on(ResourceTopics.resourceChanged) {
+    messageConnector.on(ResourceTopics.changed) {
       updateResource(it)
     }
-    messageConnector.on(ResourceTopics.resourceCreated) {
+    messageConnector.on(ResourceTopics.created) {
       createResource(it)
     }
-    messageConnector.on(ResourceTopics.resourceDeleted) {
+    messageConnector.on(ResourceTopics.deleted) {
       deleteResource(it)
     }
 
@@ -129,7 +129,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
       override public fun projectClosing(project: Project) {
         notifyProjectDisconnected(project)
 
-        messageConnector.notify(ProjectTopics.projectDisconnected) {
+        messageConnector.notify(ProjectTopics.disconnected) {
           it.name("project").value(project.getName())
         }
       }
@@ -185,7 +185,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
       }
 
       if (stored) {
-        messageConnector.notify(ResourceTopics.resourceStored) {
+        messageConnector.notify(ResourceTopics.saved) {
           it.name("project").value(projectName)
           it.name("resource").value(resourcePath)
           it.name("timestamp").value(updateTimestamp)
@@ -287,12 +287,13 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
       val token = ReadAction.start()
       try {
         val document = FileDocumentManager.getInstance().getDocument(resource)
-        writer.name("timestamp").value(if (document != null) document.getModificationStamp() else resource.getModificationStamp())
         //message.put("hash", connectedProject.getHash(resourcePath));
         if (resource.isDirectory()) {
           writer.name("type").value("folder")
         }
         else {
+          writer.name("lastSaved").value(resource.getTimeStamp())
+
           val shaHex = if (document != null) DigestUtils.sha1Hex(document.getText()) else DigestUtils.sha1Hex(resource.getInputStream())
           if (hash == shaHex) {
             return
@@ -377,7 +378,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
     }
 
     if (stored) {
-      messageConnector.notify(ResourceTopics.resourceStored) {
+      messageConnector.notify(ResourceTopics.saved) {
         it.name("project").value(projectName)
         it.name("resource").value(resourcePath)
         it.name("timestamp").value(updateTimestamp)
@@ -508,7 +509,7 @@ class IntellijRepository(private val messageConnector: MessageConnector, private
   }
 
   protected fun sendProjectConnectedMessage(projectName: String) {
-    messageConnector.notify(ProjectTopics.projectConnected) {
+    messageConnector.notify(ProjectTopics.connected) {
       it.name("project").value(projectName)
     }
   }

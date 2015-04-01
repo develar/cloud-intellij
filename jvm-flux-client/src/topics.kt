@@ -1,45 +1,34 @@
 package org.eclipse.flux.client
 
-enum class LiveEditTopics : Topic {
-  override val name: String
-    get() = name()
+trait EditorTopics {
+  companion object {
+    val started = Topic("editor.started", true)
+    val startedResponse = Topic(started.responseName!!)
 
-  /**
-   * A resource is going to be edited
-   */
-  liveResourceStarted
-  liveResourceChanged
+    /**
+     * Delta information about a live change to a resource
+     */
+    val changed = Topic("editor.changed")
 
-  liveResourceStartedResponse
+    val allRequested = Topic("editor.allRequested", true)
+    val allRequestedResponse = Topic(allRequested.responseName!!)
 
-  /**
-   * All participants asking for the resources that are being edited at the moment
-   */
-  liveResourcesRequested {
-    override val responseName: String?
-      get() = liveResources.name
+    val metadataChanged = Topic("editor.metadataChanged")
   }
-  // broadcast request (liveResourcesRequested -> n liveResources direct messages)
-  liveResources
-
-  liveMetadataChanged
 }
 
-enum class ResourceTopics : Topic {
-  override val name: String
-    get() = name()
-
-  resourceChanged
-  resourceCreated
-  resourceDeleted
-
-  resourceStored
+trait ResourceTopics {
+  companion object {
+    val created = Topic("resource.created")
+    val changed = Topic("resource.changed")
+    val deleted = Topic("resource.deleted")
+    val saved = Topic("resource.saved")
+  }
 }
 
-enum class ProjectTopics : Topic {
-  override val name: String
-    get() = name()
-
-  projectConnected
-  projectDisconnected
+trait ProjectTopics {
+  companion object {
+    val connected = Topic("resource.connected")
+    val disconnected = Topic("resource.disconnected")
+  }
 }
