@@ -1,8 +1,18 @@
 package org.intellij.flux
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentAdapter
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.psi.PsiDocumentManager
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.flux.client.EditorTopics
 import org.eclipse.flux.client.MessageConnector
@@ -10,7 +20,44 @@ import org.eclipse.flux.client.services.LiveEditService
 
 private val CHANGE_FLAG = Key<Boolean>("our.change")
 
-class IntellijLiveEditService(messageConnector: MessageConnector, private val errorAnalyzerService: ErrorAnalyzerService) : LiveEditService(messageConnector) {
+class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(messageConnector) {
+  init {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(object : DocumentAdapter() {
+      override public fun documentChanged(documentEvent: DocumentEvent) {
+        val document = documentEvent.getDocument()
+        if (document.getUserData(CHANGE_FLAG) != null) {
+          return
+        }
+
+        val file = FileDocumentManager.getInstance().getFile(document)
+        val referencedProject = file?.findProject()
+        // todo several projects
+        if (referencedProject == null) {
+          return
+        }
+
+        val resourcePath = VfsUtilCore.getRelativePath(file!!, referencedProject.getBaseDir())
+        if (resourcePath == null) {
+          return
+        }
+
+        notifyChanged(referencedProject.getName(), resourcePath, documentEvent.getOffset(), documentEvent.getOldLength(), documentEvent.getNewFragment())
+
+//        ApplicationManager.getApplication().invokeLater(Runnable {
+//          val token = WriteAction.start()
+//          try {
+//            PsiDocumentManager.getInstance(referencedProject).commitDocument(document)
+//          }
+//          finally {
+//            token.finish()
+//          }
+//
+//          messageConnector.sendProblems(document, referencedProject, referencedProject.getName(), resourcePath, EditorTopics.metadataChanged)
+//        })
+      }
+    })
+  }
+
   override fun liveEditors(replyTo: String, correlationId: String, projectRegEx: String?, resourceRegEx: String?, liveUnits: List<Map<String, Any>>) {
     [suppress("UNCHECKED_CAST")]
     for (liveUnit in liveUnits) {
@@ -71,32 +118,35 @@ class IntellijLiveEditService(messageConnector: MessageConnector, private val er
   }
 
   override fun started(replyTo: String, correlationId: String, projectName: String, resourcePath: String, requestorHash: String) {
-    val content: String
+    val content: CharSequence
     val accessToken = ReadAction.start()
+    val document: Document?
+    val project: Project?
     try {
-      val referencedFile = findReferencedFile(resourcePath, projectName)
-      val document = referencedFile?.getDocument()
+      project = findReferencedProject(projectName)
+      document = project?.findFile(resourcePath)?.getDocument()
       if (document == null) {
         return
       }
 
-      content = document.getText()
-      val hash = DigestUtils.sha1Hex(content)
-      if (hash == requestorHash) {
-        return
-      }
+      content = document.getImmutableCharSequence()
     }
     finally {
       accessToken.finish()
     }
 
-    sendStartedResponse(replyTo, correlationId, projectName, resourcePath, requestorHash, content)
+    val hash = content.sha1()
+    if (hash == requestorHash) {
+      return
+    }
 
-    try {
-      errorAnalyzerService.sendProblems(projectName, resourcePath, EditorTopics.metadataChanged)
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
+    sendStartedResponse(replyTo, correlationId, projectName, resourcePath, hash, content)
+
+//    try {
+//      errorAnalyzerService.sendProblems(document!!, project!!, projectName, resourcePath, EditorTopics.metadataChanged)
+//    }
+//    catch (e: Throwable) {
+//      LOG.error(e)
+//    }
   }
 }

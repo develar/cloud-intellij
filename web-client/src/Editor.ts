@@ -1,7 +1,6 @@
 "use strict"
 
 import sha1 = require("sha1")
-import Deferred = require("orion/Deferred")
 import stompClient = require("stompClient")
 import service = require("service")
 import Promise = require("bluebird")
@@ -11,22 +10,10 @@ import fileSystem = require("FileSystem")
 
 import EditorTopics = service.EditorTopics
 import GetResourceResponse = service.GetResourceResponse
-
-var SERVICE_TO_REGEXP = {
-  "org.eclipse.flux.jdt": new RegExp(".*\\.java|.*\\.class")
-};
-
-var callbacksCache = {};
-
-var counter = 1;
-function generateCallbackId() {
-  return counter++;
-}
+import EditorContext = orion.EditorContext
+import EditorOptions = orion.EditorOptions
 
 class ResourceMetadata {
-  public liveMarkers: Array<any> = []
-  public markers: Array<any> = []
-
   private muteRequests = 0
 
   public modificationCount = 0
@@ -47,33 +34,27 @@ class ResourceMetadata {
   }
 }
 
-class Editor implements orion.Validator, orion.LiveEditor {
+class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
   private resourceMetadataPromise: Promise<ResourceMetadata> = null
   private resourceMetadata: ResourceMetadata = null
   private resourceUri: fileSystem.ResourceUri = null
   private editorContext: orion.EditorContext = null
 
   constructor(private stompClient: stompClient.StompConnector, private fileService: fileSystem.FileService) {
-    stompClient.on(EditorTopics.startedResponse, (data: service.EditorStartedResponse) => {
+    stompClient.on(EditorTopics.startedResponse, (result: service.EditorStartedResponse) => {
       var resourceMetadata = this.resourceMetadata
       if (resourceMetadata == null || resourceMetadata.modificationCount > 0) {
         return
       }
 
       var resourceUri = this.resourceUri;
-      if (resourceUri == null || resourceUri.path !== data.resource || resourceUri.project !== data.project) {
+      if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
         return
       }
 
-      resourceMetadata.resource.content = data.content
-      resourceMetadata.resource.hash = data.hash
-
-      resourceMetadata._queueMuteRequest();
-      this.editorContext.setText(data.content).then(() => {
-        resourceMetadata._dequeueMuteRequest();
-      }, () => {
-        resourceMetadata._dequeueMuteRequest();
-      })
+      resourceMetadata.resource.content = result.content
+      resourceMetadata.resource.hash = result.hash
+      this.setEditorText(resourceMetadata, result.content)
     })
 
     stompClient.replyOn(EditorTopics.started, (replyTo: string, correlationId: string, editorStarted: service.EditorStarted) => {
@@ -105,17 +86,46 @@ class Editor implements orion.Validator, orion.LiveEditor {
         })
       })
     })
+
+    this.stompClient.on(EditorTopics.changed, (result: service.EditorChanged) => {
+      var resourceMetadata = this.resourceMetadata
+      if (resourceMetadata == null || this.editorContext == null) {
+        return
+      }
+
+      var resourceUri = this.resourceUri
+      if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
+        return
+      }
+
+      this.setEditorText(resourceMetadata, result.addedCharacters, result.offset, result.offset + result.removedCharCount)
+    })
+
+    this.stompClient.on(EditorTopics.metadataChanged, (result: service.EditorMetadataChanged) => {
+      var resourceMetadata = this.resourceMetadata
+      if (resourceMetadata == null || this.editorContext == null) {
+        return
+      }
+
+      var resourceUri = this.resourceUri
+      if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
+        return
+      }
+
+      this.editorContext.showMarkers(result.markers)
+    })
+  }
+
+  private setEditorText(resourceMetadata: ResourceMetadata, content: string, start?: number, end?: number) {
+    resourceMetadata.modificationCount++
+    resourceMetadata._queueMuteRequest()
+    var handler = () => {
+      resourceMetadata._dequeueMuteRequest()
+    }
+    this.editorContext.setText(content, start, end).then(handler, handler)
   }
 
   _createSocket() {
-    //this.socket.on('getMetadataResponse', function (data) {
-    //  self._handleMessage(data);
-    //});
-    //
-    //this.socket.on('contentassistresponse', function (data) {
-    //  self._handleMessage(data);
-    //});
-    //
     //this.socket.on('getLiveResourcesRequest', function (data) {
     //  self.getResourceData().then(function (resourceMetadata) {
     //    if ((!data.projectRegEx || new RegExp(data.projectRegEx).test(resourceMetadata.project))
@@ -160,60 +170,6 @@ class Editor implements orion.Validator, orion.LiveEditor {
     //    }
     //  });
     //});
-    //
-    //this.socket.on('liveResourceChanged', function (data) {
-    //  self.getResourceData().then(function (resourceMetadata) {
-    //    if (data.username === resourceMetadata.username
-    //      && data.project === resourceMetadata.project
-    //      && data.resource === resourceMetadata.resource
-    //      && self._editorContext) {
-    //
-    //      var text = data.addedCharacters !== undefined ? data.addedCharacters : "";
-    //
-    //      resourceMetadata._queueMuteRequest();
-    //      self._editorContext.setText(text, data.offset, data.offset + data.removedCharCount).then(function () {
-    //        resourceMetadata._dequeueMuteRequest();
-    //      }, function () {
-    //        resourceMetadata._dequeueMuteRequest();
-    //      });
-    //    }
-    //  });
-    //});
-    //
-    //this.socket.on('liveMetadataChanged', function (data) {
-    //  self.getResourceData().then(function (resourceMetadata) {
-    //    if (resourceMetadata.username === data.username
-    //      && resourceMetadata.project === data.project
-    //      && resourceMetadata.resource === data.resource
-    //      && data.problems !== undefined) {
-    //
-    //      resourceMetadata.liveMarkers = [];
-    //      var i;
-    //      for (i = 0; i < data.problems.length; i++) {
-    //        //						var lineOffset = editor.getModel().getLineStart(data.problems[i].line - 1);
-    //
-    //        //						console.log(lineOffset);
-    //
-    //        resourceMetadata.liveMarkers[i] = {
-    //          'id': data.problems[i].id,
-    //          'description': data.problems[i].description,
-    //          //							'line' : data.problems[i].line,
-    //          'severity': data.problems[i].severity,
-    //          'start': /*(data.problems[i].start - lineOffset) + 1*/ data.problems[i].start,
-    //          'end': /*data.problems[i].end - lineOffset*/ data.problems[i].end
-    //        };
-    //      }
-    //      if (self._editorContext) {
-    //        self._editorContext.showMarkers(resourceMetadata.liveMarkers);
-    //      }
-    //    }
-    //    self._handleMessage(data);
-    //  });
-    //});
-    //
-    //this.socket.on('javadocresponse', function (data) {
-    //  self._handleMessage(data);
-    //});
   }
 
   private getResourceData(): Promise<ResourceMetadata> {
@@ -234,6 +190,8 @@ class Editor implements orion.Validator, orion.LiveEditor {
   }
 
   onModelChanging(event: orion.ModelChangingEvent): void {
+    console.log(JSON.stringify(event))
+
     if (this.resourceUri == null) {
       console.log("onModelChanging called before startEdit")
       return
@@ -242,7 +200,7 @@ class Editor implements orion.Validator, orion.LiveEditor {
     this.getResourceData().then((resourceMetadata: ResourceMetadata) => {
       if (resourceMetadata.canLiveEdit()) {
         var resourceUri = this.resourceUri
-        this.stompClient.notify(service.EditorTopics.changed, {
+        this.stompClient.notify(service.EditorTopics.changed, <service.EditorChanged>{
           project: resourceUri.project,
           resource: resourceUri.path,
           offset: event.start,
@@ -253,97 +211,49 @@ class Editor implements orion.Validator, orion.LiveEditor {
     })
   }
 
-  computeContentAssist(editorContext: any, options: any) {
-    var request = new Deferred();
-    this.getResourceData().then((resourceMetadata: any) => {
-      this.stompClient.request(service.EditorService.contentAssist, {
-        'project': resourceMetadata.project,
-        'resource': resourceMetadata.resource,
-        'offset': options.offset,
-        'prefix': options.prefix,
-        'selection': options.selection
-      }).done((data: any) => {
-        var proposals: any = []
-        if (data.proposals) {
-          data.proposals.forEach((proposal: any) => {
-            var name: string
-            var description: string
-            if (proposal.description
-              && proposal.description.segments
-              && (Array.isArray && Array.isArray(proposal.description.segments) || proposal.description.segments instanceof Array)) {
-
-              if (proposal.description.segments.length >= 2) {
-                name = proposal.description.segments[0].value;
-                description = proposal.description.segments[1].value;
-              }
-              else {
-                description = proposal.description.segments[0].value;
-              }
+  computeContentAssist(editorContext: EditorContext, options: orion.ContentAssistOptions): Promise<Array<any>> {
+    return editorContext.getFileMetadata()
+      .then((fileMetadata) => {
+        var resourceUri = this.fileService.toResourceUri(fileMetadata.location)
+        return this.stompClient.request(service.EditorService.contentAssist, {
+          project: resourceUri.project,
+          path: resourceUri.path,
+          offset: options.offset,
+          prefix: options.prefix,
+          selection: options.selection
+        })
+      })
+      .then((data: any) => {
+        var list = data.list
+        for (var proposal of list) {
+          var name: string
+          var description: string
+          if (proposal.description != null && proposal.description.segments != null) {
+            if (proposal.description.segments.length >= 2) {
+              name = proposal.description.segments[0].value;
+              description = proposal.description.segments[1].value;
             }
             else {
-              description = proposal.description;
+              description = proposal.description.segments[0].value;
             }
-            if (!description) {
-              description = proposal.proposal;
-            }
-            if (description) {
-              proposals.push({
-                'description': description,
-                'name': name,
-                'overwrite': proposal.replace,
-                'positions': proposal.positions,
-                'proposal': proposal.proposal,
-                'additionalEdits': proposal.additionalEdits,
-                'style': "emphasis",
-                'escapePosition': proposal.escapePosition
-              })
-            }
-          })
-        }
-        console.log("Editor content assist: " + JSON.stringify(proposals));
-        request.resolve(proposals);
-      })
-    })
-    return request
-  }
-
-  computeProblems(editorContext: any, options: any) {
-    console.log("Validator (Problems): " + JSON.stringify(options));
-    var problemsRequest = new Deferred();
-//			this._setEditorInput(options.title, editorContext);
-
-    this.getResourceData().then((resourceMetadata: any) => {
-      if (this.resourceUri === options.title) {
-        this.stompClient.request(service.EditorService.metadata, {
-          'project': resourceMetadata.project,
-          'resource': resourceMetadata.resource
-        }).done((data: any) => {
-          resourceMetadata.markers = [];
-          for (var i = 0; i < data.metadata.length; i++) {
-            resourceMetadata.markers[i] = {
-              'id': data.metadata[i].id,
-              'description': data.metadata[i].description,
-              'severity': data.metadata[i].severity,
-              'start': data.metadata[i].start,
-              'end': data.metadata[i].end
-            };
           }
-          problemsRequest.resolve(resourceMetadata.markers)
-        })
-      }
-      else {
-        problemsRequest.reject()
-      }
-    })
-    return problemsRequest
+          else {
+            description = proposal.description;
+          }
+          if (description == null) {
+            description = proposal.proposal;
+          }
+        }
+        return list
+      })
   }
 
-  startEdit(editorContext: orion.EditorContext, options: any): Deferred {
-    var location: string = options == null ? null : options.title
-    if (!this.fileService.isOurResource(location)) {
-      return
-    }
+  computeProblems(editorContext: EditorContext, options: EditorOptions): Promise<orion.Problems> {
+    return this.stompClient.request<orion.Problems>(service.EditorService.problems, this.fileService.toResourceUri(options.title))
+  }
 
+  startEdit(editorContext: orion.EditorContext, options: any): Promise<any> {
+    var location: string = options == null ? null : (<any>editorContext).title
     var resourceUri = this.fileService.toResourceUri(location)
     if (resourceUri.equals(this.resourceUri)) {
       return
@@ -382,30 +292,29 @@ class Editor implements orion.Validator, orion.LiveEditor {
     this.resourceMetadata = null
   }
 
-  computeHoverInfo(editorContext: any, ctxt: any) {
-    var request = new Deferred();
-    this.getResourceData().then((resourceMetadata: any) => {
-      this.stompClient.request(service.EditorService.javadoc, {
-        'project': resourceMetadata.project,
-        'resource': resourceMetadata.resource,
-        'offset': ctxt.offset,
-        'length': 0
-      }).done((data: any) => {
-        if (data.javadoc != null) {
-          request.resolve({type: 'html', content: data.javadoc.javadoc});
-        }
-        else {
-          request.resolve(false);
-        }
-      })
-    })
-    return request
-  }
+  //computeHoverInfo(editorContext: any, ctxt: any) {
+  //  return this.getResourceData()
+  //    .then((resourceMetadata: any) => {
+  //      this.stompClient.request(service.EditorService.javadoc, {
+  //        'project': resourceMetadata.project,
+  //        'resource': resourceMetadata.resource,
+  //        'offset': ctxt.offset,
+  //        'length': 0
+  //      }).done((data: any) => {
+  //        if (data.javadoc != null) {
+  //          return {type: 'html', content: data.javadoc.javadoc}
+  //        }
+  //        else {
+  //          return false
+  //        }
+  //      })
+  //    })
+  //}
 
   public applyQuickfix(editorContext: any, context: any) {
-    var request = new Deferred();
-    this.getResourceData().then((resourceMetadata: any) => {
-      this.stompClient.request(service.EditorService.quickfix, {
+    return this.getResourceData()
+      .then((resourceMetadata: any) => {
+        return this.stompClient.request(service.EditorService.quickfix, {
           'project': resourceMetadata.project,
           'resource': resourceMetadata.resource,
           'id': context.annotation.id,
@@ -413,8 +322,7 @@ class Editor implements orion.Validator, orion.LiveEditor {
           'length': (context.annotation.end - context.annotation.start + 1),
           'apply-fix': true
         })
-    })
-    return request;
+      })
   }
 }
 

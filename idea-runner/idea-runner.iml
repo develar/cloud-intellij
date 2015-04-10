@@ -13,6 +13,9 @@
     <orderEntry type="module" module-name="jvm-flux-client" scope="RUNTIME" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library>
+        <ANNOTATIONS>
+          <root url="file://$MODULE_DIR$/../jvm-flux-client/lib" />
+        </ANNOTATIONS>
         <CLASSES>
           <root url="file://$MODULE_DIR$/../dependencies/ideaSdk/lib" />
         </CLASSES>

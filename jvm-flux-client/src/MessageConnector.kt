@@ -1,8 +1,11 @@
 package org.eclipse.flux.client
 
-import com.google.gson.stream.JsonWriter
+import org.jetbrains.json.JsonWriterEx
+import org.jetbrains.json.MapMemberWriter
 import org.jetbrains.util.concurrency.Promise
-import java.io.ByteArrayOutputStream
+import org.slf4j.LoggerFactory
+
+val LOG = LoggerFactory.getLogger("flux-client")
 
 trait Service {
   trait Method {
@@ -19,32 +22,26 @@ trait Service {
   }
 }
 
-
 class Topic(val name: String, responseExpected: Boolean = false) {
   // broadcast request (liveResourcesRequested -> n liveResources direct messages)
   val responseName = if (responseExpected) "$name.response" else null
 }
 
 public trait Result {
-  inline
-  final fun write(writer: (JsonWriter) -> Unit) {
-    writeIf({
-      writer(it)
-      true
-    })
-  }
-
-  inline
-  final fun writeIf(writer: (JsonWriter) -> Boolean) {
-    val byteOut: ByteArrayOutputStream
-    val jsonWriter: JsonWriter
+  inline final fun write(f: MapMemberWriter.() -> Unit) {
+    val bytes: ByteArray
     try {
-      byteOut = ByteArrayOutputStream()
-      jsonWriter = JsonWriter(byteOut.writer())
-      jsonWriter.beginObject()
-      if (!writer(jsonWriter)) {
-        reject("consumer condition")
+      val writer = JsonWriterEx()
+      writer.beginObject()
+      writer.f()
+      writer.endObject()
+
+      if (writer.out.isEmpty()) {
+        reject("Empty response")
         return
+      }
+      else {
+        bytes = writer.toByteArray()
       }
     }
     catch (e: Throwable) {
@@ -52,10 +49,10 @@ public trait Result {
       return
     }
 
-    write(jsonWriter, byteOut)
+    write(bytes)
   }
 
-  fun write(writer: JsonWriter, byteOut: ByteArrayOutputStream)
+  fun write(byteArray: ByteArray)
 
   fun reject(error: Throwable)
 
@@ -104,36 +101,33 @@ public trait MessageConnector {
 
   public fun isConnected(): Boolean
 
-  inline
-  public final fun notify(topic: Topic, writer: (JsonWriter) -> Unit) {
-    val byteOut = ByteArrayOutputStream()
-    val jsonWriter = JsonWriter(byteOut.writer())
-    jsonWriter.beginObject()
-    writer(jsonWriter)
-    notify(topic, jsonWriter, byteOut)
+  public inline final fun notify(topic: Topic, f: MapMemberWriter.() -> Unit) {
+    val writer = JsonWriterEx()
+    writer.map {
+      f()
+    }
+    notify(topic, writer.toByteArray())
   }
 
-  inline
-  public final fun request(method: Service.Method, writer: (JsonWriter) -> Unit): Promise<Map<String, Any>> {
-    val byteOut = ByteArrayOutputStream()
-    val jsonWriter = JsonWriter(byteOut.writer())
-    jsonWriter.beginObject()
-    writer(jsonWriter)
-    return request(method, jsonWriter, byteOut)
+  public inline final fun request(method: Service.Method, f: MapMemberWriter.() -> Unit): Promise<Map<String, Any>> {
+    val writer = JsonWriterEx()
+    writer.map {
+      f()
+    }
+    return request(method, writer.toByteArray())
   }
 
-  public fun notify(topic: Topic, writer: JsonWriter, byteOut: ByteArrayOutputStream)
+  public fun notify(topic: Topic, byteArray: ByteArray)
 
-  public fun request(method: Service.Method, writer: JsonWriter, byteOut: ByteArrayOutputStream): Promise<Map<String, Any>>
+  public fun request(method: Service.Method, byteArray: ByteArray): Promise<Map<String, Any>>
 
-  inline
-  public final fun replyToEvent(replyTo: String, correlationId: String, writer: (JsonWriter) -> Unit) {
-    val byteOut = ByteArrayOutputStream()
-    val jsonWriter = JsonWriter(byteOut.writer())
-    jsonWriter.beginObject()
-    writer(jsonWriter)
-    replyToEvent(replyTo, correlationId, jsonWriter, byteOut)
+  public inline final fun replyToEvent(replyTo: String, correlationId: String, f: MapMemberWriter.() -> Unit) {
+    val writer = JsonWriterEx()
+    writer.map {
+      f()
+    }
+    replyToEvent(replyTo, correlationId, writer.toByteArray())
   }
 
-  public fun replyToEvent(replyTo: String, correlationId: String, writer: JsonWriter, byteOut: ByteArrayOutputStream)
+  public fun replyToEvent(replyTo: String, correlationId: String, byteArray: ByteArray)
 }

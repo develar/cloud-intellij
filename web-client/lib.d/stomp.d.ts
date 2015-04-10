@@ -19,7 +19,7 @@ declare module "stomp" {
 
   export interface Frame {
     body: string
-    command: string
+    command?: string
     headers: { [key: string]: any; }
   }
 

@@ -1,0 +1,5 @@
+<root>
+  <item name='org.apache.commons.codec.binary.Hex java.lang.String encodeHexString(byte[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

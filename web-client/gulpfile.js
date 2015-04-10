@@ -15,7 +15,9 @@ var tsProject = ts.createProject({
   removeComments: true,
   sortOutput: true,
   noExternalResolve: true,
-  module: "amd"
+  noEmitOnError: true,
+  module: "amd",
+  typescript: require('typescript')
 });
 
 gulp.task("compile", function () {
@@ -41,10 +43,10 @@ gulp.task("package", ['compile'], function () {
   gulp.src(["out/*.js"])
       .pipe(amdOptimize("main", {
               configFile: "out/requireConfig.js",
-              exclude: ["Deferred", "sockjs", "stomp", "bluebird", "sha1", "orion/plugin"],
-              loader: amdOptimize.loader(function (moduleName) {
-                return "lib/empty.js"
-              })
+              exclude: ["Deferred", "sockjs", "stomp", "bluebird", "sha1", "orion/plugin"]
+              //loader: amdOptimize.loader(function (moduleName) {
+              //  return "lib/empty.js"
+              //})
             }))
       .pipe(sourcemaps.init({loadMaps: true}))
       .pipe(concat("main.js"))

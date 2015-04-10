@@ -31,7 +31,6 @@ public abstract class LiveEditService(private val messageConnector: MessageConne
       val offset = (it.get("offset") as Double).toInt()
       val removedCharCount = (it.get("removedCharCount") as Double).toInt()
       val addedChars = it.get("addedCharacters") as String?
-
       changed(projectName, resourcePath, offset, removedCharCount, addedChars)
     }
 
@@ -49,35 +48,33 @@ public abstract class LiveEditService(private val messageConnector: MessageConne
 
   protected abstract fun liveEditors(replyTo: String, correlationId: String, projectRegEx: String?, resourceRegEx: String?, liveUnits: List<Map<String, Any>>)
 
-  public fun sendModelChangedMessage(projectName: String, resourcePath: String, offset: Int, removedCharactersCount: Int, newText: String?) {
+  protected fun notifyChanged(projectName: String, resourcePath: String, offset: Int, removedCharactersCount: Int, newText: CharSequence?) {
     messageConnector.notify(EditorTopics.changed) {
-      it.name("project").value(projectName)
-      it.name("resource").value(resourcePath)
-      it.name("offset").value(offset)
-      it.name("removedCharCount").value(removedCharactersCount)
-      it.name("addedCharacters").value(newText ?: "")
+      "project"(projectName)
+      "resource"(resourcePath)
+      "offset"(offset)
+      "removedCharCount"(removedCharactersCount)
+      "addedCharacters"(newText ?: "")
     }
-    changed(projectName, resourcePath, offset, removedCharactersCount, newText)
   }
 
   public fun startedMessage(projectName: String, resourcePath: String, hash: String, timestamp: Long) {
     messageConnector.notify(EditorTopics.started) {
-      it.name("project").value(projectName)
-      it.name("callback_id").value(0)
-      it.name("resource").value(resourcePath)
-      it.name("hash").value(hash)
-      it.name("timestamp").value(timestamp)
+      "project"(projectName)
+      "resource"(resourcePath)
+      "hash"(hash)
+      "timestamp"(timestamp)
     }
 
     started("local", "", projectName, resourcePath, hash)
   }
 
-  protected fun sendStartedResponse(replyTo: String, correlationId: String, projectName: String, resourcePath: String, hash: String, content: String) {
+  protected fun sendStartedResponse(replyTo: String, correlationId: String, projectName: String, resourcePath: String, hash: String, content: CharSequence) {
     messageConnector.replyToEvent(replyTo, correlationId) {
-      it.name("project").value(projectName)
-      it.name("resource").value(resourcePath)
-      it.name("hash").value(hash)
-      it.name("content").value(content)
+      "project"(projectName)
+      "resource"(resourcePath)
+      "hash"(hash)
+      "content"(content)
     }
   }
 
@@ -87,25 +84,25 @@ public abstract class LiveEditService(private val messageConnector: MessageConne
       return
     }
 
-    messageConnector.replyToEvent(replyTo, correlationId) {
-      it.name("liveEditUnits").beginObject()
-      for (entry in liveUnits.entrySet()) {
-        it.name(entry.getKey())
-        for (data in entry.getValue()) {
-          data.write(it)
-        }
-      }
-      it.endObject()
-    }
+//    messageConnector.replyToEvent(replyTo, correlationId) {
+//      "liveEditUnits").beginObject()
+//      for (entry in liveUnits.entrySet()) {
+//        entry.getKey())
+//        for (data in entry.getValue()) {
+//          data.write(it)
+//        }
+//      }
+//      it.endObject()
+//    }
   }
 
   protected class ResourceData(private val path: String, private val hash: String, private val timestamp: Long) {
     fun write(it: JsonWriter) {
-      it.beginObject();
-      it.name("resource").value(path)
-      it.name("savePointHash").value(hash)
-      it.name("savePointTimestamp").value(timestamp)
-      it.endObject()
+//      it.beginObject();
+//      "resource" .. path)
+//      "savePointHash" .. hash)
+//      "savePointTimestamp" .. timestamp)
+//      it.endObject()
     }
   }
 }

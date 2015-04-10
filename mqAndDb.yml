@@ -21,5 +21,7 @@ mq:
     - mqAuth:mq-auth
   ports:
     - "5672:5672"
+    # web stomp
+    - "15674:15674"
     # management
     - "15672:15672"

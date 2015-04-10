@@ -13,7 +13,6 @@ trait ProjectService : Service {
       get() = name()
 
     getAll
-    get
   }
 
   override final val name: String
@@ -21,25 +20,9 @@ trait ProjectService : Service {
 
   public fun getAll(result: Result)
 
-  public fun get(projectName: String, result: Result)
-
   override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {
       "getAll" -> getAll(result)
-      "get" -> {
-        var project: String? = null
-        val reader = JsonReader(request.inputStream.reader())
-        reader.beginObject()
-        while (reader.hasNext()) {
-          when (reader.nextName()) {
-            "project" -> project = reader.nextString()
-            else -> reader.skipValue()
-          }
-        }
-        reader.endObject()
-
-        get(project!!, result)
-      }
       else -> {
         noMethod(methodName, result)
       }

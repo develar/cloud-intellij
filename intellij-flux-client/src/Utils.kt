@@ -1,15 +1,35 @@
 package org.intellij.flux
 
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import org.apache.commons.codec.binary.Hex
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
+import java.security.MessageDigest
+
+public inline fun StringBuilder.plusAssign(s: String) {
+  append(s)
+}
+
+public inline fun StringBuilder.plusAssign(s: Char) {
+  append(s)
+}
+
+fun CharSequence.toByteBuffer(): ByteBuffer {
+  return Charsets.UTF_8.encode(CharBuffer.wrap(this))
+}
+
+fun CharSequence.sha1(): String {
+  val digest = MessageDigest.getInstance("SHA-1")
+  digest.update(toByteBuffer())
+  return Hex.encodeHexString(digest.digest())
+}
 
 fun findReferencedProject(projectName: String): Project? {
   for (project in ProjectManager.getInstance().getOpenProjects()) {
@@ -20,26 +40,20 @@ fun findReferencedProject(projectName: String): Project? {
   return null
 }
 
+fun VirtualFile.getDocument() = FileDocumentManager.getInstance().getDocument(this)
+
+fun Project.findFile(resourcePath: String) = findReferencedFile(resourcePath, this)
+
 fun findReferencedFile(resourcePath: String, projectName: String): VirtualFile? {
   val project = findReferencedProject(projectName)
   return if (project == null) null else findReferencedFile(resourcePath, project)
 }
 
-fun findReferencedFile(resourcePath: String, project: Project): VirtualFile? {
-  for (module in ModuleManager.getInstance(project).getModules()) {
-    for (contentRoot in ModuleRootManager.getInstance(module).getContentRoots()) {
-      val resource = VfsUtilCore.findRelativeFile(resourcePath, contentRoot!!)
-      if (resource != null) {
-        return resource
-      }
-    }
-  }
-  return null
-}
+fun findReferencedFile(path: String, project: Project) = project.getBaseDir().findFileByRelativePath(path)
 
-fun findReferencedProject(file: VirtualFile): Project? {
+fun VirtualFile.findProject(): Project? {
   for (project in ProjectManager.getInstance().getOpenProjects()) {
-    if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+    if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(this)) {
       return project
     }
   }

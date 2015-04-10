@@ -22,6 +22,8 @@
       <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/platform-impl/src" />
       <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/util-rt/src" />
       <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/util/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/analysis-api/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/analysis-impl/src" />
     </SOURCES>
   </library>
 </component>

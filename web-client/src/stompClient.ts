@@ -1,6 +1,5 @@
 "use strict"
 
-import SockJS = require("sockjs")
 import Stomp = require("stomp")
 import Promise = require("bluebird")
 import service = require("service")
@@ -15,14 +14,13 @@ export class StompConnector {
   private messageIdCounter = 0
   private callbacks: { [key: number]: PromiseCallback; } = {}
 
-  private eventHandlers: { [key: string]: Array<any>; } = {}
+  private eventHandlers: { [key: string]: Array<((data: any) => void) | ((replyTo: string, correlationId: string, data: any) => void)>; } = {}
 
   connect(host: string, user: string, password: string): Promise<void> {
-    var url = "http://" + host + "/stomp"
-    var ws = new SockJS(url)
-    this.client = Stomp.over(ws)
-    // SockJS does not support heart-beat: disable heart-beats
-    this.client.heartbeat.outgoing = 0
+    var url = `ws://${host}/stomp/websocket`
+    var webSocket = new WebSocket(url, ['v11.stomp'])
+    this.client = Stomp.over(webSocket)
+    this.client.heartbeat.outgoing = 25000
     this.client.heartbeat.incoming = 0
     this.exchangeCommands = "/exchange/d." + user
     this.exchangeEvents = "/exchange/t." + user
@@ -36,10 +34,10 @@ export class StompConnector {
         // we don't use default ("") exchange due to security reasons - user can send/receive messages only to/from own exchange
         this.queue = "sc" + frame.headers["session"].substring("session-".length)
 
-        console.log("Connected to message broker:", url, user);
+        console.log("Connected to message broker:", url, user)
         this.client.subscribe(this.exchangeCommands + "/" + this.queue, (frame) => {
           try {
-            var properties = frame.headers;
+            var properties = frame.headers
             var correlationId = properties["correlation-id"]
             var type = properties["type"]
             if (type != null) {
@@ -68,6 +66,26 @@ export class StompConnector {
           }
           catch (e) {
             console.error(e)
+          }
+        })
+
+        // we listen only editor.# event now
+        this.client.subscribe(this.exchangeEvents + "/editor.#", (frame) => {
+          let properties = frame.headers
+          if (properties["app-id"] != this.queue) {
+            let topicName = properties["destination"].substr(this.exchangeEvents.length + 1)
+            let handlers = this.eventHandlers[topicName]
+            if (handlers != null) {
+              var data = JSON.parse(frame.body)
+              for (let handler of handlers) {
+                if (handler.length === 3) {
+                  (<(replyTo: string, correlationId: string, data: any) => void>handler)(properties["reply-to"], properties["correlation-id"], data)
+                }
+                else {
+                  (<(data: any) => void>handler)(data)
+                }
+              }
+            }
           }
         })
 

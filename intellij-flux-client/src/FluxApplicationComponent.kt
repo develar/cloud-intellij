@@ -30,16 +30,14 @@ inline fun readAction(task: () -> Unit): Unit {
   }
 }
 
-fun VirtualFile.getDocument() = FileDocumentManager.getInstance().getDocument(this)
-
 class FluxApplicationComponent : ApplicationComponent {
-  private var fluxService: FluxIntellijServiceManager? = null
+  private var fluxService: IdeaFluxServiceManager? = null
 
   override public fun getComponentName() = "FluxConnector"
 
   public override fun initComponent() {
     ApplicationManager.getApplication().executeOnPooledThread {
-      fluxService = FluxIntellijServiceManager(System.getProperty("flux.user", "dev"))
+      fluxService = IdeaFluxServiceManager(System.getProperty("flux.user", "dev"))
     }
   }
 

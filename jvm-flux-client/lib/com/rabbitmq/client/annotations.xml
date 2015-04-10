@@ -26,4 +26,7 @@
   <item name='com.rabbitmq.client.Envelope java.lang.String getRoutingKey()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='com.rabbitmq.client.ShutdownListener void shutdownCompleted(com.rabbitmq.client.ShutdownSignalException) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

@@ -21,29 +21,10 @@ public fun getMessage(e: Throwable): String {
   return msg
 }
 
-public fun stackTrace(e: Throwable): String {
-  try {
-    val trace = ByteArrayOutputStream()
-    val dump = PrintStream(trace, true, "utf8")
-    e.printStackTrace(dump)
-    return trace.toString("utf8")
-  } catch (shouldNotHappen: Exception) {
-    throw RuntimeException(shouldNotHappen)
-  }
-
-}
-
 public fun exception(error: Throwable): Exception {
   if (error is Exception) {
     return error : Exception
   } else {
     return RuntimeException(error)
   }
-}
-
-public fun unchecked(e: Exception): RuntimeException {
-  if (e is RuntimeException) {
-    return e : RuntimeException
-  }
-  return RuntimeException(e)
 }

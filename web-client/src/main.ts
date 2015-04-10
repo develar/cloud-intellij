@@ -5,23 +5,30 @@ import Editor = require("Editor")
 
 import PluginProvider = require("orion/plugin")
 
-var host = window.location.hostname
-var port: number = <number>(window.location.port || 80)
-var stompConnector = new stompClient.StompConnector()
-stompConnector.connect(host, "dev", "dev").done(() => {
-  var base = "flux://" + host + ":" + port + "/";
-  var headers = {
+const hostname = window.location.hostname
+let mqHost: string
+if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host)) {
+  // ip address - dev machine
+  mqHost = hostname + ":" + 15674
+}
+else {
+  mqHost = `mq.${hostname}`
+}
+
+const stompConnector = new stompClient.StompConnector()
+stompConnector.connect(mqHost, "dev", "dev").done(() => {
+  const rootLocation = `flux://${hostname}:${window.location.port || 80}`
+  let headers = {
     'Name': "Flux",
     'Version': "0.1",
     'Description': "Flux Integration",
-    'top': base,
+    'top': rootLocation,
     // orion client: c12f972	07/08/14 18:35	Silenio Quarti*	change orion file client pattern to "/file" instead of "/"
-    'pattern': "^(" + base + ")|(/file)",
-    'login': 'http://' + host + ':' + port + '/auth/github'
+    'pattern': "^(" + rootLocation + ")|(/file)"
   }
 
   var provider = new PluginProvider(headers)
-  var fileService = new fileSystem.FileService(stompConnector, base);
+  var fileService = new fileSystem.FileService(stompConnector, rootLocation);
   provider.registerService("orion.core.file", fileService, headers)
 
   provider.registerServiceProvider("orion.page.link.category", null, {
@@ -35,19 +42,12 @@ stompConnector.connect(host, "dev", "dev").done(() => {
 
   var editorService = new Editor(stompConnector, fileService)
 
-  provider.registerService("orion.edit.validator", editorService, {
-    'pattern': base + ".*",
-    'contentType': ["text/x-java-source"]
-  })
-  provider.registerService(["orion.edit.model", "orion.edit.live"], editorService, {'contentType': ["text/plain"]})
-  provider.registerService(["orion.edit.contentAssist", "orion.edit.hover"], editorService, {'contentType': ["text/x-java-source"]})
+  // requires our fork - orion doesn't support pattern, only content-type
+  provider.registerService(["orion.edit.model", "orion.edit.live", "orion.edit.contentAssist", "orion.edit.validator"], editorService, {pattern: rootLocation + "/.*"})
 
   provider.registerService("orion.edit.command", {
     execute: function (editorContext: any, context: any): void {
-      if (!context.annotation) {
-        return
-      }
-      if (context.annotation.id) {
+      if (context.annotation != null && context.annotation.id) {
         editorService.applyQuickfix(editorContext, context)
       }
     }

@@ -1,6 +1,5 @@
 package org.intellij.flux
 
-import com.google.gson.stream.JsonWriter
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -9,31 +8,46 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiNameIdentifierOwner
-import org.eclipse.flux.client.services.NavigationServiceBase
+import org.eclipse.flux.client.Result
+import org.jetbrains.json.MapMemberWriter
 
-class IntellijNavigationService() : NavigationServiceBase {
-  override fun computeNavigation(projectName: String, resourcePath: String, offset: Int, writer: JsonWriter): Boolean {
+class IdeaEditorService() : IdeaContentAssistService {
+  override fun computeProblems(projectName: String, resourcePath: String, result: Result) {
+    result.write {
+      val project = findReferencedProject(projectName)
+      val accessToken = ReadAction.start()
+      try {
+        val document = project?.findFile(resourcePath)?.getDocument()
+        if (document == null) {
+          "error"("not found")
+        }
+        else {
+          computeProblems(document, project!!, null, null)
+        }
+      }
+      finally {
+        accessToken.finish()
+      }
+    }
+  }
+
+  override fun MapMemberWriter.computeNavigation(projectName: String, resourcePath: String, offset: Int): Boolean {
     val referencedFile: VirtualFile?
-    val referencedProject: Project?
+    val project: Project?
 
     val accessToken = ReadAction.start()
-
     try {
       if (resourcePath.startsWith("classpath:/")) {
         val typeName = resourcePath.substring("classpath:/".length())
         referencedFile = JarFileSystem.getInstance().findFileByPath(typeName)
-        referencedProject = findReferencedProject(projectName)
+        project = findReferencedProject(projectName)
       }
       else {
         referencedFile = findReferencedFile(resourcePath, projectName)
-        if (referencedFile == null) {
-          return false
-        }
-
-        referencedProject = findReferencedProject(referencedFile)
+        project = referencedFile?.findProject()
       }
 
-      if (referencedFile == null || referencedProject == null) {
+      if (referencedFile == null || project == null) {
         return false
       }
 
@@ -42,23 +56,22 @@ class IntellijNavigationService() : NavigationServiceBase {
         return false
       }
 
-      val resolve = getTargetElement(offset, referencedProject, document, false)
+      val resolve = getTargetElement(offset, project, document, false)
       if (resolve == null) {
         return false
       }
 
-      writer.name("navigation").beginObject()
-      writer.name("project").value(projectName)
       val containingFile = resolve.getContainingFile()
 
       var virtualFile = containingFile.getVirtualFile() ?: containingFile.getOriginalFile().getVirtualFile()
       // todo jar
-      writer.name("resource")
-      if (virtualFile!!.isInLocalFileSystem()) {
-        writer.value(VfsUtilCore.getRelativePath(virtualFile, referencedProject.getBaseDir()))
-      }
-      else {
-        writer.value("classpath:/${virtualFile!!.getPath()}")
+      string("resource") {
+        if (virtualFile!!.isInLocalFileSystem()) {
+          VfsUtilCore.getRelativePath(virtualFile, project.getBaseDir())
+        }
+        else {
+          "classpath:/${virtualFile!!.getPath()}"
+        }
       }
 
       var textRange: TextRange? = null
@@ -71,8 +84,8 @@ class IntellijNavigationService() : NavigationServiceBase {
       if (textRange == null) {
         textRange = resolve.getTextRange()
       }
-      writer.name("offset").value(textRange!!.getStartOffset())
-      writer.name("length").value(textRange!!.getLength())
+      "offset"(textRange!!.getStartOffset())
+      "length"(textRange!!.getLength())
       return true
     }
     finally {

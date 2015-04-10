@@ -1,34 +1,14 @@
-app:
-  image: node:wheezy
-  external_links:
-    - cloudintellij_mq_1:mq
-  environment:
-    HOST: 0.0.0.0
-    PORT: 80
-    MQ_HOST: mq
-    DEBUG: "express:*, socket.io:socket"
-    #DEBUG: "*"
-  volumes:
-    - flux/node.server:/app
-  expose:
-    - "3000"
-  ports:
-    - "8585:5858"
-  working_dir: /app
-  #command: /bin/sh -c "npm install && node --debug-brk=5858 startup-all-in-one.js"
-  command: /bin/sh -c "npm install && node startup-all-in-one.js"
 web:
   image: develar/orion-client
-  links:
-    - app
+#  links:
+#    - app
   external_links:
     - cloudintellij_mq_1:mq
   ports:
     - 80:80
   volumes:
     - web-client/nginx-config:/config
-    # all this stuff should be in one directory, but we want to mimize our fork changes
-    - flux/node.server/flux-static:/s1
+    - web-client/resources:/s1
     - flux/node.server/web-editor:/s2/client
     - flux/node.server/node_modules/URIjs/src:/s3/client/js/URIjs
     - flux/node.server/flux.orion.integration:/s4/orion-plugin
