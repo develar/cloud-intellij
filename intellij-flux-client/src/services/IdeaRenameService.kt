@@ -16,7 +16,7 @@ class IdeaRenameService() : RenameService {
   override fun renameInFile(projectName: String, resourcePath: String, offset: Int, result: Result) {
     result.write {
       if (!computeReferences(projectName, resourcePath, offset)) {
-        "error"("not found")
+        "error"(404)
       }
     }
   }

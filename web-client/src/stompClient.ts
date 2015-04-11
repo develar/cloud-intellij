@@ -60,8 +60,25 @@ export class StompConnector {
             else {
               // response
               var data = frame.body.length == 0 ? {} : JSON.parse(frame.body)
+              var error: number = data.error
               var promiseCallback = this.callbacks[correlationId]
-              promiseCallback.resolve(data)
+              if (error == null) {
+                promiseCallback.resolve(data)
+              }
+              else {
+                var errorMessage: string
+                if (error === 404) {
+                  errorMessage = "Not Found"
+                }
+                else if (error === 500) {
+                  errorMessage = "Internal Server Error, see server logs"
+                }
+                else {
+                  errorMessage = "Error Code " + error
+                }
+                console.error("Message " + correlationId + " rejected: " + errorMessage)
+                promiseCallback.reject(errorMessage)
+              }
             }
           }
           catch (e) {

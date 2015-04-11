@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Flux Plugin</title>
+  <script>
+    var require = {
+      paths: {
+        "bluebird": "../bluebird-2.9.24.min",
+        "stomp": "../stomp-2.3.4.min",
+        "sha1": "../sha1-0.3.min",
+        "orion/Deferred": "../orion/Deferred",
+        "orion/plugin": "../orion/plugin"
+      },
+      shim: {
+        'stomp': {
+          exports: "window.Stomp"
+        }
+      }
+    };
+  </script>
+  <!-- requirejs from orion-client -->
+  <script data-main="fluxPlugin.js" src="/requirejs/require.min.js"></script>
+</head>
+</html>

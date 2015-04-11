@@ -43,7 +43,7 @@ stompConnector.connect(mqHost, "dev", "dev").done(() => {
   var editorService = new Editor(stompConnector, fileService)
 
   // requires our fork - orion doesn't support pattern, only content-type
-  provider.registerService(["orion.edit.model", "orion.edit.live", "orion.edit.contentAssist", "orion.edit.validator"], editorService, {pattern: rootLocation + "/.*"})
+  provider.registerService(["orion.edit.model", "orion.edit.live", "orion.edit.contentAssist", "orion.edit.validator"], editorService, {contentType: "text/plain"})
 
   provider.registerService("orion.edit.command", {
     execute: function (editorContext: any, context: any): void {

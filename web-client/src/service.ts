@@ -31,7 +31,6 @@ export interface GetResourceResponse {
 
   // if directory
   children: Array<GetResourceResponse>
-  topLevelChildren: Array<GetResourceResponse>
 
   // if file
   /**

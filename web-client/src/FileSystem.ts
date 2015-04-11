@@ -82,11 +82,38 @@ class VirtualFileSystem {
     }
     return parent
   }
+
+  public static createChildren(parent: Directory, children: Array<service.GetResourceResponse>): Array<File> {
+    var n = children.length
+    var orionChildren = new Array<File>(n)
+    for (var i = 0; i < n; i++) {
+      var child = children[i]
+      if ("lastSaved" in child) {
+        orionChildren[i] = VirtualFileSystem.createFileFromMetadata(child, parent)
+      }
+      else {
+        var directory = new Directory(child.name, parent);
+        orionChildren[i] = directory
+        if (child.children != null) {
+          VirtualFileSystem.createChildren(directory, child.children)
+        }
+      }
+    }
+    parent.Children = orionChildren
+    return orionChildren
+  }
+
+  public static createFileFromMetadata(descriptor: service.GetResourceResponse, parent: Directory) {
+    var file = new File(descriptor.name, parent)
+    file.Length = descriptor.length
+    file.ETag = descriptor.hash
+    file.LocalTimeStamp = descriptor.lastSaved
+    return file
+  }
 }
 
 export class FileService implements orion.FileClient {
   private vfs: VirtualFileSystem
-  private saves: { [key: string]: Saved; } = {};
   
   constructor(private stompClient: stompClient.StompConnector, private rootLocation: string) {
     this.vfs = new VirtualFileSystem(new Directory(rootLocation))
@@ -97,10 +124,6 @@ export class FileService implements orion.FileClient {
     var indexOfDelimiter = path.indexOf('/')
     var project = indexOfDelimiter < 0 ? path : path.substring(0, indexOfDelimiter)
     return new ResourceUri(project, indexOfDelimiter < 0 ? null : path.substring(indexOfDelimiter + 1))
-  }
-
-  public isOurResource(location?: string) {
-    return location != null && location.indexOf(this.rootLocation) === 0
   }
 
   fetchChildren(location: string): Promise<Array<File>> {
@@ -130,92 +153,15 @@ export class FileService implements orion.FileClient {
     const uri = this.toResourceUri(location)
     return this.stompClient.request(ResourceService.get, uri)
       .then((result: service.GetResourceResponse) => {
-        var children = "topLevelChildren" in result ? result.topLevelChildren : result.children
-        var n = children.length
-        var orionChildren = new Array<File>(n)
-        for (var i = 0; i < n; i++) {
-          var child = children[i]
-          if ("lastSaved" in child) {
-            orionChildren[i] = FileService.createFileFromMetadata(child, parent)
-          }
-          else {
-            orionChildren[i] = new Directory(child.name, parent)
-          }
+        var children = result.children
+        // if project has only one top-level directory - merge it
+        if (children.length === 1 && parent.Parents[0] == this.vfs.root) {
+          children = children[0].children
         }
-        parent.Children = orionChildren
-        return orionChildren
+        return VirtualFileSystem.createChildren(parent, children)
       })
   }
 
-  private static createFileFromMetadata(descriptor: service.GetResourceResponse, parent: Directory) {
-    var file = new File(descriptor.name, parent)
-    file.Length = descriptor.length
-    file.ETag = descriptor.hash
-    file.LocalTimeStamp = descriptor.lastSaved
-    return file
-  }
-
-  //private createOrionProject(result: ProjectGetResponse, projectName: string): File {
-  //  var project = orion.createDirectory(projectName, projectName)
-  //  var entries = new Array<File>(result);
-  //  for (var i = 0, n = result.files.length; i < n; i++) {
-  //    var file = result.files[i];
-  //    if (!file.path) {
-  //      // project entry is found with empty path fill in the data
-  //      project.ETag = file.hash;
-  //      project.LocalTimeStamp = file.lastSaved;
-  //      continue;
-  //    }
-  //    if (file.path) {
-  //      file.path = '/' + file.path;
-  //    }
-  //    file.path = projectName + file.path;
-  //    var lastIndexOfSlash = file.path.lastIndexOf('/');
-  //    var name = lastIndexOfSlash < 0 ? file.path : file.path.substr(lastIndexOfSlash + 1);
-  //    var isFile = file.type === 'file';
-  //
-  //    //var entry = new File(file.path, null, !isFile, name, file.lastSaved)
-  //    //entry.Id = name
-  //    //entry.ETag = file.hash
-  //    //entries.push(entry)
-  //  }
-  //
-  //  var childrenDepthMap = <{ [key: number]: Array<File>; }>{};
-  //  for (var i = 0, n = entries.length; i < n; i++) {
-  //    var entry = entries[i]
-  //    var depth = entry.Location.split('/').length - 1
-  //    if (!childrenDepthMap[depth]) {
-  //      childrenDepthMap[depth] = []
-  //    }
-  //    childrenDepthMap[depth].push(entry)
-  //    if (depth === 0) {
-  //      result = entry
-  //    }
-  //  }
-  //  assignAncestry({}, childrenDepthMap, 0)
-  //  for (var i = 0, n = entries.length; i < n; i++) {
-  //    var entry = entries[i];
-  //    entry.Location = this.rootLocation + entry.Location
-  //    if (entry.Directory) {
-  //      entry.ChildrenLocation = entry.Location + '/'
-  //    }
-  //  }
-  //  return result;
-  //}
-
-  //private getProject(projectName: string): Promise<File> {
-  //  return this.stompClient.request(ProjectService.get, {
-  //    'project': projectName
-  //  })
-  //    .then((data: ProjectGetResponse) => {
-  //            return this.createOrionProject(data, projectName)
-  //          })
-  //}
-
-  /**
-   * Loads all the user's workspaces. Returns a deferred that will provide the loaded
-   * workspaces when ready.
-   */
   public loadWorkspaces(): Promise<File> {
     return this.loadWorkspace("")
   }
@@ -385,7 +331,7 @@ export class FileService implements orion.FileClient {
         const isFile = "lastSaved" in result
         const parent = this.vfs.locationToParent(location, !isFile)
         if (isFile) {
-          return FileService.createFileFromMetadata(result, parent)
+          return VirtualFileSystem.createFileFromMetadata(result, parent)
         }
         else {
           return parent

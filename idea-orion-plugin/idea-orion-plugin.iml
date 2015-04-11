@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module type="JAVA_MODULE" version="4">
+<module version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -7,9 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="module" module-name="jvm-flux-client" />
-    <orderEntry type="library" name="slf4j-api" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="KotlinJavaScript" level="project" />
   </component>
 </module>

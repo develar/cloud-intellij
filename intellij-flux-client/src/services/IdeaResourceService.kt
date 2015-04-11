@@ -27,12 +27,9 @@ class IdeaResourceService : ResourceService {
   private fun MapMemberWriter.getRootDirectoryContent(projectName: String) {
     val project = findReferencedProject(projectName)
     if (project == null) {
-      "error"("not found")
+      "error"(404)
       return
     }
-
-    var topLevelCount = 0
-    var lastTopLevelDir: VirtualFile? = null
 
     array("children") {
       val directoryIndex = DirectoryIndex.getInstance(project)
@@ -64,23 +61,19 @@ class IdeaResourceService : ResourceService {
 
           map {
             "name"(contentRoot.getName())
-            "Location"("m:${module.getName()}")
-          }
+            "location"("m:${module.getName()}")
 
-          topLevelCount++
-          lastTopLevelDir = contentRoot
+            describeDirectory(contentRoot)
+          }
         }
       }
     }
-
-    if (topLevelCount == 1) {
-      describeDirectory(lastTopLevelDir!!, "topLevelChildren")
-    }
   }
 
-  private fun MapMemberWriter.describeDirectory(directory: VirtualFile, fieldName: String = "children") {
-    array(fieldName) {
-      for (file in directory.getChildren()) {
+  private fun MapMemberWriter.describeDirectory(directory: VirtualFile) {
+    array("children") {
+      val children = directory.getChildren()
+      for (file in children) {
         try {
           map {
             "name"(file.getName())
@@ -89,6 +82,9 @@ class IdeaResourceService : ResourceService {
               val cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file)
               "hash"(if (cachedDocument == null) DigestUtils.sha1Hex(file.getInputStream()) else cachedDocument.getImmutableCharSequence().sha1())
               "lastSaved"(file.getTimeStamp())
+            }
+            else if (children.size() == 1) {
+              describeDirectory(file)
             }
           }
         }
@@ -102,7 +98,7 @@ class IdeaResourceService : ResourceService {
   private fun MapMemberWriter.getResource(projectName: String, resourcePath: String, requestorHash: String?, includeContents: Boolean) {
     val file = findReferencedFile(resourcePath, projectName)
     if (file == null) {
-      "error"("not found")
+      "error"(404)
       return
     }
 
@@ -139,7 +135,7 @@ class IdeaResourceService : ResourceService {
     val typeName = resourcePath.substring("classpath:/".length())
     val fileByPath = JarFileSystem.getInstance().findFileByPath(typeName)
     if (fileByPath == null) {
-      "error"("not found")
+      "error"(404)
       return
     }
 

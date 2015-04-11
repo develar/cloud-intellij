@@ -10,6 +10,9 @@ public trait MessageWriter {
   fun beginObject()
   fun endObject()
 
+  fun mark(name: kotlin.String? = null)
+  fun reset()
+
   public val out: ByteArrayUtf8Writer
 }
 
@@ -64,21 +67,17 @@ trait ArrayMemberWriter : MessageWriter {
 }
 
 private inline fun MessageWriter._map(name: String? = null, f: MapMemberWriter.() -> Unit) {
-  out.mark()
-  if (name != null) {
-    name(name)
-  }
+  mark(name)
 
-  beginObject()
   var success = false
   try {
+    beginObject()
     (this as MapMemberWriter).f()
     success = true
   }
   finally {
     if (!success) {
-      out.reset()
-      return
+      reset()
     }
   }
 

@@ -20,11 +20,6 @@ import java.io.IOException
 import java.lang
 
 public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, ArrayMemberWriter {
-  private var stack = IntArray(32)
-  private var stackSize = 0
-
-  override val out = ByteArrayUtf8Writer()
-
   companion object {
     /**
      * An array with no elements requires no separators or newlines before
@@ -87,9 +82,11 @@ public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, Array
     }
   }
 
-  init {
-    push(EMPTY_DOCUMENT)
-  }
+  private var stack = IntArray(32)
+  private var stackSize = 0
+  private var markedStackSize = 0
+
+  override val out = ByteArrayUtf8Writer()
 
   /**
    * A string containing a full set of spaces for a single level of
@@ -102,11 +99,19 @@ public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, Array
    */
   private var separator = ":"
 
-  private var lenient = false
+  /**
+   * Configure this writer to relax its syntax rules. By default, this writer
+   * only emits well-formed JSON as specified by [RFC 4627](http://www.ietf.org/rfc/rfc4627.txt).
+   */
+  public var lenient: Boolean = false
 
   private var deferredName: String? = null
 
   public var serializeNulls: Boolean = true
+
+  init {
+    push(EMPTY_DOCUMENT)
+  }
 
   /**
    * Sets the indentation string to be repeated for each level of indentation
@@ -127,19 +132,18 @@ public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, Array
     }
   }
 
-  /**
-   * Configure this writer to relax its syntax rules. By default, this writer
-   * only emits well-formed JSON as specified by [RFC 4627](http://www.ietf.org/rfc/rfc4627.txt).
-   */
-  public fun setLenient(lenient: Boolean) {
-    this.lenient = lenient
+  override fun mark(name: String?) {
+    out.mark()
+    markedStackSize = stackSize
+
+    if (name != null) {
+      this.name(name)
+    }
   }
 
-  /**
-   * Returns true if this writer has relaxed syntax rules.
-   */
-  public fun isLenient(): Boolean {
-    return lenient
+  override fun reset() {
+    out.reset()
+    stackSize = markedStackSize
   }
 
   /**
@@ -238,13 +242,6 @@ public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, Array
     stack[stackSize - 1] = topOfStack
   }
 
-  /**
-   * Encodes the property name.
-
-   * @param name the name of the forthcoming value. May not be null.
-  * *
-   * @return this writer.
-   */
   override fun name(name: String) {
     if (deferredName != null) {
       throw IllegalStateException()

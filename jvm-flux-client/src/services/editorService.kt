@@ -79,7 +79,7 @@ trait EditorServiceBase : EditorService {
   override final fun navigate(projectName: String, resourcePath: String, offset: Int, result: Result) {
     result.write {
       if (!computeNavigation(projectName, resourcePath, offset)) {
-        "error"("not found")
+        "error"(404)
       }
     }
   }

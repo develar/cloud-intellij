@@ -125,9 +125,15 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
 
   inner class RequestConsumer : DefaultConsumer(channel) {
     override fun handleDelivery(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: ByteArray) {
+      val requeueOnReject = !envelope.isRedeliver()
       try {
-        if (properties.getHeaders().get("x-death") != null) {
-          throw UnsupportedOperationException();
+        val replyTo = properties.getReplyTo()!!
+        val messageId = properties.getCorrelationId()
+        val xDeath = properties.getHeaders().get("x-death")
+        if (xDeath != null) {
+          channel.basicAck(envelope.getDeliveryTag(), false)
+          channel.basicPublish(exchangeCommands, replyTo, BasicProperties.Builder().appId(queue).correlationId(messageId).build(), "{\"error\": 500}".toByteArray())
+          return
         }
 
         // we must not answer to yourself - we ask message broker to requeue request
@@ -137,7 +143,7 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
           return
         }
 
-        reply(envelope.getRoutingKey(), properties.getType()!!, body, RabbitMqResult(properties.getReplyTo()!!, properties.getCorrelationId(), envelope.getDeliveryTag()))
+        reply(envelope.getRoutingKey(), properties.getType()!!, body, RabbitMqResult(replyTo, messageId, envelope.getDeliveryTag(), requeueOnReject))
       }
       catch (e: Throwable) {
         // RabbitMQ also handle consumer exceptions and we can provide our own implementation of com.rabbitmq.client.ExceptionHandler,
@@ -146,13 +152,13 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
           LOG.error(e.getMessage(), e)
         }
         finally {
-          channel.basicReject(envelope.getDeliveryTag(), true)
+          channel.basicReject(envelope.getDeliveryTag(), requeueOnReject)
         }
       }
     }
   }
 
-  inner class RabbitMqResult(private val replyTo: String, private val messageId: String, private val deliveryTag: Long) : Result {
+  inner class RabbitMqResult(private val replyTo: String, private val messageId: String, private val deliveryTag: Long, private val requeueOnReject: Boolean) : Result {
     override fun write(byteArray: ByteArray) {
       channel.basicAck(deliveryTag, false)
       channel.basicPublish(exchangeCommands, replyTo, BasicProperties.Builder().appId(queue).correlationId(messageId).build(), byteArray)
@@ -163,7 +169,7 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
         LOG.warn("$messageId rejected, reason: $reason")
       }
       finally {
-        channel.basicReject(deliveryTag, true)
+        channel.basicReject(deliveryTag, requeueOnReject)
       }
     }
 
@@ -172,7 +178,7 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
         LOG.error("$messageId rejected, ${error.getMessage()}", error)
       }
       finally {
-        channel.basicReject(deliveryTag, true)
+        channel.basicReject(deliveryTag, requeueOnReject)
       }
     }
   }

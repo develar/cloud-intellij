@@ -19,7 +19,7 @@ class IdeaEditorService() : IdeaContentAssistService {
       try {
         val document = project?.findFile(resourcePath)?.getDocument()
         if (document == null) {
-          "error"("not found")
+          "error"(404)
         }
         else {
           computeProblems(document, project!!, null, null)
