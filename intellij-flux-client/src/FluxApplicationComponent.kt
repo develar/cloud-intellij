@@ -8,28 +8,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Time
 
-inline fun writeAction(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) task: () -> Unit): Unit {
-  ApplicationManager.getApplication().invokeLater(Runnable {
-    val token = WriteAction.start()
-    try {
-      task()
-    }
-    finally {
-      token.finish()
-    }
-  })
-}
-
-inline fun readAction(task: () -> Unit): Unit {
-  val token = ReadAction.start()
-  try {
-    task()
-  }
-  finally {
-    token.finish()
-  }
-}
-
 class FluxApplicationComponent : ApplicationComponent {
   private var fluxService: IdeaFluxServiceManager? = null
 

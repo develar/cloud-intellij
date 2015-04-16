@@ -1,5 +1,6 @@
 package org.eclipse.flux.client
 
+import org.jetbrains.json.ArrayMemberWriter
 import org.jetbrains.json.JsonWriterEx
 import org.jetbrains.json.MapMemberWriter
 import org.jetbrains.util.concurrency.Promise
@@ -52,7 +53,22 @@ public trait Result {
     write(bytes)
   }
 
-  fun write(byteArray: ByteArray)
+  inline final fun array(f: ArrayMemberWriter.() -> Unit) {
+    val bytes: ByteArray
+    try {
+      val writer = JsonWriterEx()
+      writer.array(f)
+      bytes = writer.toByteArray()
+    }
+    catch (e: Throwable) {
+      reject(e)
+      return
+    }
+
+    write(bytes)
+  }
+
+  fun write(bytes: ByteArray)
 
   fun reject(error: Throwable)
 
@@ -86,13 +102,13 @@ public trait MessageConnector {
   public fun addService(service: Service)
 
   inline
-  public final fun on(topic: Topic, inlineOptions(InlineOption.ONLY_LOCAL_RETURN) handler: (message: Map<String, Any>) -> Unit) {
+  public final fun on(topic: Topic, inlineOptions(InlineOption.ONLY_LOCAL_RETURN) handler: (message: ByteArray) -> Unit) {
     replyOn(topic, { replyTo, correlationId, message ->
       handler(message)
     })
   }
 
-  public fun replyOn(topic: Topic, handler: (replyTo: String, correlationId: String, message: Map<String, Any>) -> Unit)
+  public fun replyOn(topic: Topic, handler: (replyTo: String, correlationId: String, message: ByteArray) -> Unit)
 
   /**
    * Timeout (in milliseconds) for completing all the close-relate operations, use -1 for infinity
@@ -109,7 +125,7 @@ public trait MessageConnector {
     notify(topic, writer.toByteArray())
   }
 
-  public inline final fun request(method: Service.Method, f: MapMemberWriter.() -> Unit): Promise<Map<String, Any>> {
+  public inline final fun request(method: Service.Method, f: MapMemberWriter.() -> Unit): Promise<ByteArray> {
     val writer = JsonWriterEx()
     writer.map {
       f()
@@ -117,9 +133,9 @@ public trait MessageConnector {
     return request(method, writer.toByteArray())
   }
 
-  public fun notify(topic: Topic, byteArray: ByteArray)
+  public fun notify(topic: Topic, message: ByteArray)
 
-  public fun request(method: Service.Method, byteArray: ByteArray): Promise<Map<String, Any>>
+  public fun request(method: Service.Method, message: ByteArray): Promise<ByteArray>
 
   public inline final fun replyToEvent(replyTo: String, correlationId: String, f: MapMemberWriter.() -> Unit) {
     val writer = JsonWriterEx()

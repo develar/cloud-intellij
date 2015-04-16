@@ -1,6 +1,7 @@
 package org.intellij.flux
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -12,7 +13,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.psi.PsiDocumentManager
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.flux.client.EditorTopics
 import org.eclipse.flux.client.MessageConnector
@@ -63,7 +63,7 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
     for (liveUnit in liveUnits) {
       [suppress("NAME_SHADOWING")]
       val projectName = liveUnit.get("project") as String
-      val resource = liveUnit.get("resource") as String
+      val resource = liveUnit.get("path") as String
       val hash = liveUnit.get("savePointHash") as String
 
 //      started(replyTo, correlationId, projectName, resource, hash)
@@ -94,30 +94,42 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
     }
   }
 
-  override fun changed(projectName: String, resourcePath: String, offset: Int, removeCount: Int, newText: String?) {
+  override fun changed(projectName: String, resourcePath: String, offset: Int, removeCount: Int, newFragment: String?) {
     val project = findReferencedProject(projectName)
     val referencedFile = if (project == null) null else findReferencedFile(resourcePath, project)
     if (referencedFile == null) {
       return
     }
 
-    writeAction {
-      val document = referencedFile.getDocument()
-      if (document != null) {
-        CommandProcessor.getInstance().executeCommand(project, {
+    val document = referencedFile.getDocument()
+    if (document == null) {
+      return
+    }
+
+    ApplicationManager.getApplication().invokeLater({
+      CommandProcessor.getInstance().executeCommand(project!!, {
+        val token = WriteAction.start()
+        try {
           document.putUserData<Boolean>(CHANGE_FLAG, java.lang.Boolean.TRUE)
           try {
-            document.replaceString(offset, offset + removeCount, newText ?: "")
+            document.replaceString(offset, offset + removeCount, newFragment ?: "")
           }
           finally {
             document.putUserData<Boolean>(CHANGE_FLAG, null)
           }
-        }, "Edit", null)
-      }
-    }
+        }
+        finally {
+          token.finish()
+        }
+
+        messageConnector.notify(EditorTopics.metadataChanged) {
+          computeProblems(document, project, projectName, resourcePath)
+        }
+      }, "Edit", null)
+    }, ModalityState.any())
   }
 
-  override fun started(replyTo: String, correlationId: String, projectName: String, resourcePath: String, requestorHash: String) {
+  override fun started(replyTo: String, correlationId: String, projectName: String, resourcePath: String, requestorHash: String?) {
     val content: CharSequence
     val accessToken = ReadAction.start()
     val document: Document?
@@ -141,12 +153,5 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
     }
 
     sendStartedResponse(replyTo, correlationId, projectName, resourcePath, hash, content)
-
-//    try {
-//      errorAnalyzerService.sendProblems(document!!, project!!, projectName, resourcePath, EditorTopics.metadataChanged)
-//    }
-//    catch (e: Throwable) {
-//      LOG.error(e)
-//    }
   }
 }

@@ -54,15 +54,26 @@ trait MapMemberWriter : PrimitiveWriter {
   public inline final fun string(name: String, f: () -> CharSequence?) {
     charSequence(name, f())
   }
+
+  public inline final fun String.invoke(f: () -> CharSequence?) {
+    charSequence(this, f())
+  }
 }
 
 trait ArrayMemberWriter : MessageWriter {
+  fun string(value: CharSequence)
+
   public inline final fun map(f: MapMemberWriter.() -> Unit) {
     _map(null, f)
   }
 
   public inline final fun array(f: ArrayMemberWriter.() -> Unit) {
     _array(null, f)
+  }
+
+
+  public final fun CharSequence.plus() {
+    string(this)
   }
 }
 

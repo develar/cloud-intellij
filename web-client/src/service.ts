@@ -24,9 +24,23 @@ export class ResourceService<R> extends Service<R> {
   }
 
   public static get = new ResourceService<GetResourceResponse>("get")
+
+  public static contentTypes = new ResourceService<Array<ContentTypeDescriptor>>("contentTypes")
+}
+
+// https://wiki.eclipse.org/Orion/Documentation/Developer_Guide/Plugging_into_the_navigator#orion.core.contenttype
+export interface ContentTypeDescriptor {
+  id: string
+  name: string
+  extension: Array<string>
+
+  extends?: string
+
+  image?: string
 }
 
 export interface GetResourceResponse {
+  // if described as child of directory or requested as "contents: false"
   name?: string
 
   // if directory
@@ -80,13 +94,13 @@ export class EditorTopics {
 // contains project and resource because it is a broadcast response (we subscribe to event, we don't use Promise) - we need to identify resource
 export interface EditorEventResponse {
   project: string
-  resource: string
+  path: string
 }
 
-export interface EditorChanged extends EditorEventResponse {
+export interface DocumentChanged extends EditorEventResponse {
   offset: number
   removedCharCount: number
-  addedCharacters: string
+  newFragment: string
 }
 
 export interface EditorStarted extends EditorEventResponse {

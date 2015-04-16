@@ -21,6 +21,9 @@ import org.eclipse.flux.client.ResourceTopics
 import org.eclipse.flux.client.Result
 import org.eclipse.flux.client.services.ProjectService
 import org.eclipse.flux.client.services.ResourceService
+import org.jetbrains.json.jsonReader
+import org.jetbrains.json.map
+import org.jetbrains.json.nextNullableString
 import java.util.concurrent.ConcurrentLinkedDeque
 
 private val LOG = Logger.getInstance("flux-idea")
@@ -63,16 +66,26 @@ class IdeaRepository(private val messageConnector: MessageConnector, private val
     })
   }
 
-  private fun updateResource(request: Map<String, Any>) {
-    val username = request.get("username") as String
-    val projectName = request.get("project") as String
-    val resourcePath = request.get("resource") as String
-    val updateTimestamp = request.get("timestamp") as Long
-    val updateHash = request.get("hash") as String?
+  private fun updateResource(request: ByteArray) {
+    var project: String? = null
+    var path: String? = null
+    var updateTimestamp = 0L
+    var updateHash: String? = null
+    var content: String? = null
+    request.jsonReader().map {
+      when (nextName()) {
+        "project" -> project = nextString()
+        "path" -> path = nextString()
+        "timestamp" -> updateTimestamp = nextLong()
+        "hash" -> updateHash = nextNullableString()
+        "content" -> content = nextString()
+        else -> skipValue()
+      }
+    }
 
     // ConnectedProject connectedProject = this.syncedProjects.get(projectName);
     if (this.username == username /*&& connectedProject != null*/) {
-      val resource = findReferencedFile(resourcePath, projectName)
+      val resource = findReferencedFile(path!!, project!!)
       var stored = false
 
       if (resource != null) {
@@ -89,8 +102,7 @@ class IdeaRepository(private val messageConnector: MessageConnector, private val
           val localTimestamp = if (cachedDocument != null) cachedDocument.getModificationStamp() else resource.getModificationStamp()
 
           if (!Comparing.equal(localHash, updateHash) && localTimestamp < updateTimestamp) {
-            val newResourceContent = request.get("content") as String
-
+            val newResourceContent = content!!
             if (cachedDocument != null) {
               cachedDocument.setText(newResourceContent)
             }
@@ -102,19 +114,19 @@ class IdeaRepository(private val messageConnector: MessageConnector, private val
         }
       }
       else {
-        val newResourceContent = request.get("content") as String
-        val i = resourcePath.lastIndexOf('/')
-        val resourceDir = findReferencedFile(resourcePath.substring(0, i), projectName)
-        val newFileName = resourcePath.substring(i + 1)
+        val newResourceContent = content
+        val i = path!!.lastIndexOf('/')
+        val resourceDir = findReferencedFile(path!!.substring(0, i), project!!)
+        val newFileName = path!!.substring(i + 1)
         if (resourceDir != null) {
-          VfsUtil.saveText(resourceDir.createChildData(this, newFileName), newResourceContent)
+          VfsUtil.saveText(resourceDir.createChildData(this, newFileName), newResourceContent!!)
         }
       }
 
       if (stored) {
         messageConnector.notify(ResourceTopics.saved) {
-          "project"(projectName)
-          "resource"(resourcePath)
+          "project"(project)
+          "path"(path)
           "timestamp"(updateTimestamp)
           "hash"(updateHash)
         }
@@ -122,7 +134,7 @@ class IdeaRepository(private val messageConnector: MessageConnector, private val
     }
   }
 
-  public fun createResource(request: Map<String, Any>) {
+  public fun createResource(request: ByteArray) {
     val a = 1
     /*try {
             final String username = request.getString("username");
@@ -169,7 +181,7 @@ class IdeaRepository(private val messageConnector: MessageConnector, private val
         }*/
   }
 
-  public fun deleteResource(request: Map<String, Any>) {
+  public fun deleteResource(request: ByteArray) {
     val a = 1
     /*try {
             final String username = request.getString("username");

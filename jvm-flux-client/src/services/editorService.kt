@@ -1,6 +1,5 @@
 package org.eclipse.flux.client.services
 
-import com.google.gson.stream.JsonReader
 import org.eclipse.flux.client.Result
 import org.eclipse.flux.client.Service
 import org.jetbrains.json.ArrayMemberWriter
@@ -27,7 +26,7 @@ trait EditorService : Service {
         request.jsonReader().map {
           when (nextName()) {
             "project" -> project = nextString()
-            "resource" -> resource = nextString()
+            "path" -> resource = nextString()
             "offset" -> offset = nextInt()
             else -> skipValue()
           }

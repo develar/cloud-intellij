@@ -1,25 +1,16 @@
 package org.intellij.flux
 
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ProperTextRange
 import com.intellij.psi.PsiDocumentManager
+import org.eclipse.flux.client.EditorTopics
 import org.eclipse.flux.client.MessageConnector
-import org.eclipse.flux.client.Topic
 import org.jetbrains.json.ArrayMemberWriter
 import org.jetbrains.json.MapMemberWriter
-
-fun MessageConnector.sendProblems(document: Document, project: Project, projectName: String, resourcePath: String, topic: Topic) {
-  notify(topic) {
-    computeProblems(document, project, projectName, resourcePath)
-  }
-}
 
 /**
  * We should write project and resourcePath only if it is broadcast event response
@@ -34,14 +25,15 @@ fun MapMemberWriter.computeProblems(document: Document, project: Project, projec
 
     if (projectName != null) {
       "project"(projectName)
-      "resource"(resourcePath)
+      "path"(resourcePath)
     }
 
-    val pass = GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(), false, ProperTextRange(0, document.getTextLength()), null, HighlightInfoProcessor.getEmpty())
-    pass.collectInformation(DaemonProgressIndicator())
-
     array("problems") {
-      writeInfos(pass.getInfos())
+      // todo check is analyzing finished
+      DaemonCodeAnalyzerEx.processHighlights(document, project, null, 0, document.getTextLength()) {
+        writeInfos(it)
+        true
+      }
     }
   }
   finally {
@@ -49,20 +41,18 @@ fun MapMemberWriter.computeProblems(document: Document, project: Project, projec
   }
 }
 
-private fun ArrayMemberWriter.writeInfos(markers: List<HighlightInfo>) {
-  for (m in markers) {
-    if (m.getDescription() == null) {
-      continue
-    }
+private fun ArrayMemberWriter.writeInfos(marker: HighlightInfo) {
+  if (marker.getDescription() == null) {
+    return
+  }
 
-    map {
-      "description"(m.getDescription())
-      // default severity "error"
-      if (m.getSeverity() != HighlightSeverity.ERROR) {
-        "severity"("warning")
-      }
-      "start"(m.getStartOffset())
-      "end"(m.getEndOffset())
+  map {
+    "description"(marker.getDescription())
+    // default severity "error"
+    if (marker.getSeverity() != HighlightSeverity.ERROR) {
+      "severity"("warning")
     }
+    "start"(marker.getStartOffset())
+    "end"(marker.getEndOffset())
   }
 }

@@ -16,14 +16,14 @@ trait ResourceService : Service {
 
     override final val name: String
       get() = name()
-
-    get
   }
 
   override val name: String
     get() = "resource"
 
   public fun get(projectName: String, path: String?, requestorHash: String?, includeContents: Boolean, result: Result)
+
+  public fun contentTypes(result: Result)
 
   override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {
@@ -44,9 +44,10 @@ trait ResourceService : Service {
 
         get(project!!, path, hash, contents, result)
       }
-      else -> {
-        noMethod(methodName, result)
+      "contentTypes" -> {
+        contentTypes(result)
       }
+      else -> noMethod(methodName, result)
     }
   }
 }
@@ -64,21 +65,21 @@ trait RenameService : Service {
     when (methodName) {
       "renameInFile" -> {
         var project: String? = null
-        var resource: String? = null
+        var path: String? = null
         var offset: Int = -1
         val reader = JsonReader(request.inputStream.reader())
         reader.beginObject()
         while (reader.hasNext()) {
           when (reader.nextName()) {
             "project" -> project = reader.nextString()
-            "resource" -> resource = reader.nextString()
+            "path" -> path = reader.nextString()
             "offset" -> offset = reader.nextInt()
             else -> reader.skipValue()
           }
         }
         reader.endObject()
 
-        renameInFile(project!!, resource!!, offset, result)
+        renameInFile(project!!, path!!, offset, result)
       }
       else -> {
         noMethod(methodName, result)

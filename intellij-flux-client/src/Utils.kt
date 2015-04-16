@@ -1,5 +1,8 @@
 package org.intellij.flux
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -21,6 +24,28 @@ public inline fun StringBuilder.plusAssign(s: Char) {
   append(s)
 }
 
+inline fun writeAction(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) task: () -> Unit): Unit {
+  ApplicationManager.getApplication().invokeLater(Runnable {
+    val token = WriteAction.start()
+    try {
+      task()
+    }
+    finally {
+      token.finish()
+    }
+  })
+}
+
+inline fun readAction(task: () -> Unit): Unit {
+  val token = ReadAction.start()
+  try {
+    task()
+  }
+  finally {
+    token.finish()
+  }
+}
+
 fun CharSequence.toByteBuffer(): ByteBuffer {
   return Charsets.UTF_8.encode(CharBuffer.wrap(this))
 }
@@ -40,7 +65,17 @@ fun findReferencedProject(projectName: String): Project? {
   return null
 }
 
-fun VirtualFile.getDocument() = FileDocumentManager.getInstance().getDocument(this)
+fun VirtualFile.getDocument(): Document? {
+  val document: Document?
+  val token = ReadAction.start()
+  try {
+    document = FileDocumentManager.getInstance().getDocument(this)
+  }
+  finally {
+    token.finish()
+  }
+  return document
+}
 
 fun Project.findFile(resourcePath: String) = findReferencedFile(resourcePath, this)
 

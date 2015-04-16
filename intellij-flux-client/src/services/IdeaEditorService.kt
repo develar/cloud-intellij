@@ -65,7 +65,7 @@ class IdeaEditorService() : IdeaContentAssistService {
 
       var virtualFile = containingFile.getVirtualFile() ?: containingFile.getOriginalFile().getVirtualFile()
       // todo jar
-      string("resource") {
+      string("path") {
         if (virtualFile!!.isInLocalFileSystem()) {
           VfsUtilCore.getRelativePath(virtualFile, project.getBaseDir())
         }

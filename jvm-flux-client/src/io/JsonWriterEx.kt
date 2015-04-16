@@ -68,6 +68,8 @@ public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, Array
 
     val REPLACEMENT_CHARS = arrayOfNulls<String>(128)
 
+    val DEFAULT_INDENT: String?
+
     init {
       for (i in 0..31) {
         REPLACEMENT_CHARS[i] = lang.String.format("\\u%04x", i.toInt())
@@ -79,6 +81,13 @@ public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, Array
       REPLACEMENT_CHARS['\n'.toInt()] = "\\n"
       REPLACEMENT_CHARS['\r'.toInt()] = "\\r"
       REPLACEMENT_CHARS[12] = "\\f"
+
+      val prettyPrint = System.getProperty("json.prettyPrint")
+      DEFAULT_INDENT = when (prettyPrint) {
+        null -> null
+        "" -> "  "
+        else -> if (prettyPrint.toBoolean()) "  " else null
+      }
     }
   }
 
@@ -92,7 +101,7 @@ public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, Array
    * A string containing a full set of spaces for a single level of
    * indentation, or null for no pretty printing.
    */
-  private var indent: String? = null
+  private var indent: String? = DEFAULT_INDENT
 
   /**
    * The name/value separator; either ":" or ": ".
@@ -388,7 +397,7 @@ public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, Array
     stackSize = 0
   }
 
-  private fun string(value: CharSequence) {
+  override fun string(value: CharSequence) {
     out.write('"')
     var last = 0
     val length = value.length()

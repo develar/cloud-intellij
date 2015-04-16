@@ -197,14 +197,23 @@ export interface EditorFileMetadata {
 export interface EditorContext {
   setText(value: string, start?: number, end?: number): Promise<any>
 
-  getText(): Promise<any>
+  getText(): Promise<string>
 
   showMarkers(markers: Array<EditorMarker>): void
 
   getFileMetadata(): Promise<EditorFileMetadata>
 }
 
-export interface ModelChangingEvent {
+export interface ServiceFile {
+  name: string
+  location: string
+}
+
+export interface ServiceEvent {
+  file: ServiceFile
+}
+
+export interface ModelChangingEvent extends ServiceEvent {
   text: string
   start: number
   removedCharCount: number
@@ -214,10 +223,10 @@ export interface ModelChangingEvent {
 }
 
 export interface LiveEditor {
-  // returned result is not used currently by orion, null could be returned
-  startEdit(editorContext: EditorContext, context: any): Promise<any>
+  // Promise<void> must be returned to keep reference to editorContext (otherwise it will be invalidated)
+  startEdit(editorContext: EditorContext, context: any): Promise<void>
 
-  endEdit(resource: string): void
+  endEdit(location: string): void
 
   onModelChanging(event: ModelChangingEvent): void
 }

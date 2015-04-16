@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 public abstract class BaseMessageConnector() : MessageConnector {
   private val services: ConcurrentHashMap<String, Service> = ConcurrentHashMap()
-  private val eventHandlers = ConcurrentHashMap<String, MutableCollection<(replyTo: String, correlationId: String, message: Map<String, Any>) -> Unit>>()
+  private val eventHandlers = ConcurrentHashMap<String, MutableCollection<(replyTo: String, correlationId: String, message: ByteArray) -> Unit>>()
 
   protected fun reply(serviceName: String, methodName: String, message: ByteArray, result: Result) {
     val service = services.get(serviceName)
@@ -25,7 +25,7 @@ public abstract class BaseMessageConnector() : MessageConnector {
     }
   }
 
-  protected fun handleEvent(topic: String, replyTo: String, correlationId: String, message: Map<String, Any>) {
+  protected fun handleEvent(topic: String, replyTo: String, correlationId: String, message: ByteArray) {
     for (handler in eventHandlers.get(topic)) {
       try {
         handler(replyTo, correlationId, message)
@@ -36,10 +36,10 @@ public abstract class BaseMessageConnector() : MessageConnector {
     }
   }
 
-  override fun replyOn(topic: Topic, handler: (replyTo: String, correlationId: String, message: Map<String, Any>) -> Unit) {
+  override fun replyOn(topic: Topic, handler: (replyTo: String, correlationId: String, message: ByteArray) -> Unit) {
     var list = eventHandlers.get(topic)
     if (list == null) {
-      list = ConcurrentLinkedDeque<(replyTo: String, correlationId: String, message: Map<String, Any>) -> Unit>()
+      list = ConcurrentLinkedDeque<(replyTo: String, correlationId: String, message: ByteArray) -> Unit>()
       val existingList = eventHandlers.putIfAbsent(topic.name, list)
       if (existingList != null) {
         list = existingList

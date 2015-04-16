@@ -10,8 +10,8 @@ trait EditorTopics {
      */
     val changed = Topic("editor.changed")
 
-    val allRequested = Topic("editor.allRequested", true)
-    val allRequestedResponse = Topic(allRequested.responseName!!)
+//    val allRequested = Topic("editor.allRequested", true)
+//    val allRequestedResponse = Topic(allRequested.responseName!!)
 
     val metadataChanged = Topic("editor.metadataChanged")
   }
@@ -28,7 +28,7 @@ trait ResourceTopics {
 
 trait ProjectTopics {
   companion object {
-    val connected = Topic("resource.connected")
-    val disconnected = Topic("resource.disconnected")
+    val connected = Topic("project.connected")
+    val disconnected = Topic("project.disconnected")
   }
 }

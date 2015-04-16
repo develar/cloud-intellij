@@ -43,7 +43,7 @@ export class StompConnector {
             if (type != null) {
               if (type == "eventResponse") {
                 // response to broadcast request
-                console.error("Unsupported, todo")
+                this.handleEvent(correlationId, properties, frame)
               }
               else {
                 // request
@@ -74,7 +74,7 @@ export class StompConnector {
                   errorMessage = "Internal Server Error, see server logs"
                 }
                 else {
-                  errorMessage = "Error Code " + error
+                  errorMessage = "Error code " + error
                 }
                 console.error("Message " + correlationId + " rejected: " + errorMessage)
                 promiseCallback.reject(errorMessage)
@@ -90,19 +90,7 @@ export class StompConnector {
         this.client.subscribe(this.exchangeEvents + "/editor.#", (frame) => {
           let properties = frame.headers
           if (properties["app-id"] != this.queue) {
-            let topicName = properties["destination"].substr(this.exchangeEvents.length + 1)
-            let handlers = this.eventHandlers[topicName]
-            if (handlers != null) {
-              var data = JSON.parse(frame.body)
-              for (let handler of handlers) {
-                if (handler.length === 3) {
-                  (<(replyTo: string, correlationId: string, data: any) => void>handler)(properties["reply-to"], properties["correlation-id"], data)
-                }
-                else {
-                  (<(data: any) => void>handler)(data)
-                }
-              }
-            }
+            this.handleEvent(properties["destination"].substr(this.exchangeEvents.length + 1), properties, frame)
           }
         })
 
@@ -112,6 +100,21 @@ export class StompConnector {
         reject(error)
       })
     })
+  }
+
+  private handleEvent(topicName: string, properties: { [key: string]: any; }, frame: Stomp.Frame) {
+    let handlers = this.eventHandlers[topicName]
+    if (handlers != null) {
+      var data = JSON.parse(frame.body)
+      for (let handler of handlers) {
+        if (handler.length === 3) {
+          (<(replyTo: string, correlationId: string, data: any) => void>handler)(properties["reply-to"], properties["correlation-id"], data)
+        }
+        else {
+          (<(data: any) => void>handler)(data)
+        }
+      }
+    }
   }
 
   request<R>(service: service.Service<R>, message: any = {}): Promise<R> {

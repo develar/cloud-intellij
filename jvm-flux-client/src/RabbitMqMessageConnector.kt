@@ -28,7 +28,7 @@ val mqUri: String
  */
 public class RabbitMqMessageConnector(username: String, executor: ExecutorService, rpcQueueName: String, uri: String = mqUri) : BaseMessageConnector() {
   private val connection: Connection
-  private val commandProcessor = CommandProcessor<Map<String, Any>>()
+  private val commandProcessor = CommandProcessor<ByteArray>()
 
   val channel: Channel
   val queue: String
@@ -81,8 +81,6 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
   }
 
   inner class EventOrResponseConsumer : DefaultConsumer(channel) {
-    private val gson = GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create()
-
     override fun handleDelivery(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: ByteArray) {
       try {
         val correlationId = properties.getCorrelationId()
@@ -90,25 +88,19 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
         if (properties.getType() == "eventResponse") {
           // response to broadcast request
           // todo real handler will not use it replyTo and correlationId, should be asserted somehow
-          [suppress("UNCHECKED_CAST")]
-          val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
-          handleEvent(correlationId, "will be ignored in any case", "will be ignored in any case", data)
+          handleEvent(correlationId, "will be ignored in any case", "will be ignored in any case", body)
         }
         else if (correlationId == null || replyTo != null) {
           // event
           if (properties.getAppId() != queue) {
-            [suppress("UNCHECKED_CAST")]
-            val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
-            handleEvent(envelope.getRoutingKey(), replyTo ?: "not a broadcast event", correlationId ?: "not a broadcast event", data)
+            handleEvent(envelope.getRoutingKey(), replyTo ?: "not a broadcast event", correlationId ?: "not a broadcast event", body)
           }
         }
         else {
           // response
-          [suppress("UNCHECKED_CAST")]
-          val data = gson.fromJson(body.inputStream.reader(), javaClass<Any>()) as Map<String, Any>
           val promise = commandProcessor.getPromiseAndRemove(correlationId.toInt())
           try {
-            promise?.setResult(data)
+            promise?.setResult(body)
           }
           catch (e: Throwable) {
             LOG.error(e.getMessage(), e)
@@ -159,9 +151,9 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
   }
 
   inner class RabbitMqResult(private val replyTo: String, private val messageId: String, private val deliveryTag: Long, private val requeueOnReject: Boolean) : Result {
-    override fun write(byteArray: ByteArray) {
+    override fun write(bytes: ByteArray) {
       channel.basicAck(deliveryTag, false)
-      channel.basicPublish(exchangeCommands, replyTo, BasicProperties.Builder().appId(queue).correlationId(messageId).build(), byteArray)
+      channel.basicPublish(exchangeCommands, replyTo, BasicProperties.Builder().appId(queue).correlationId(messageId).build(), bytes)
     }
 
     override fun reject(reason: String) {
@@ -183,14 +175,14 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
     }
   }
 
-  override fun notify(topic: Topic, byteArray: ByteArray) {
+  override fun notify(topic: Topic, message: ByteArray) {
     val propertiesBuilder = BasicProperties.Builder().appId(queue)
     if (topic.responseName != null) {
       propertiesBuilder
               .correlationId(topic.responseName)
               .replyTo(queue)
     }
-    channel.basicPublish(exchangeEvents, topic.name, propertiesBuilder.build(), byteArray)
+    channel.basicPublish(exchangeEvents, topic.name, propertiesBuilder.build(), message)
   }
 
   /**
@@ -200,13 +192,13 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
     channel.basicPublish(exchangeCommands, replyTo, BasicProperties.Builder().appId(queue).correlationId(correlationId).type("eventResponse").build(), byteArray)
   }
 
-  override fun request(method: Service.Method, byteArray: ByteArray): Promise<Map<String, Any>> {
+  override fun request(method: Service.Method, message: ByteArray): Promise<ByteArray> {
     val requestId = commandProcessor.getNextId()
-    val promise = AsyncPromise<Map<String, Any>>()
+    val promise = AsyncPromise<ByteArray>()
     commandProcessor.callbackMap.put(requestId, promise)
     try {
       val properties = BasicProperties.Builder().replyTo(queue).correlationId(requestId.toString()).type(method.name).build()
-      channel.basicPublish(exchangeCommands, method.serviceName, properties, byteArray)
+      channel.basicPublish(exchangeCommands, method.serviceName, properties, message)
     }
     catch (e: Throwable) {
       try {

@@ -1,24 +1,105 @@
 package org.intellij.flux
 
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.scratch.ScratchFileType
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
+import com.intellij.openapi.fileTypes.*
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.DirectoryIndex
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.flux.client.Result
 import org.eclipse.flux.client.services.ResourceService
+import org.intellij.lang.regexp.RegExpFileType
 import org.jetbrains.json.MapMemberWriter
+import java.awt.GraphicsEnvironment
+import java.awt.Transparency
+import javax.activation.MimetypesFileTypeMap
+import javax.imageio.ImageIO
+
+private val FILE_MIMETYPE_MAP = MimetypesFileTypeMap()
 
 class IdeaResourceService : ResourceService {
+  override fun contentTypes(result: Result) {
+    result.array {
+      val byteOut = BufferExposingByteArrayOutputStream()
+      val builder = StringBuilder()
+      for (fileType in FileTypeManager.getInstance().getRegisteredFileTypes()) {
+        if (fileType is PlainTextFileType ||
+                fileType is UnknownFileType ||
+                fileType is ScratchFileType ||
+                fileType is RegExpFileType ||
+                fileType is RegExpFileType ||
+                fileType.getName() == EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT ||
+                fileType.getDefaultExtension().isEmpty()) {
+          continue
+        }
+
+        map {
+          "id"(fun (): CharSequence? {
+            if (fileType is LanguageFileType) {
+              val mimeTypes = fileType.getLanguage().getMimeTypes()
+              if (!mimeTypes.isEmpty()) {
+                val id = mimeTypes[0]
+                return when (id) {
+                  "text/java" -> "text/x-java-source"
+                  "text/dtd" -> "application/xml-dtd"
+                  "text/xml" -> "application/xml"
+                  else -> id
+                }
+              }
+            }
+
+            return FILE_MIMETYPE_MAP.getContentType("f.${fileType.getDefaultExtension()}")
+          })
+
+          "name"(fun (): CharSequence {
+            val name = fileType.getDescription()
+            val postfix = " files"
+            if (name.endsWith(postfix)) {
+              return name.substring(0, name.length() - postfix.length())
+            }
+            return name
+          })
+
+          if (fileType is ProjectFileType || fileType is ModuleFileType) {
+            "extends"("application/xml")
+          }
+
+          val icon = fileType.getIcon()
+          if (icon != null) {
+            val image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(icon.getIconWidth(), icon.getIconHeight(), Transparency.TRANSLUCENT)
+            val g = image.createGraphics()
+            icon.paintIcon(null, g, 0, 0)
+            g.dispose()
+
+            ImageIO.write(image, "png", byteOut)
+            builder.append("data:image/png;base64,").append(Base64.encode(byteOut.getInternalBuffer(), byteOut.size()))
+            "image"(builder)
+
+            builder.setLength(0)
+            byteOut.reset()
+          }
+
+          array("extension") {
+            +fileType.getDefaultExtension()
+          }
+        }
+      }
+    }
+  }
+
   override fun get(projectName: String, path: String?, requestorHash: String?, includeContents: Boolean, result: Result) {
     result.write {
       when {
         path == null -> getRootDirectoryContent(projectName)
-        path.startsWith("classpath:") -> getClasspathResource(path, result)
+        path.startsWith("classpath:") -> getClasspathResource(path)
         else -> getResource(projectName, path, requestorHash, includeContents)
       }
     }
@@ -129,9 +210,12 @@ class IdeaResourceService : ResourceService {
     if (includeContents) {
       "content"(content)
     }
+    else {
+      "name"(file.getName())
+    }
   }
 
-  private fun MapMemberWriter.getClasspathResource(resourcePath: String, result: Result) {
+  private fun MapMemberWriter.getClasspathResource(resourcePath: String) {
     val typeName = resourcePath.substring("classpath:/".length())
     val fileByPath = JarFileSystem.getInstance().findFileByPath(typeName)
     if (fileByPath == null) {

@@ -1,0 +1,13 @@
+{
+  "name": "cloud-intellij",
+  "version": "0.1",
+  "description": "Replaces Github file viewer",
+  "manifest_version": 2,
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*/blob/*"],
+      "run_at": "document_end",
+      "js": ["github.js"]
+    }
+  ]
+}

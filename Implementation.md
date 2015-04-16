@@ -8,3 +8,6 @@ For events server-named exclusive, autodelete, non-durable queue used. Without e
 For RPC non-exclusive, autodelete, non-durable queue used. Not the event queue because RPC should be consumed with explicit acknowledgement. Not an exclusive queue to reduce numbers of queues and, first of all, to clarify that it is a [work queue](https://www.rabbitmq.com/tutorials/tutorial-two-python.html). As a result, RabbitMqMessageConnector requires to specify rpcQueueName, because each client can define own set of bindings. If two clients define different bindings but use the same rpcQueueName, client can receive unsupported message.
 
 IntelliJ IDEA plugin currently uses "idea-client" as a rpcQueueName.
+
+# Eclipse Orion
+Eclipse Orion has very suitable and appropriate API — [AsyncStyler](https://orion.eclipse.org/jsdoc/symbols/orion.editor.AsyncStyler.html) to provide highlighting. IDE implementation could be used directly without intermediate model. Performance — yes, on each typing we ask IDE to provide style information, but in any case we must do it to annotate code.  

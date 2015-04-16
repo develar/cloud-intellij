@@ -7,122 +7,60 @@ import Promise = require("bluebird")
 import orion = require("orion-api")
 
 import fileSystem = require("FileSystem")
+import LiveEditSession = require("LiveEditSession")
 
 import EditorTopics = service.EditorTopics
 import GetResourceResponse = service.GetResourceResponse
 import EditorContext = orion.EditorContext
 import EditorOptions = orion.EditorOptions
 
-class ResourceMetadata {
-  private muteRequests = 0
-
-  public modificationCount = 0
-
-  constructor(public resource: GetResourceResponse) {
-  }
-
-  public _queueMuteRequest() {
-    this.muteRequests++
-  }
-
-  public _dequeueMuteRequest() {
-    this.muteRequests--
-  }
-
-  public canLiveEdit() {
-    return this.muteRequests === 0
-  }
-}
-
 class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
-  private resourceMetadataPromise: Promise<ResourceMetadata> = null
-  private resourceMetadata: ResourceMetadata = null
-  private resourceUri: fileSystem.ResourceUri = null
-  private editorContext: orion.EditorContext = null
+  private liveEditSessions: Array<LiveEditSession> = []
 
   constructor(private stompClient: stompClient.StompConnector, private fileService: fileSystem.FileService) {
     stompClient.on(EditorTopics.startedResponse, (result: service.EditorStartedResponse) => {
-      var resourceMetadata = this.resourceMetadata
-      if (resourceMetadata == null || resourceMetadata.modificationCount > 0) {
-        return
-      }
-
-      var resourceUri = this.resourceUri;
-      if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
-        return
-      }
-
-      resourceMetadata.resource.content = result.content
-      resourceMetadata.resource.hash = result.hash
-      this.setEditorText(resourceMetadata, result.content)
-    })
-
-    stompClient.replyOn(EditorTopics.started, (replyTo: string, correlationId: string, editorStarted: service.EditorStarted) => {
-      if (this.resourceMetadata == null) {
-        return
-      }
-
-      this.editorContext.getText().then((contents) => {
-        var resourceMetadata = this.resourceMetadata
-        if (resourceMetadata == null) {
-          return
+      for (let session of this.liveEditSessions) {
+        var resourceUri = session.resourceUri
+        if (resourceUri.path === result.path || resourceUri.project === result.project) {
+          session.startedResponse(result)
+          break
         }
+      }
+    })
 
-        var resourceUri = this.resourceUri;
-        if (resourceUri == null || resourceUri.path !== editorStarted.resource || resourceUri.project !== editorStarted.project) {
-          return
+    stompClient.replyOn(EditorTopics.started, (replyTo: string, correlationId: string, result: service.EditorStarted) => {
+      for (let session of this.liveEditSessions) {
+        var resourceUri = session.resourceUri
+        if (resourceUri.path === result.path || resourceUri.project === result.project) {
+          session.started(replyTo, correlationId, result)
+          break
         }
+      }
+    })
 
-        var hash = sha1(contents)
-        if (hash === editorStarted.hash) {
-          return
+    this.stompClient.on(EditorTopics.changed, (result: service.DocumentChanged) => {
+      for (let session of this.liveEditSessions) {
+        var resourceUri = session.resourceUri
+        if (resourceUri.path === result.path || resourceUri.project === result.project) {
+          session.changed(result)
+          break
         }
-
-        this.stompClient.replyToEvent(replyTo, correlationId, {
-          project: resourceUri.project,
-          resource: resourceUri.path,
-          hash: hash,
-          content: contents
-        })
-      })
+      }
     })
 
-    this.stompClient.on(EditorTopics.changed, (result: service.EditorChanged) => {
-      var resourceMetadata = this.resourceMetadata
-      if (resourceMetadata == null || this.editorContext == null) {
-        return
-      }
-
-      var resourceUri = this.resourceUri
-      if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
-        return
-      }
-
-      this.setEditorText(resourceMetadata, result.addedCharacters, result.offset, result.offset + result.removedCharCount)
-    })
-
-    this.stompClient.on(EditorTopics.metadataChanged, (result: service.EditorMetadataChanged) => {
-      var resourceMetadata = this.resourceMetadata
-      if (resourceMetadata == null || this.editorContext == null) {
-        return
-      }
-
-      var resourceUri = this.resourceUri
-      if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
-        return
-      }
-
-      this.editorContext.showMarkers(result.markers)
-    })
-  }
-
-  private setEditorText(resourceMetadata: ResourceMetadata, content: string, start?: number, end?: number) {
-    resourceMetadata.modificationCount++
-    resourceMetadata._queueMuteRequest()
-    var handler = () => {
-      resourceMetadata._dequeueMuteRequest()
-    }
-    this.editorContext.setText(content, start, end).then(handler, handler)
+    //this.stompClient.on(EditorTopics.metadataChanged, (result: service.EditorMetadataChanged) => {
+    //  var resourceMetadata = this.resourceMetadata
+    //  if (resourceMetadata == null || this.editorContext == null) {
+    //    return
+    //  }
+    //
+    //  var resourceUri = this.resourceUri
+    //  if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
+    //    return
+    //  }
+    //
+    //  this.editorContext.showMarkers(result.markers)
+    //})
   }
 
   _createSocket() {
@@ -172,43 +110,14 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
     //});
   }
 
-  private getResourceData(): Promise<ResourceMetadata> {
-    if (this.resourceMetadataPromise != null) {
-      return this.resourceMetadataPromise
-    }
-    else if (this.resourceUri != null) {
-      return this.resourceMetadataPromise = this.fileService.getResourceByUri(this.resourceUri)
-        .then((data: GetResourceResponse) => {
-                this.resourceMetadata = new ResourceMetadata(data)
-                return (this.resourceMetadata = new ResourceMetadata(data))
-              })
-        .cancellable()
-    }
-    else {
-      return Promise.reject("No resource URL")
-    }
-  }
-
   onModelChanging(event: orion.ModelChangingEvent): void {
-    console.log(JSON.stringify(event))
-
-    if (this.resourceUri == null) {
-      console.log("onModelChanging called before startEdit")
-      return
-    }
-
-    this.getResourceData().then((resourceMetadata: ResourceMetadata) => {
-      if (resourceMetadata.canLiveEdit()) {
-        var resourceUri = this.resourceUri
-        this.stompClient.notify(service.EditorTopics.changed, <service.EditorChanged>{
-          project: resourceUri.project,
-          resource: resourceUri.path,
-          offset: event.start,
-          removedCharCount: event.removedCharCount,
-          addedCharacters: event.text
-        })
+    var resourceUri = this.fileService.toResourceUri(event.file.location)
+    for (let session of this.liveEditSessions) {
+      if (session.resourceUri.equals(resourceUri)) {
+        session.modelChanging(event)
+        break
       }
-    })
+    }
   }
 
   computeContentAssist(editorContext: EditorContext, options: orion.ContentAssistOptions): Promise<Array<any>> {
@@ -225,7 +134,7 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
       })
       .then((data: any) => {
         var list = data.list
-        for (var proposal of list) {
+        for (let proposal of list) {
           var name: string
           var description: string
           if (proposal.description != null && proposal.description.segments != null) {
@@ -252,77 +161,43 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
     return this.stompClient.request<orion.Problems>(service.EditorService.problems, this.fileService.toResourceUri(options.title))
   }
 
-  startEdit(editorContext: orion.EditorContext, options: any): Promise<any> {
-    var location: string = options == null ? null : (<any>editorContext).title
-    var resourceUri = this.fileService.toResourceUri(location)
-    if (resourceUri.equals(this.resourceUri)) {
-      return
-    }
-
-    if (this.resourceMetadataPromise != null) {
-      this.resourceMetadataPromise.cancel()
-    }
-
-    this.resourceUri = resourceUri
-    this.resourceMetadata = null
-    this.editorContext = editorContext
-    this.resourceMetadataPromise = new Promise((resolve: (result: ResourceMetadata) => void, reject: (error: any) => void) => {
-      this.fileService.getResourceByUri(resourceUri).done((result: GetResourceResponse) => {
-        if (resourceUri !== this.resourceUri) {
-          reject("outdated")
-          return
-        }
-
-        this.resourceMetadata = new ResourceMetadata(result)
-        resolve(this.resourceMetadata)
-        this.stompClient.notify(service.EditorTopics.started, {
-          project: resourceUri.project,
-          resource: resourceUri.path,
-          hash: result.hash
-        })
-      }, reject)
-    }).cancellable()
-    return null
-  }
-
-  endEdit(resource: string): void {
-    this.resourceMetadataPromise = null
-    this.resourceUri = null
-    this.editorContext = null
-    this.resourceMetadata = null
-  }
-
-  //computeHoverInfo(editorContext: any, ctxt: any) {
-  //  return this.getResourceData()
-  //    .then((resourceMetadata: any) => {
-  //      this.stompClient.request(service.EditorService.javadoc, {
-  //        'project': resourceMetadata.project,
-  //        'resource': resourceMetadata.resource,
-  //        'offset': ctxt.offset,
-  //        'length': 0
-  //      }).done((data: any) => {
-  //        if (data.javadoc != null) {
-  //          return {type: 'html', content: data.javadoc.javadoc}
-  //        }
-  //        else {
-  //          return false
-  //        }
-  //      })
-  //    })
-  //}
-
-  public applyQuickfix(editorContext: any, context: any) {
-    return this.getResourceData()
-      .then((resourceMetadata: any) => {
-        return this.stompClient.request(service.EditorService.quickfix, {
-          'project': resourceMetadata.project,
-          'resource': resourceMetadata.resource,
-          'id': context.annotation.id,
-          'offset': context.annotation.start,
-          'length': (context.annotation.end - context.annotation.start + 1),
-          'apply-fix': true
+  startEdit(editorContext: orion.EditorContext, options: any): Promise<void> {
+    return editorContext.getFileMetadata()
+      .then((fileMetadata) => {
+        return new Promise<void>((resolve, reject) => {
+          this.liveEditSessions.push(new LiveEditSession(editorContext, this.fileService.toResourceUri(fileMetadata.location), this.stompClient, resolve))
         })
       })
+  }
+
+  endEdit(location: string): void {
+    var uri = this.fileService.toResourceUri(location)
+    for (let i = 0, n = this.liveEditSessions.length; i < n; i++) {
+      var session = this.liveEditSessions[i];
+      if (session.resourceUri.equals(uri)) {
+        try {
+          this.liveEditSessions.splice(i, 1)
+        }
+        finally {
+          session.callMeOnEnd()
+        }
+        break
+      }
+    }
+  }
+
+  public applyQuickfix(editorContext: any, context: any) {
+    //return this.getResourceData()
+    //  .then((resourceMetadata: any) => {
+    //    return this.stompClient.request(service.EditorService.quickfix, {
+    //      'project': resourceMetadata.project,
+    //      'resource': resourceMetadata.resource,
+    //      'id': context.annotation.id,
+    //      'offset': context.annotation.start,
+    //      'length': (context.annotation.end - context.annotation.start + 1),
+    //      'apply-fix': true
+    //    })
+    //  })
   }
 }
 

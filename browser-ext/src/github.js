@@ -1,0 +1,1 @@
+document.querySelector("div.file > div.blob-wrapper").innerHTML = "hello!"

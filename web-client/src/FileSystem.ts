@@ -58,9 +58,6 @@ class VirtualFileSystem {
     return parent
   }
 
-  /**
-   * Orion File API is ugly - we must calculate parents
-   */
   public locationToParent(location: string, isDirectory: boolean = true): Directory {
     // find in the existing data
     var file = this.findFileOrKnownParent(location)
@@ -344,10 +341,7 @@ export class FileService implements orion.FileClient {
   }
 
   public getResourceByUri(uri: ResourceUri): Promise<service.GetResourceResponse> {
-    return this.stompClient.request<service.GetResourceResponse>(ResourceService.get, {
-      project: uri.project,
-      path: uri.path
-    })
+    return this.stompClient.request<service.GetResourceResponse>(ResourceService.get, uri)
   }
 
   write(location: string, contents: any, args: any) {
@@ -376,8 +370,4 @@ export class FileService implements orion.FileClient {
 
 enum ResourceType {
   file, folder
-}
-
-class Saved {
-  constructor(public project: string, public resource: string, public type: ResourceType, hash: string, timestamp: number, content: string, deferred: any) {}
 }
