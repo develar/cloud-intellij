@@ -1,10 +1,12 @@
 import Promise = require("bluebird")
-import stompClient = require("stompClient")
-import fileSystem = require("FileSystem")
 import Editor = require("Editor")
 import IdePreferenceProvider = require("IdePreferenceProvider")
 
 import PluginProvider = require("orion/plugin")
+
+import {
+    FileService,
+    } from "ResourceService"
 
 import {
   EditorService,
@@ -16,6 +18,10 @@ import {
     ContentTypeDescriptor,
     } from "api/resource"
 
+import {
+    StompConnector,
+    } from "stompClient"
+
 const hostname = window.location.hostname
 let mqHost: string
 if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host)) {
@@ -26,7 +32,7 @@ else {
   mqHost = `mq.${hostname}`
 }
 
-const stompConnector = new stompClient.StompConnector()
+const stompConnector = new StompConnector()
 stompConnector.connect(mqHost, "dev", "dev").done(() => {
   const rootLocation = "ide"
   let headers = {
@@ -39,7 +45,7 @@ stompConnector.connect(mqHost, "dev", "dev").done(() => {
   }
   var provider = new PluginProvider(headers)
 
-  var fileService = new fileSystem.FileService(stompConnector, rootLocation);
+  var fileService = new FileService(stompConnector, rootLocation);
   provider.registerService("orion.core.file", fileService, headers)
 
   var editorService = new Editor(stompConnector, fileService)

@@ -5,7 +5,7 @@ import stompClient = require("stompClient")
 import editor = require("api/editor")
 import Promise = require("bluebird")
 
-import fileSystem = require("FileSystem")
+import fileSystem = require("ResourceService")
 import LiveEditSession = require("LiveEditSession")
 
 import {

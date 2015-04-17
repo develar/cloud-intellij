@@ -1,10 +1,7 @@
 "use strict"
 
 import sha1 = require("sha1")
-import stompClient = require("stompClient")
 import Promise = require("bluebird")
-import orion = require("orion-api")
-import fileSystem = require("FileSystem")
 
 import {
   EditorTopics,
@@ -12,6 +9,19 @@ import {
   EditorStarted,
   DocumentChanged,
   } from "api/editor"
+
+import {
+    StompConnector,
+    } from "stompClient"
+
+import {
+    ResourceUri,
+    } from "ResourceService"
+
+import {
+    EditorContext,
+    ModelChangingEvent,
+    } from "orion-api"
 
 class LiveEditSession {
   private muteRequests = 0
@@ -29,7 +39,7 @@ class LiveEditSession {
     return this.muteRequests === 0
   }
 
-  constructor(private editorContext: orion.EditorContext, public resourceUri: fileSystem.ResourceUri, private stompClient: stompClient.StompConnector, public callMeOnEnd: (ignored?: any) => void) {
+  constructor(private editorContext: EditorContext, public resourceUri: ResourceUri, private stompClient: StompConnector, public callMeOnEnd: (ignored?: any) => void) {
     this.stompClient.notify(EditorTopics.started, resourceUri)
   }
 
@@ -61,7 +71,7 @@ class LiveEditSession {
     this.setEditorText(result.newFragment, result.offset, result.offset + result.removedCharCount)
   }
 
-  public modelChanging(event: orion.ModelChangingEvent) {
+  public modelChanging(event: ModelChangingEvent) {
     if (!this.canLiveEdit()) {
       return
     }
