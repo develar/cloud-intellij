@@ -14,8 +14,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.codec.digest.DigestUtils
-import org.eclipse.flux.client.Result
-import org.eclipse.flux.client.services.ResourceService
 import org.intellij.lang.regexp.RegExpFileType
 import org.jetbrains.json.MapMemberWriter
 import java.awt.GraphicsEnvironment

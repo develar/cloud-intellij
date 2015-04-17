@@ -1,7 +1,5 @@
-package org.eclipse.flux.client.services
+package org.intellij.flux
 
-import org.eclipse.flux.client.EditorTopics
-import org.eclipse.flux.client.MessageConnector
 import org.jetbrains.json.map
 import org.jetbrains.json.nextNullableString
 

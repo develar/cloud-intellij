@@ -8,9 +8,6 @@ import com.intellij.openapi.project.ProjectManagerAdapter
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VfsUtil
 import org.apache.commons.codec.digest.DigestUtils
-import org.eclipse.flux.client.MessageConnector
-import org.eclipse.flux.client.ProjectTopics
-import org.eclipse.flux.client.ResourceTopics
 import org.jetbrains.json.map
 import org.jetbrains.json.nextNullableString
 import java.util.concurrent.ConcurrentLinkedDeque

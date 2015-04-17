@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import org.eclipse.flux.client.MessageConnector
 import org.jetbrains.json.ArrayMemberWriter
 import java.awt.Font
 

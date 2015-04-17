@@ -1,4 +1,4 @@
-package org.eclipse.flux.client
+package org.intellij.flux
 
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise

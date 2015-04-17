@@ -1,8 +1,4 @@
-package org.eclipse.flux.client.services
-
-import com.google.gson.stream.JsonReader
-import org.eclipse.flux.client.Result
-import org.eclipse.flux.client.Service
+package org.intellij.flux
 
 trait ProjectService : Service {
   enum class Methods : Service.Method {

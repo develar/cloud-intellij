@@ -1,4 +1,4 @@
-package org.eclipse.flux.client
+package org.intellij.flux
 
 import com.rabbitmq.client.*
 import com.rabbitmq.client.AMQP.BasicProperties

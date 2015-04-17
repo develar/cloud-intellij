@@ -1,8 +1,6 @@
-package org.eclipse.flux.client.services
+package org.intellij.flux
 
 import com.google.gson.stream.JsonReader
-import org.eclipse.flux.client.Result
-import org.eclipse.flux.client.Service
 import org.jetbrains.json.map
 import org.jetbrains.json.nextNullableString
 

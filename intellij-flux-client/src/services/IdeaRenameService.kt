@@ -8,8 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.eclipse.flux.client.Result
-import org.eclipse.flux.client.services.RenameService
 import org.jetbrains.json.MapMemberWriter
 
 class IdeaRenameService() : RenameService {

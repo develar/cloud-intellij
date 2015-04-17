@@ -1,8 +1,6 @@
 package org.intellij.flux
 
 import com.intellij.openapi.project.Project
-import org.eclipse.flux.client.ProjectTopics
-import org.eclipse.flux.client.RabbitMqMessageConnector
 import org.jetbrains.ide.PooledThreadExecutor
 
 // todo change this username property to a preference and add authentication

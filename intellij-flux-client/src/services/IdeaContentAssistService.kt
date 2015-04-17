@@ -15,10 +15,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import org.eclipse.flux.client.services.EditorServiceBase
 import org.jetbrains.json.ArrayMemberWriter
 import org.jetbrains.json.MapMemberWriter
-import org.jetbrains.json.MessageWriter
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 

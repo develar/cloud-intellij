@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiNameIdentifierOwner
-import org.eclipse.flux.client.Result
 import org.jdom.Element
 import org.jetbrains.json.MapMemberWriter
 

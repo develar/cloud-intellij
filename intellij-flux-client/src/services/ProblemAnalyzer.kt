@@ -7,8 +7,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import org.eclipse.flux.client.EditorTopics
-import org.eclipse.flux.client.MessageConnector
 import org.jetbrains.json.ArrayMemberWriter
 import org.jetbrains.json.MapMemberWriter
 

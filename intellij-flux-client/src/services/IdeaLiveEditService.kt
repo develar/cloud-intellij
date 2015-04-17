@@ -14,8 +14,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.codec.digest.DigestUtils
-import org.eclipse.flux.client.MessageConnector
-import org.eclipse.flux.client.services.LiveEditService
 
 private val CHANGE_FLAG = Key<Boolean>("our.change")
 

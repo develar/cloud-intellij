@@ -1,10 +1,24 @@
-package org.eclipse.flux.client.services
+package org.intellij.flux
 
-import org.eclipse.flux.client.Result
-import org.eclipse.flux.client.Service
 import org.jetbrains.json.ArrayMemberWriter
 import org.jetbrains.json.MapMemberWriter
 import org.jetbrains.json.map
+
+trait EditorTopics {
+  companion object {
+    val started = TopicWithResponse("editor.started")
+
+    /**
+     * Delta information about a live change to a resource
+     */
+    val changed = TopicWithResponse("editor.changed")
+
+    //    val allRequested = Topic("editor.allRequested", true)
+    //    val allRequestedResponse = Topic(allRequested.responseName!!)
+
+    val metadataChanged = Topic("editor.metadataChanged")
+  }
+}
 
 trait EditorService : Service {
   override val name: String
