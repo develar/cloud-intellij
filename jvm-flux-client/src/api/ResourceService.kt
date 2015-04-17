@@ -4,6 +4,15 @@ import com.google.gson.stream.JsonReader
 import org.jetbrains.json.map
 import org.jetbrains.json.nextNullableString
 
+trait ResourceTopics {
+    companion object {
+        val created = Topic("resource.created")
+        val changed = Topic("resource.changed")
+        val deleted = Topic("resource.deleted")
+        val saved = Topic("resource.saved")
+    }
+}
+
 trait ResourceService : Service {
   enum class Methods : Service.Method {
     override final val serviceName: String

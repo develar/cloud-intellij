@@ -1,5 +1,12 @@
 package org.intellij.flux
 
+trait ProjectTopics {
+    companion object {
+        val connected = Topic("project.connected")
+        val disconnected = Topic("project.disconnected")
+    }
+}
+
 trait ProjectService : Service {
   enum class Methods : Service.Method {
     override final val serviceName: String
