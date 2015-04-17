@@ -2,10 +2,16 @@
 
 import sha1 = require("sha1")
 import stompClient = require("stompClient")
-import service = require("service")
 import Promise = require("bluebird")
 import orion = require("orion-api")
 import fileSystem = require("FileSystem")
+
+import {
+  EditorTopics,
+  EditorStartedResponse,
+  EditorStarted,
+  DocumentChanged,
+  } from "api/editor"
 
 class LiveEditSession {
   private muteRequests = 0
@@ -24,10 +30,10 @@ class LiveEditSession {
   }
 
   constructor(private editorContext: orion.EditorContext, public resourceUri: fileSystem.ResourceUri, private stompClient: stompClient.StompConnector, public callMeOnEnd: (ignored?: any) => void) {
-    this.stompClient.notify(service.EditorTopics.started, resourceUri)
+    this.stompClient.notify(EditorTopics.started, resourceUri)
   }
 
-  public startedResponse(result: service.EditorStartedResponse) {
+  public startedResponse(result: EditorStartedResponse) {
     if (this.modificationCount > 0) {
       return
     }
@@ -35,7 +41,7 @@ class LiveEditSession {
     this.setEditorText(result.content)
   }
 
-  public externalStarted(replyTo: string, correlationId: string, event: service.EditorStarted) {
+  public externalStarted(replyTo: string, correlationId: string, event: EditorStarted) {
     this.editorContext.getText().then((contents) => {
       var hash = sha1(contents)
       if (hash === event.hash) {
@@ -51,7 +57,7 @@ class LiveEditSession {
     })
   }
 
-  public externallyChanged(result: service.DocumentChanged) {
+  public externallyChanged(result: DocumentChanged) {
     this.setEditorText(result.newFragment, result.offset, result.offset + result.removedCharCount)
   }
 
@@ -63,7 +69,7 @@ class LiveEditSession {
     this.modificationCount++
 
     var resourceUri = this.resourceUri
-    this.stompClient.notify(service.EditorTopics.changed, <service.DocumentChanged>{
+    this.stompClient.notify(EditorTopics.changed, <DocumentChanged>{
       project: resourceUri.project,
       path: resourceUri.path,
       offset: event.start,

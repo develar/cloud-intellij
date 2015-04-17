@@ -3,13 +3,21 @@
 import sha1 = require("sha1")
 import stompClient = require("stompClient")
 import service = require("service")
+import editor = require("api/editor")
 import Promise = require("bluebird")
 import orion = require("orion-api")
 
 import fileSystem = require("FileSystem")
 import LiveEditSession = require("LiveEditSession")
 
-import EditorTopics = service.EditorTopics
+import {
+  EditorTopics,
+  EditorStarted,
+  EditorStartedResponse,
+  DocumentChanged,
+  EditorService
+  } from "api/editor"
+
 import GetResourceResponse = service.GetResourceResponse
 import EditorContext = orion.EditorContext
 import EditorOptions = orion.EditorOptions
@@ -22,7 +30,7 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
   private editSessions: Array<LiveEditSession> = []
 
   constructor(private stompClient: stompClient.StompConnector, private fileService: fileSystem.FileService) {
-    stompClient.on(EditorTopics.started.response, (result: service.EditorStartedResponse) => {
+    stompClient.on(EditorTopics.started.response, (result: EditorStartedResponse) => {
       for (let session of this.editSessions) {
         var resourceUri = session.resourceUri
         if (resourceUri.path === result.path || resourceUri.project === result.project) {
@@ -32,7 +40,7 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
       }
     })
 
-    stompClient.replyOn(EditorTopics.started, (replyTo: string, correlationId: string, result: service.EditorStarted) => {
+    stompClient.replyOn(EditorTopics.started, (replyTo: string, correlationId: string, result: EditorStarted) => {
       for (let session of this.editSessions) {
         var resourceUri = session.resourceUri
         if (resourceUri.path === result.path || resourceUri.project === result.project) {
@@ -42,7 +50,7 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
       }
     })
 
-    this.stompClient.on(EditorTopics.changed, (result: service.DocumentChanged) => {
+    this.stompClient.on(EditorTopics.changed, (result: DocumentChanged) => {
       for (let session of this.editSessions) {
         var resourceUri = session.resourceUri
         if (resourceUri.path === result.path || resourceUri.project === result.project) {
@@ -133,7 +141,7 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
     return editorContext.getFileMetadata()
       .then((fileMetadata) => {
         var resourceUri = this.fileService.toResourceUri(fileMetadata.location)
-        return this.stompClient.request(service.EditorService.contentAssist, {
+        return this.stompClient.request(EditorService.contentAssist, {
           project: resourceUri.project,
           path: resourceUri.path,
           offset: options.offset,
@@ -167,7 +175,7 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
   }
 
   computeProblems(editorContext: EditorContext, options: EditorOptions): Promise<orion.Problems> {
-    return this.stompClient.request<orion.Problems>(service.EditorService.problems, this.fileService.toResourceUri(options.title))
+    return this.stompClient.request<orion.Problems>(EditorService.problems, this.fileService.toResourceUri(options.title))
   }
 
   startEdit(editorContext: orion.EditorContext, options: any): Promise<void> {

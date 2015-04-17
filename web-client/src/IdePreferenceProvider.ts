@@ -1,13 +1,15 @@
 import orion = require("orion-api")
-import service = require("service")
 
+import {
+  EditorStyles
+  } from "api/editor"
 /*
 Caret row - annotationLine.currentLine.backgroundColor
  */
 class IdePreferenceProvider implements orion.PreferenceProvider {
   private editorStyle: any
 
-  constructor(style: service.EditorStyles) {
+  constructor(style: EditorStyles) {
     var defaultFont = style.EDITOR_FONT_NAME
     var defaultFontSize = style.EDITOR_FONT_SIZE + "px"
 

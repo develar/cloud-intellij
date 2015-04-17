@@ -7,6 +7,11 @@ import service = require("service")
 
 import PluginProvider = require("orion/plugin")
 
+import {
+  EditorService,
+  EditorStyles,
+  } from "api/editor"
+
 const hostname = window.location.hostname
 let mqHost: string
 if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host)) {
@@ -67,8 +72,8 @@ stompConnector.connect(mqHost, "dev", "dev").done(() => {
         provider.registerServiceProvider("orion.core.contenttype", {}, {contentTypes: result})
         provider.registerServiceProvider("orion.edit.highlighter", editorService.eventTarget, {type: "highlighter", contentType: result})
       }),
-    stompConnector.request(service.EditorService.styles)
-      .then((result: service.EditorStyles) => {
+    stompConnector.request(EditorService.styles)
+      .then((result: EditorStyles) => {
         provider.registerService("orion.core.preference.provider", new IdePreferenceProvider(result))
       })
   ])
