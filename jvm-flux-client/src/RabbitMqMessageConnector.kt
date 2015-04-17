@@ -1,4 +1,4 @@
-package org.intellij.flux
+package org.jetbrains.flux
 
 import com.rabbitmq.client.*
 import com.rabbitmq.client.AMQP.BasicProperties

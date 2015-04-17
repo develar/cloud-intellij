@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.flux.EditorTopics
+import org.jetbrains.flux.MessageConnector
 import org.jetbrains.json.ArrayMemberWriter
 import java.awt.Font
 
@@ -64,22 +66,25 @@ class HighlighterService(private val project: Project) : Disposable {
   }
 
   // see HTMLTextPainter
-  fun sendHighlighting(document: Document, file: VirtualFile, resourcePath: String, replyTo: String, correlationId: String, offset: Int, length: Int, messageConnector: MessageConnector) {
-    messageConnector.replyToEvent(replyTo, correlationId) {
-      val iterator = getHighlighter(document, file, resourcePath).createIterator(offset)
+  fun sendHighlighting(document: Document, file: VirtualFile, resourcePath: String, replyTo: String, changedStart: Int, changedEnd: Int, messageConnector: MessageConnector) {
+    messageConnector.replyToEvent(replyTo, EditorTopics.styleReady.name) {
+      // we provide style per line, so, we cannot stop at changed end offset, we must compute style for the whole line
+      val maxLine = document.getLineNumber(changedEnd) + 1
+      val iterator = getHighlighter(document, file, resourcePath).createIterator(if (changedStart == 0) 0 else document.getLineStartOffset(document.getLineNumber(changedStart)))
       var prevLine = -1
       map("lineStyles") {
         while (!iterator.atEnd()) {
           val start = iterator.getStart()
-          if (start > length) {
+          val end = iterator.getEnd()
+
+          val startLine = document.getLineNumber(start)
+          if (startLine >= maxLine) {
             break
           }
 
-          val end = iterator.getEnd()
+          val endLine = document.getLineNumber(end)
 
-          val lineStart = document.getLineNumber(start)
-          val lineEnd = document.getLineNumber(end)
-          for (line in lineStart..lineEnd) {
+          for (line in startLine..endLine) {
             if (line != prevLine) {
               if (prevLine != -1) {
                 // end ranges array
@@ -101,7 +106,7 @@ class HighlighterService(private val project: Project) : Disposable {
               // if start less than lineStartOffset, it means that range overlaps several lines and current line is not the first in the overlapped lines
               "start"(if (start < lineStartOffset) 0 else (start - lineStartOffset))
 
-              val effectiveEnd = if (line == lineStart) end else Math.min(end, document.getLineEndOffset(line))
+              val effectiveEnd = if (line == endLine) end else Math.min(end, document.getLineEndOffset(line))
               "end"(effectiveEnd - lineStartOffset)
 
               map("style") {

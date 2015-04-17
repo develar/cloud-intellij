@@ -1,4 +1,4 @@
-package org.intellij.flux
+package org.jetbrains.flux
 
 import org.jetbrains.json.ArrayMemberWriter
 import org.jetbrains.json.MapMemberWriter
@@ -17,6 +17,13 @@ trait EditorTopics {
     //    val allRequestedResponse = Topic(allRequested.responseName!!)
 
     val metadataChanged = Topic("editor.metadataChanged")
+
+    /**
+     * Direct event.
+     * started -> styleReady (styles for the whole content (all lines))
+     * changed -> styleReady (styles for the changed lines)
+     */
+    val styleReady = Topic("editor.styleReady")
   }
 }
 

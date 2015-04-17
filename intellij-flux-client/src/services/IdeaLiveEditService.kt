@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.codec.digest.DigestUtils
+import org.jetbrains.flux.LiveEditService
+import org.jetbrains.flux.MessageConnector
 
 private val CHANGE_FLAG = Key<Boolean>("our.change")
 
@@ -110,7 +112,7 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
           token.finish()
         }
 
-        highlighterService(project).sendHighlighting(document, file, resourcePath, replyTo, correlationId, offset, newFragment?.length() ?: 0, messageConnector)
+        highlighterService(project).sendHighlighting(document, file, resourcePath, replyTo, offset, offset + removeCount, messageConnector)
 
 //        messageConnector.notify(EditorTopics.metadataChanged) {
 //          computeProblems(document, project, projectName, resourcePath)
@@ -153,6 +155,6 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
       }
     }
 
-    highlighterService(project).sendHighlighting(document!!, file!!, resourcePath, replyTo, correlationId, 0, document.getTextLength(), messageConnector)
+    highlighterService(project).sendHighlighting(document!!, file!!, resourcePath, replyTo, 0, document.getTextLength(), messageConnector)
   }
 }

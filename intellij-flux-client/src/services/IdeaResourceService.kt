@@ -15,6 +15,9 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.codec.digest.DigestUtils
 import org.intellij.lang.regexp.RegExpFileType
+import org.jetbrains.flux.Base64
+import org.jetbrains.flux.ResourceService
+import org.jetbrains.flux.Result
 import org.jetbrains.json.MapMemberWriter
 import java.awt.GraphicsEnvironment
 import java.awt.Transparency

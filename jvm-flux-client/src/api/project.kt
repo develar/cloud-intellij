@@ -1,4 +1,4 @@
-package org.intellij.flux
+package org.jetbrains.flux
 
 trait ProjectTopics {
   companion object {

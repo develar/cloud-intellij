@@ -1,4 +1,4 @@
-package org.intellij.flux
+package org.jetbrains.flux
 
 import com.google.gson.stream.JsonReader
 import org.jetbrains.json.map

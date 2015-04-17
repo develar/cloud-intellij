@@ -13,6 +13,8 @@ export class EditorTopics {
   // response on changed sends only designated "main" idea service (currently not implemented - all sends response)
   public static changed = new Topic("editor.changed", true)
 
+  public static styleReady = new Topic("editor.styleReady")
+
   public static metadataChanged = new Topic("editor.metadataChanged")
 }
 

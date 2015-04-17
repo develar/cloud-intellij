@@ -1,4 +1,4 @@
-package org.intellij.flux
+package org.jetbrains.flux
 
 import org.jetbrains.json.map
 import org.jetbrains.json.nextNullableString

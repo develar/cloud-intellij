@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import org.jdom.Element
+import org.jetbrains.flux.Result
 import org.jetbrains.json.MapMemberWriter
 
 class IdeaEditorService() : IdeaContentAssistService {

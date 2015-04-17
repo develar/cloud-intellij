@@ -1,4 +1,4 @@
-package org.intellij.flux
+package org.jetbrains.flux
 
 import org.jetbrains.json.ArrayMemberWriter
 import org.jetbrains.json.JsonWriterEx

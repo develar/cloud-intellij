@@ -1,4 +1,4 @@
-package org.intellij.flux
+package org.jetbrains.flux
 
 class Base64 {
   companion object {

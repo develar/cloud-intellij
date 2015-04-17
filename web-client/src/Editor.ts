@@ -70,7 +70,7 @@ class Editor implements Validator, LiveEditor, ContentAssist {
       }
     })
 
-    this.stompClient.on(EditorTopics.changed.response, (result: any) => {
+    this.stompClient.on(EditorTopics.styleReady, (result: any) => {
       result.type = "orion.edit.highlighter.styleReady"
       this.eventTarget.dispatchEvent(result)
     })
