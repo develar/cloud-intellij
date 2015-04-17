@@ -1,7 +1,7 @@
 import {
     Service,
     Topic,
-    } from "service"
+    } from "api/service"
 
 export class ProjectTopics {
   public static created = new Topic("project.created")

@@ -1,7 +1,7 @@
 import {
     Service,
     Topic,
-    } from "service"
+    } from "api/service"
 
 export class ResourceTopics {
   public static changed = new Topic("resource.changed")

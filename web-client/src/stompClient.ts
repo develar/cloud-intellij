@@ -2,7 +2,7 @@
 
 import Stomp = require("stomp")
 import Promise = require("bluebird")
-import service = require("service")
+import service = require("api/service")
 
 export class StompConnector {
   private client: Stomp.Client

@@ -6,7 +6,7 @@ import {
 import {
     Service,
     Topic,
-    } from "service"
+    } from "api/service"
 
 export class EditorTopics {
   public static started = new Topic("editor.started", true)

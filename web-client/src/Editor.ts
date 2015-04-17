@@ -2,7 +2,6 @@
 
 import sha1 = require("sha1")
 import stompClient = require("stompClient")
-import service = require("service")
 import editor = require("api/editor")
 import Promise = require("bluebird")
 
