@@ -10,4 +10,8 @@
       <implementation-class>org.intellij.flux.FluxApplicationComponent</implementation-class>
     </component>
   </application-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.intellij.flux.HighlighterService"/>
+  </extensions>
 </idea-plugin>

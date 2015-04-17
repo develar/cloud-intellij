@@ -1,5 +1,13 @@
 import Promise = require("bluebird")
 
+export interface PreferenceProvider {
+  get(name: string, force?: boolean): any
+
+  put(name: string, data: any): void
+
+  remove(name: string, key: string): void
+}
+
 // see fileClient.js
 export interface FileClient {
   /**

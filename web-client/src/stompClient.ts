@@ -130,14 +130,14 @@ export class StompConnector {
 
   notify(topic: service.Topic, message: any = {}): void {
     var headers: { [key: string]: any; }
-    if (topic.responseTopic == null) {
+    if (topic.response == null) {
       headers = {"app-id": this.queue};
     }
     else {
       headers = {
         "app-id": this.queue,
         "reply-to": this.queue,
-        "correlation-id": topic.responseTopic
+        "correlation-id": topic.response.name
       }
     }
     this.client.send(this.exchangeEvents + "/" + topic.name, headers, JSON.stringify(message))

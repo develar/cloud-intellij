@@ -4,6 +4,7 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 
 public fun ByteArray.jsonReader(): JsonReader = JsonReader(inputStream.reader())
+public inline fun ByteArray.map(f: JsonReader.() -> Unit): Unit = JsonReader(inputStream.reader()).map(f)
 
 public inline fun JsonReader.map(f: JsonReader.() -> Unit) {
   beginObject()

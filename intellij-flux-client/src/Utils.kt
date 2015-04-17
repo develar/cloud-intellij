@@ -12,9 +12,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.apache.commons.codec.binary.Hex
+import java.awt.Color
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.security.MessageDigest
+
+fun Color.toHex() = java.lang.String.format("#%06X", 0xFFFFFF and this.getRGB())
 
 public inline fun StringBuilder.plusAssign(s: String) {
   append(s)
@@ -34,6 +37,8 @@ inline fun writeAction(inlineOptions(InlineOption.ONLY_LOCAL_RETURN) task: () ->
       token.finish()
     }
   })
+
+
 }
 
 inline fun readAction(task: () -> Unit): Unit {

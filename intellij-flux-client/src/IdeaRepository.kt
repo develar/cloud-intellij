@@ -1,27 +1,16 @@
 package org.intellij.flux
 
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerAdapter
-import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.codec.digest.DigestUtils
 import org.eclipse.flux.client.MessageConnector
 import org.eclipse.flux.client.ProjectTopics
 import org.eclipse.flux.client.ResourceTopics
-import org.eclipse.flux.client.Result
-import org.eclipse.flux.client.services.ProjectService
-import org.eclipse.flux.client.services.ResourceService
-import org.jetbrains.json.jsonReader
 import org.jetbrains.json.map
 import org.jetbrains.json.nextNullableString
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -72,7 +61,7 @@ class IdeaRepository(private val messageConnector: MessageConnector, private val
     var updateTimestamp = 0L
     var updateHash: String? = null
     var content: String? = null
-    request.jsonReader().map {
+    request.map {
       when (nextName()) {
         "project" -> project = nextString()
         "path" -> path = nextString()

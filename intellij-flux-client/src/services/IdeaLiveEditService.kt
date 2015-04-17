@@ -10,11 +10,10 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentAdapter
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.codec.digest.DigestUtils
-import org.eclipse.flux.client.EditorTopics
 import org.eclipse.flux.client.MessageConnector
 import org.eclipse.flux.client.services.LiveEditService
 
@@ -58,20 +57,6 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
     })
   }
 
-  override fun liveEditors(replyTo: String, correlationId: String, projectRegEx: String?, resourceRegEx: String?, liveUnits: List<Map<String, Any>>) {
-    [suppress("UNCHECKED_CAST")]
-    for (liveUnit in liveUnits) {
-      [suppress("NAME_SHADOWING")]
-      val projectName = liveUnit.get("project") as String
-      val resource = liveUnit.get("path") as String
-      val hash = liveUnit.get("savePointHash") as String
-
-//      started(replyTo, correlationId, projectName, resource, hash)
-
-//      startedMessage(projectName, resource, hash)
-    }
-  }
-
   override fun startedResponse(projectName: String, resourcePath: String, savePointHash: String, content: String) {
     val document = findReferencedFile(resourcePath, projectName)?.getDocument()
     if (document == null) {
@@ -94,14 +79,14 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
     }
   }
 
-  override fun changed(projectName: String, resourcePath: String, offset: Int, removeCount: Int, newFragment: String?) {
+  override fun changed(projectName: String, resourcePath: String, offset: Int, removeCount: Int, newFragment: String?, replyTo: String, correlationId: String) {
     val project = findReferencedProject(projectName)
-    val referencedFile = if (project == null) null else findReferencedFile(resourcePath, project)
-    if (referencedFile == null) {
+    val file = project?.findFile(resourcePath)
+    if (file == null) {
       return
     }
 
-    val document = referencedFile.getDocument()
+    val document = file.getDocument()
     if (document == null) {
       return
     }
@@ -112,7 +97,12 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
         try {
           document.putUserData<Boolean>(CHANGE_FLAG, java.lang.Boolean.TRUE)
           try {
-            document.replaceString(offset, offset + removeCount, newFragment ?: "")
+            if (newFragment.isNullOrEmpty()) {
+              document.deleteString(offset, offset + removeCount)
+            }
+            else {
+              document.replaceString(offset, offset + removeCount, newFragment!!)
+            }
           }
           finally {
             document.putUserData<Boolean>(CHANGE_FLAG, null)
@@ -122,36 +112,49 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
           token.finish()
         }
 
-        messageConnector.notify(EditorTopics.metadataChanged) {
-          computeProblems(document, project, projectName, resourcePath)
-        }
+        highlighterService(project).sendHighlighting(document, file, resourcePath, replyTo, correlationId, offset, newFragment?.length() ?: 0, messageConnector)
+
+//        messageConnector.notify(EditorTopics.metadataChanged) {
+//          computeProblems(document, project, projectName, resourcePath)
+//        }
       }, "Edit", null)
     }, ModalityState.any())
   }
 
-  override fun started(replyTo: String, correlationId: String, projectName: String, resourcePath: String, requestorHash: String?) {
-    val content: CharSequence
-    val accessToken = ReadAction.start()
+  /**
+   * If requestorHash specified, so, requestor wants to get actual content if differs.
+   * If not specified, so, requestor has actual content and we don't need to send it in any case.
+   */
+  override fun started(projectName: String, resourcePath: String, requestorHash: String?, replyTo: String, correlationId: String) {
+    val project = findReferencedProject(projectName)
+    if (project == null) {
+      return
+    }
+
+    val content: CharSequence?
     val document: Document?
-    val project: Project?
+    val file: VirtualFile?
+    val accessToken = ReadAction.start()
     try {
-      project = findReferencedProject(projectName)
-      document = project?.findFile(resourcePath)?.getDocument()
+      file = project.findFile(resourcePath)
+      document = file?.getDocument()
       if (document == null) {
         return
       }
 
-      content = document.getImmutableCharSequence()
+      content = if (requestorHash == null) null else document.getImmutableCharSequence()
     }
     finally {
       accessToken.finish()
     }
 
-    val hash = content.sha1()
-    if (hash == requestorHash) {
-      return
+    if (requestorHash != null) {
+      val hash = content!!.sha1()
+      if (hash != requestorHash) {
+        sendStartedResponse(replyTo, correlationId, projectName, resourcePath, hash, content)
+      }
     }
 
-    sendStartedResponse(replyTo, correlationId, projectName, resourcePath, hash, content)
+    highlighterService(project).sendHighlighting(document!!, file!!, resourcePath, replyTo, correlationId, 0, document.getTextLength(), messageConnector)
   }
 }

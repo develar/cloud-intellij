@@ -1,11 +1,11 @@
 <project name="Update Dependencies" default="update">
   <property name="ideaVersion" value="141.588.1"/>
 
-  <condition property="os.tag" value="win.zip">
+  <condition property="os.tag" value="zip">
     <os family="windows"/>
   </condition>
 
-  <condition property="os.tag" value="mac.zip">
+  <condition property="os.tag" value="dmg">
     <os family="mac"/>
   </condition>
 
@@ -30,10 +30,6 @@
     <execute_update_with_id_resolve
         teamcity.server.url="http://buildserver.labs.intellij.net"
         build.locator.request="buildType:bt3498,status:SUCCESS,branch:/idea/${ideaVersion}"/>
-  </target>
-
-  <target name="jb_update_continuous_139" depends="fetch-third-party,fetch-annotations">
-    <execute_update base.url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:ijplatform_IjPlatformMaster_IdeaTrunk_CommunityDist,status:SUCCESS"/>
   </target>
 
   <target name="jb_update_continuous_141" depends="fetch-third-party,fetch-annotations">
@@ -99,7 +95,6 @@
         <filterchain>
           <tokenfilter>
             <filetokenizer/>
-
             <replaceregex pattern="^(.*)ideaIC-([\w\.]+)\.win\.zip(.*)$" replace="\2" flags="s"/>
           </tokenfilter>
         </filterchain>
@@ -120,10 +115,7 @@
         <istrue value="${idea.sdk.fetch.needed}"/>
 
         <then>
-          <delete dir="${ideaSdk}" failonerror="false">
-            <exclude name="config-idea/**"/>
-            <exclude name="system-idea/**"/>
-          </delete>
+          <delete dir="${ideaSdk}" failonerror="false"/>
 
           <mkdir dir="${jps}"/>
 
@@ -149,23 +141,34 @@
               <file file="${jps.extracted.dir}/util.jar"/>
             </resources>
           </copy>
-
-          <get src="${content.base.url}/${idea.archive.name}" dest="dependencies/download/${idea.archive.name}" usetimestamp="true"/>
+          <get src="http://download.jetbrains.com/idea/ideaIU-${ideaVersion}.${os.tag}" dest="dependencies/download/${idea.archive.name}" usetimestamp="true"/>
           <get src="${content.base.url}/sources.zip" dest="dependencies/idea-sdk-sources.zip" usetimestamp="true"/>
         </then>
       </if>
 
       <if>
-        <matches pattern=".+\.win\.zip" string="${idea.archive.name}"/>
+        <matches pattern=".+\.zip" string="${idea.archive.name}"/>
         <then>
           <unzip src="dependencies/download/${idea.archive.name}" dest="${ideaSdk}"/>
         </then>
         <elseif>
-          <matches pattern=".+\.mac\.zip" string="${idea.archive.name}"/>
+          <matches pattern=".+\.dmg" string="${idea.archive.name}"/>
           <then>
-            <unzip src="dependencies/download/${idea.archive.name}" dest="${ideaSdk}">
-              <cutdirsmapper dirs="2"/>
-            </unzip>
+            <exec executable="hdiutil">
+              <arg value="attach"/>
+              <arg value="-readonly"/>
+              <arg value="-mountpoint"/>
+              <arg path="dependencies/download/mount"/>
+              <arg path="dependencies/download/${idea.archive.name}"/>
+            </exec>
+            <exec executable="bash">
+              <arg line="-c 'cp -R dependencies/download/mount/IntelliJ\ IDEA\ 14\ EAP.app/Contents/ ${ideaSdk}'"/>
+            </exec>
+            <exec executable="hdiutil">
+              <arg value="detach"/>
+              <arg path="dependencies/download/mount"/>
+            </exec>
+
             <!-- Java can't manipulate permissions -->
             <exec executable="chmod">
               <arg value="a+x"/>
@@ -196,6 +199,72 @@
       <delete dir="${ideaSdk}/plugins/editorconfig" failonerror="false"/>
       <delete dir="${ideaSdk}/plugins/eclipse" failonerror="false"/>
       <delete dir="${ideaSdk}/plugins/cvsIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/uiDesigner" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/terminal" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/tasks" failonerror="false"/>
+      <delete dir="${ideaSdk}/help" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/AppServersView" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/BatchApplications" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/BeanValidation" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/CDI" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/ClearCaseIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/PerforceIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/maven-ext" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/Jetty" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/Tomcat" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/Glassfish" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/Geronimo" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/jbpm" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/herokuIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/cloudBeesIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/resinIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/cloudFoundryIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/weblogicIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/webSphereIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/JBoss" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/osmorc" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/coverage" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/WebSocket" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/emma" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/dmServer" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/vaadin" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/JSF" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/openShiftIntegration" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/GoogleAppEngine" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/GWTStudio" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/Grails" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/devkit" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/tfsIntegration" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/tasks-time-tracking" failonerror="false"/>
+      <delete failonerror="false" includeemptydirs="true">
+        <fileset dir="${ideaSdk}/plugins" includes="**/Spring*/"/>
+      </delete>
+      <delete failonerror="false" includeemptydirs="true">
+        <fileset dir="${ideaSdk}/plugins" includes="**/Seam*/"/>
+      </delete>
+      <delete dir="${ideaSdk}/plugins/remote-run" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/spy-js" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/restClient" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/restWebServices" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/flex" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/webDeployment" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/zkm" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/zkm" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/uml" failonerror="false"/>
+
+      <!-- remove, we don't use it yet -->
+      <delete dir="${ideaSdk}/plugins/svn4idea" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/hg4idea" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/maven" failonerror="false"/>
     </sequential>
   </macrodef>
 

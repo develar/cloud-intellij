@@ -14,12 +14,16 @@ import GetResourceResponse = service.GetResourceResponse
 import EditorContext = orion.EditorContext
 import EditorOptions = orion.EditorOptions
 
+import EventTarget = require("orion/EventTarget")
+
 class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
-  private liveEditSessions: Array<LiveEditSession> = []
+  public eventTarget = new EventTarget()
+
+  private editSessions: Array<LiveEditSession> = []
 
   constructor(private stompClient: stompClient.StompConnector, private fileService: fileSystem.FileService) {
-    stompClient.on(EditorTopics.startedResponse, (result: service.EditorStartedResponse) => {
-      for (let session of this.liveEditSessions) {
+    stompClient.on(EditorTopics.started.response, (result: service.EditorStartedResponse) => {
+      for (let session of this.editSessions) {
         var resourceUri = session.resourceUri
         if (resourceUri.path === result.path || resourceUri.project === result.project) {
           session.startedResponse(result)
@@ -29,23 +33,28 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
     })
 
     stompClient.replyOn(EditorTopics.started, (replyTo: string, correlationId: string, result: service.EditorStarted) => {
-      for (let session of this.liveEditSessions) {
+      for (let session of this.editSessions) {
         var resourceUri = session.resourceUri
         if (resourceUri.path === result.path || resourceUri.project === result.project) {
-          session.started(replyTo, correlationId, result)
+          session.externalStarted(replyTo, correlationId, result)
           break
         }
       }
     })
 
     this.stompClient.on(EditorTopics.changed, (result: service.DocumentChanged) => {
-      for (let session of this.liveEditSessions) {
+      for (let session of this.editSessions) {
         var resourceUri = session.resourceUri
         if (resourceUri.path === result.path || resourceUri.project === result.project) {
-          session.changed(result)
+          session.externallyChanged(result)
           break
         }
       }
+    })
+
+    this.stompClient.on(EditorTopics.changed.response, (result: any) => {
+      result.type = "orion.edit.highlighter.styleReady"
+      this.eventTarget.dispatchEvent(result)
     })
 
     //this.stompClient.on(EditorTopics.metadataChanged, (result: service.EditorMetadataChanged) => {
@@ -112,7 +121,7 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
 
   onModelChanging(event: orion.ModelChangingEvent): void {
     var resourceUri = this.fileService.toResourceUri(event.file.location)
-    for (let session of this.liveEditSessions) {
+    for (let session of this.editSessions) {
       if (session.resourceUri.equals(resourceUri)) {
         session.modelChanging(event)
         break
@@ -165,18 +174,18 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
     return editorContext.getFileMetadata()
       .then((fileMetadata) => {
         return new Promise<void>((resolve, reject) => {
-          this.liveEditSessions.push(new LiveEditSession(editorContext, this.fileService.toResourceUri(fileMetadata.location), this.stompClient, resolve))
+          this.editSessions.push(new LiveEditSession(editorContext, this.fileService.toResourceUri(fileMetadata.location), this.stompClient, resolve))
         })
       })
   }
 
   endEdit(location: string): void {
     var uri = this.fileService.toResourceUri(location)
-    for (let i = 0, n = this.liveEditSessions.length; i < n; i++) {
-      var session = this.liveEditSessions[i];
+    for (let i = 0, n = this.editSessions.length; i < n; i++) {
+      var session = this.editSessions[i];
       if (session.resourceUri.equals(uri)) {
         try {
-          this.liveEditSessions.splice(i, 1)
+          this.editSessions.splice(i, 1)
         }
         finally {
           session.callMeOnEnd()

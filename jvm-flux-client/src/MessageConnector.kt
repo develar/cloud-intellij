@@ -23,13 +23,17 @@ trait Service {
   }
 }
 
-class Topic(val name: String, responseExpected: Boolean = false) {
-  // broadcast request (liveResourcesRequested -> n liveResources direct messages)
-  val responseName = if (responseExpected) "$name.response" else null
+open class Topic(val name: String) {
+  open val response: Topic? = null
+}
+
+// broadcast request (liveResourcesRequested -> n liveResources direct messages)
+class TopicWithResponse(name: String) : Topic(name) {
+  override val response = Topic("$name.response")
 }
 
 public trait Result {
-  inline final fun write(f: MapMemberWriter.() -> Unit) {
+  inline final fun map(f: MapMemberWriter.() -> Unit) {
     val bytes: ByteArray
     try {
       val writer = JsonWriterEx()
@@ -103,12 +107,12 @@ public trait MessageConnector {
 
   inline
   public final fun on(topic: Topic, inlineOptions(InlineOption.ONLY_LOCAL_RETURN) handler: (message: ByteArray) -> Unit) {
-    replyOn(topic, { replyTo, correlationId, message ->
+    replyOn(topic, { message, replyTo, correlationId ->
       handler(message)
     })
   }
 
-  public fun replyOn(topic: Topic, handler: (replyTo: String, correlationId: String, message: ByteArray) -> Unit)
+  public fun replyOn(topic: Topic, handler: (message: ByteArray, replyTo: String, correlationId: String) -> Unit)
 
   /**
    * Timeout (in milliseconds) for completing all the close-relate operations, use -1 for infinity
@@ -145,5 +149,5 @@ public trait MessageConnector {
     replyToEvent(replyTo, correlationId, writer.toByteArray())
   }
 
-  public fun replyToEvent(replyTo: String, correlationId: String, byteArray: ByteArray)
+  public fun replyToEvent(replyTo: String, correlationId: String, body: ByteArray)
 }

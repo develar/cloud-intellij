@@ -96,7 +96,7 @@ class IdeaResourceService : ResourceService {
   }
 
   override fun get(projectName: String, path: String?, requestorHash: String?, includeContents: Boolean, result: Result) {
-    result.write {
+    result.map {
       when {
         path == null -> getRootDirectoryContent(projectName)
         path.startsWith("classpath:") -> getClasspathResource(path)

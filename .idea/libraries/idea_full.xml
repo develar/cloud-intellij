@@ -10,6 +10,7 @@
       <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/commons-codec-1.8.jar!/" />
       <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/picocontainer.jar!/" />
       <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/extensions.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/jdom.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
@@ -24,6 +25,8 @@
       <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/util/src" />
       <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/analysis-api/src" />
       <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/analysis-impl/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/editor-ui-api/src" />
+      <root url="jar://$PROJECT_DIR$/dependencies/idea-sdk-sources.zip!/platform/editor-ui-ex/src" />
     </SOURCES>
   </library>
 </component>

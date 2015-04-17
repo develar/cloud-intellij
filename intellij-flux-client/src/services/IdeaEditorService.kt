@@ -1,6 +1,8 @@
 package org.intellij.flux
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -9,11 +11,43 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import org.eclipse.flux.client.Result
+import org.jdom.Element
 import org.jetbrains.json.MapMemberWriter
 
 class IdeaEditorService() : IdeaContentAssistService {
+  override fun editorStyles(result: Result) {
+    result.map {
+      val xml = Element("dump")
+      (EditorColorsManager.getInstance().getGlobalScheme() as AbstractColorsScheme).writeExternal(xml)
+      //System.out.println(JDOMUtil.writeElement(xml))
+      for (option in xml.getChildren("option")) {
+        val value = option.getAttributeValue("value")
+        // why it could be null?
+        if (value != null) {
+          val name = option.getAttributeValue("name")
+          if (name == "EDITOR_FONT_SIZE") {
+            name(value.toInt())
+          }
+          else {
+            name(value)
+          }
+        }
+      }
+
+      map("colors") {
+        for (option in xml.getChild("colors").getChildren("option")) {
+          val value = option.getAttributeValue("value")
+          // why it could be null?
+          if (value != null) {
+            option.getAttributeValue("name")("#" + value)
+          }
+        }
+      }
+    }
+  }
+
   override fun computeProblems(projectName: String, resourcePath: String, result: Result) {
-    result.write {
+    result.map {
       val project = findReferencedProject(projectName)
       val accessToken = ReadAction.start()
       try {

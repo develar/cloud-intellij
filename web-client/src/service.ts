@@ -66,30 +66,41 @@ export class EditorService<R> extends Service<R> {
   }
 
   public static quickfix = new EditorService<any>("quickfix")
-  public static javadoc = new EditorService<any>("javadoc")
 
   public static problems = new EditorService<orion.Problems>("problems")
   public static contentAssist = new EditorService<any>("contentAssist")
+
+  public static styles = new EditorService<EditorStyles>("styles")
+}
+
+export interface EditorColors {
+  CARET_ROW_COLOR?: string
+  SELECTION_BACKGROUND?: string
+}
+
+export interface EditorStyles {
+  colors: EditorColors
+
+  EDITOR_FONT_SIZE: number
+  EDITOR_FONT_NAME: string
 }
 
 export class Topic {
-  public responseTopic: string
+  public response: Topic
 
   // responseName could be specified - broadcast request (liveResourcesRequested -> n liveResources direct messages)
   constructor(public name: string, responseExpected: boolean = false) {
-    this.responseTopic = responseExpected ? name + ".response" : null
+    this.response = responseExpected ? new Topic(name + ".response") : null
   }
 }
 
 export class EditorTopics {
   public static started = new Topic("editor.started", true)
-  public static startedResponse = new Topic(EditorTopics.started.responseTopic)
-
-  public static changed = new Topic("editor.changed")
+  // response on changed sends only designated "main" idea service (currently not implemented - all sends response)
+  public static changed = new Topic("editor.changed", true)
 
   public static metadataChanged = new Topic("editor.metadataChanged")
 }
-
 
 // contains project and resource because it is a broadcast response (we subscribe to event, we don't use Promise) - we need to identify resource
 export interface EditorEventResponse {

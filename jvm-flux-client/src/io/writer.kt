@@ -1,14 +1,13 @@
 package org.jetbrains.json
 
 public trait MessageWriter {
-  // these raw methods public only because kotlin bug https://youtrack.jetbrains.com/issue/KT-3029
-  fun name(name: String)
+  public fun name(name: String)
 
-  fun beginArray()
-  fun endArray()
+  public fun beginArray()
+  public fun endArray()
 
-  fun beginObject()
-  fun endObject()
+  public fun beginObject()
+  public fun endObject()
 
   fun mark(name: kotlin.String? = null)
   fun reset()

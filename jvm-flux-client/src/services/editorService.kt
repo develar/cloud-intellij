@@ -4,7 +4,6 @@ import org.eclipse.flux.client.Result
 import org.eclipse.flux.client.Service
 import org.jetbrains.json.ArrayMemberWriter
 import org.jetbrains.json.MapMemberWriter
-import org.jetbrains.json.jsonReader
 import org.jetbrains.json.map
 
 trait EditorService : Service {
@@ -17,13 +16,15 @@ trait EditorService : Service {
 
   public fun computeContentAssist(projectName: String, resourcePath: String, offset: Int, prefix: String, result: Result)
 
+  public fun editorStyles(result: Result)
+
   override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {
       "navigate" -> {
         var project: String? = null
         var resource: String? = null
         var offset: Int = -1
-        request.jsonReader().map {
+        request.map {
           when (nextName()) {
             "project" -> project = nextString()
             "path" -> resource = nextString()
@@ -38,7 +39,7 @@ trait EditorService : Service {
       "problems" -> {
         var project: String? = null
         var path: String? = null
-        request.jsonReader().map {
+        request.map {
           when (nextName()) {
             "project" -> project = nextString()
             "path" -> path = nextString()
@@ -54,7 +55,7 @@ trait EditorService : Service {
         var path: String? = null
         var offset: Int = -1
         var prefix: String? = null
-        request.jsonReader().map {
+        request.map {
           when (nextName()) {
             "project" -> project = nextString()
             "path" -> path = nextString()
@@ -67,16 +68,18 @@ trait EditorService : Service {
         computeContentAssist(project!!, path!!, offset, prefix!!, result)
       }
 
-      else -> {
-        noMethod(methodName, result)
+      "styles" -> {
+        editorStyles(result)
       }
+
+      else -> noMethod(methodName, result)
     }
   }
 }
 
 trait EditorServiceBase : EditorService {
   override final fun navigate(projectName: String, resourcePath: String, offset: Int, result: Result) {
-    result.write {
+    result.map {
       if (!computeNavigation(projectName, resourcePath, offset)) {
         "error"(404)
       }
@@ -84,7 +87,7 @@ trait EditorServiceBase : EditorService {
   }
 
   override final fun computeContentAssist(projectName: String, resourcePath: String, offset: Int, prefix: String, result: Result) {
-    result.write {
+    result.map {
       array("list") {
         computeContentAssist(projectName, resourcePath, offset, prefix)
       }

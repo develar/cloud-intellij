@@ -2,13 +2,12 @@ package org.eclipse.flux.client
 
 trait EditorTopics {
   companion object {
-    val started = Topic("editor.started", true)
-    val startedResponse = Topic(started.responseName!!)
+    val started = TopicWithResponse("editor.started")
 
     /**
      * Delta information about a live change to a resource
      */
-    val changed = Topic("editor.changed")
+    val changed = TopicWithResponse("editor.changed")
 
 //    val allRequested = Topic("editor.allRequested", true)
 //    val allRequestedResponse = Topic(allRequested.responseName!!)

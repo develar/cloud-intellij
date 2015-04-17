@@ -1,6 +1,5 @@
 package org.eclipse.flux.client
 
-import com.google.gson.GsonBuilder
 import com.rabbitmq.client.*
 import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.impl.DefaultExceptionHandler
@@ -177,9 +176,9 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
 
   override fun notify(topic: Topic, message: ByteArray) {
     val propertiesBuilder = BasicProperties.Builder().appId(queue)
-    if (topic.responseName != null) {
+    if (topic.response != null) {
       propertiesBuilder
-              .correlationId(topic.responseName)
+              .correlationId(topic.response!!.name)
               .replyTo(queue)
     }
     channel.basicPublish(exchangeEvents, topic.name, propertiesBuilder.build(), message)
@@ -188,8 +187,8 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
   /**
    * In case of reply to event, we don't need to reject request, so, we don't use Result (RabbitMqResult) class
    */
-  override fun replyToEvent(replyTo: String, correlationId: String, byteArray: ByteArray) {
-    channel.basicPublish(exchangeCommands, replyTo, BasicProperties.Builder().appId(queue).correlationId(correlationId).type("eventResponse").build(), byteArray)
+  override fun replyToEvent(replyTo: String, correlationId: String, body: ByteArray) {
+    channel.basicPublish(exchangeCommands, replyTo, BasicProperties.Builder().appId(queue).correlationId(correlationId).type("eventResponse").build(), body)
   }
 
   override fun request(method: Service.Method, message: ByteArray): Promise<ByteArray> {

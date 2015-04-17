@@ -1,11 +1,8 @@
 package org.eclipse.flux.client.services
 
 import com.google.gson.stream.JsonReader
-import com.google.gson.stream.JsonWriter
 import org.eclipse.flux.client.Result
 import org.eclipse.flux.client.Service
-import org.jetbrains.json.MessageWriter
-import org.jetbrains.json.jsonReader
 import org.jetbrains.json.map
 import org.jetbrains.json.nextNullableString
 
@@ -32,7 +29,7 @@ trait ResourceService : Service {
         var path: String? = null
         var hash: String? = null
         var contents = true
-        request.jsonReader().map {
+        request.map {
           when (nextName()) {
             "project" -> project = nextString()
             "path" -> path = nextNullableString()

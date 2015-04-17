@@ -7,52 +7,38 @@ import Promise = require("bluebird")
 import orion = require("orion-api")
 import fileSystem = require("FileSystem")
 
-class ResourceMetadata {
+class LiveEditSession {
   private muteRequests = 0
-  public modificationCount = 0
+  private modificationCount = 0
 
-  public _queueMuteRequest() {
+  private queueMuteRequest() {
     this.muteRequests++
   }
 
-  public _dequeueMuteRequest() {
+  private dequeueMuteRequest() {
     this.muteRequests--
   }
 
-  public canLiveEdit() {
+  private canLiveEdit() {
     return this.muteRequests === 0
   }
-}
-
-class LiveEditSession {
-  private resourceMetadata: ResourceMetadata = null
 
   constructor(private editorContext: orion.EditorContext, public resourceUri: fileSystem.ResourceUri, private stompClient: stompClient.StompConnector, public callMeOnEnd: (ignored?: any) => void) {
     this.stompClient.notify(service.EditorTopics.started, resourceUri)
   }
 
   public startedResponse(result: service.EditorStartedResponse) {
-    if (this.resourceMetadata == null) {
-      this.resourceMetadata = new ResourceMetadata()
-    }
-
-    var resourceMetadata = this.resourceMetadata
-    if (resourceMetadata.modificationCount > 0) {
+    if (this.modificationCount > 0) {
       return
     }
 
-    this.setEditorText(resourceMetadata, result.content)
+    this.setEditorText(result.content)
   }
 
-  public started(replyTo: string, correlationId: string, result: service.EditorStarted) {
+  public externalStarted(replyTo: string, correlationId: string, event: service.EditorStarted) {
     this.editorContext.getText().then((contents) => {
-      var resourceMetadata = this.resourceMetadata
-      if (resourceMetadata == null) {
-        return
-      }
-
       var hash = sha1(contents)
-      if (hash === result.hash) {
+      if (hash === event.hash) {
         return
       }
 
@@ -65,33 +51,32 @@ class LiveEditSession {
     })
   }
 
-  public changed(result: service.DocumentChanged) {
-    var resourceMetadata = this.resourceMetadata
-    if (resourceMetadata == null) {
+  public externallyChanged(result: service.DocumentChanged) {
+    this.setEditorText(result.newFragment, result.offset, result.offset + result.removedCharCount)
+  }
+
+  public modelChanging(event: orion.ModelChangingEvent) {
+    if (!this.canLiveEdit()) {
       return
     }
 
-    this.setEditorText(resourceMetadata, result.newFragment, result.offset, result.offset + result.removedCharCount)
+    this.modificationCount++
+
+    var resourceUri = this.resourceUri
+    this.stompClient.notify(service.EditorTopics.changed, <service.DocumentChanged>{
+      project: resourceUri.project,
+      path: resourceUri.path,
+      offset: event.start,
+      removedCharCount: event.removedCharCount,
+      newFragment: event.text
+    })
   }
 
-  public  modelChanging(event: orion.ModelChangingEvent) {
-    if (this.resourceMetadata != null && this.resourceMetadata.canLiveEdit()) {
-      var resourceUri = this.resourceUri
-      this.stompClient.notify(service.EditorTopics.changed, <service.DocumentChanged>{
-        project: resourceUri.project,
-        path: resourceUri.path,
-        offset: event.start,
-        removedCharCount: event.removedCharCount,
-        newFragment: event.text
-      })
-    }
-  }
-
-  private setEditorText(resourceMetadata: ResourceMetadata, content: string, start?: number, end?: number) {
-    resourceMetadata.modificationCount++
-    resourceMetadata._queueMuteRequest()
+  private setEditorText(content: string, start?: number, end?: number) {
+    this.modificationCount++
+    this.queueMuteRequest()
     var handler = () => {
-      resourceMetadata._dequeueMuteRequest()
+      this.dequeueMuteRequest()
     }
     this.editorContext.setText(content, start, end).then(handler, handler)
   }
