@@ -5,7 +5,6 @@ import stompClient = require("stompClient")
 import service = require("service")
 import editor = require("api/editor")
 import Promise = require("bluebird")
-import orion = require("orion-api")
 
 import fileSystem = require("FileSystem")
 import LiveEditSession = require("LiveEditSession")
@@ -18,13 +17,25 @@ import {
   EditorService
   } from "api/editor"
 
-import GetResourceResponse = service.GetResourceResponse
-import EditorContext = orion.EditorContext
-import EditorOptions = orion.EditorOptions
+import {
+    GetResourceResponse,
+    } from "api/resource"
+
+import {
+    EditorContext,
+    EditorOptions,
+    Validator,
+    ContentAssist,
+    LiveEditor,
+    Problems,
+    ModelChangingEvent,
+    ContentAssistOptions,
+    } from "orion-api"
+
 
 import EventTarget = require("orion/EventTarget")
 
-class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
+class Editor implements Validator, LiveEditor, ContentAssist {
   public eventTarget = new EventTarget()
 
   private editSessions: Array<LiveEditSession> = []
@@ -127,7 +138,7 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
     //});
   }
 
-  onModelChanging(event: orion.ModelChangingEvent): void {
+  onModelChanging(event: ModelChangingEvent): void {
     var resourceUri = this.fileService.toResourceUri(event.file.location)
     for (let session of this.editSessions) {
       if (session.resourceUri.equals(resourceUri)) {
@@ -137,7 +148,7 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
     }
   }
 
-  computeContentAssist(editorContext: EditorContext, options: orion.ContentAssistOptions): Promise<Array<any>> {
+  computeContentAssist(editorContext: EditorContext, options: ContentAssistOptions): Promise<Array<any>> {
     return editorContext.getFileMetadata()
       .then((fileMetadata) => {
         var resourceUri = this.fileService.toResourceUri(fileMetadata.location)
@@ -174,11 +185,11 @@ class Editor implements orion.Validator, orion.LiveEditor, orion.ContentAssist {
       })
   }
 
-  computeProblems(editorContext: EditorContext, options: EditorOptions): Promise<orion.Problems> {
-    return this.stompClient.request<orion.Problems>(EditorService.problems, this.fileService.toResourceUri(options.title))
+  computeProblems(editorContext: EditorContext, options: EditorOptions): Promise<Problems> {
+    return this.stompClient.request<Problems>(EditorService.problems, this.fileService.toResourceUri(options.title))
   }
 
-  startEdit(editorContext: orion.EditorContext, options: any): Promise<void> {
+  startEdit(editorContext: EditorContext, options: any): Promise<void> {
     return editorContext.getFileMetadata()
       .then((fileMetadata) => {
         return new Promise<void>((resolve, reject) => {

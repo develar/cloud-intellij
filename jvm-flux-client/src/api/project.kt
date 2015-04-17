@@ -1,10 +1,10 @@
 package org.intellij.flux
 
 trait ProjectTopics {
-    companion object {
-        val connected = Topic("project.connected")
-        val disconnected = Topic("project.disconnected")
-    }
+  companion object {
+    val connected = Topic("project.connected")
+    val disconnected = Topic("project.disconnected")
+  }
 }
 
 trait ProjectService : Service {

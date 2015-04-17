@@ -2,18 +2,25 @@
 
 import sha1 = require("sha1")
 import stompClient = require("stompClient")
-import service = require("service")
 import Promise = require("bluebird")
-import orion = require("orion-api")
 
-import ProjectService = service.ProjectService
-import ResourceService = service.ResourceService
-import ResourceTopics = service.ResourceTopics
-import ProjectTopics = service.ProjectTopics
-import ProjectGetResponse = service.ProjectGetResponse
+import {
+    File,
+    Directory,
+    FileClient,
+    } from "orion-api"
 
-import File = orion.File
-import Directory = orion.Directory
+import {
+    ResourceService,
+    ResourceTopics,
+    GetResourceResponse,
+    } from "api/resource"
+
+import {
+    ProjectTopics,
+    ProjectService,
+    ProjectGetAllResult,
+    } from "api/project"
 
 export class ResourceUri {
   constructor(public project: string, public path?: string) {
@@ -80,7 +87,7 @@ class VirtualFileSystem {
     return parent
   }
 
-  public static createChildren(parent: Directory, children: Array<service.GetResourceResponse>): Array<File> {
+  public static createChildren(parent: Directory, children: Array<GetResourceResponse>): Array<File> {
     var n = children.length
     var orionChildren = new Array<File>(n)
     for (var i = 0; i < n; i++) {
@@ -100,7 +107,7 @@ class VirtualFileSystem {
     return orionChildren
   }
 
-  public static createFileFromMetadata(descriptor: service.GetResourceResponse, parent: Directory) {
+  public static createFileFromMetadata(descriptor: GetResourceResponse, parent: Directory) {
     var file = new File(descriptor.name, parent)
     file.Length = descriptor.length
     file.ETag = descriptor.hash
@@ -109,7 +116,7 @@ class VirtualFileSystem {
   }
 }
 
-export class FileService implements orion.FileClient {
+export class FileService implements FileClient {
   private vfs: VirtualFileSystem
   
   constructor(private stompClient: stompClient.StompConnector, private rootLocation: string) {
@@ -126,7 +133,7 @@ export class FileService implements orion.FileClient {
   fetchChildren(location: string): Promise<Array<File>> {
     if (location === this.rootLocation) {
       return this.stompClient.request(ProjectService.getAll)
-        .then((result: service.ProjectGetAllResult) => {
+        .then((result: ProjectGetAllResult) => {
           var children = new Array<File>(result.projects.length)
           for (var i = 0, n = result.projects.length; i < n; i++) {
             var name = result.projects[i].name;
@@ -149,7 +156,7 @@ export class FileService implements orion.FileClient {
 
     const uri = this.toResourceUri(location)
     return this.stompClient.request(ResourceService.get, uri)
-      .then((result: service.GetResourceResponse) => {
+      .then((result: GetResourceResponse) => {
         var children = result.children
         // if project has only one top-level directory - merge it
         if (children.length === 1 && parent.Parents[0] == this.vfs.root) {
@@ -176,9 +183,9 @@ export class FileService implements orion.FileClient {
     }
   }
 
-  private getWorkspace(): Promise<orion.File> {
+  private getWorkspace(): Promise<File> {
     return <Promise<File>>this.stompClient.request(ProjectService.getAll)
-      .then((result: service.ProjectGetAllResult) => {
+      .then((result: ProjectGetAllResult) => {
               var children = new Array<File>(result.projects.length)
               for (var i = 0, n = result.projects.length; i < n; i++) {
                 var name = result.projects[i].name;
@@ -293,7 +300,7 @@ export class FileService implements orion.FileClient {
 
   deleteFile(location: string): Promise<void> {
     var uri = this.toResourceUri(location)
-    this.stompClient.notify(service.ResourceTopics.deleted, uri)
+    this.stompClient.notify(ResourceTopics.deleted, uri)
     // todo prohibit project remove
     return Promise.resolve()
   }
@@ -316,7 +323,7 @@ export class FileService implements orion.FileClient {
 
     const uri = this.toResourceUri(location)
     return this.stompClient.request(ResourceService.get, {project: uri.project, path: uri.path, contents: !isMetadata})
-      .then((result: service.GetResourceResponse) => {
+      .then((result: GetResourceResponse) => {
         if (!isMetadata) {
           var content = result.content
           if (content == null) {
@@ -335,14 +342,6 @@ export class FileService implements orion.FileClient {
         }
       })
   }
-  
-  public getResource(location: string): Promise<service.GetResourceResponse> {
-    return this.getResourceByUri(this.toResourceUri(location))
-  }
-
-  public getResourceByUri(uri: ResourceUri): Promise<service.GetResourceResponse> {
-    return this.stompClient.request<service.GetResourceResponse>(ResourceService.get, uri)
-  }
 
   write(location: string, contents: any, args: any) {
     var normalizedPath = this.toResourceUri(location)
@@ -350,7 +349,7 @@ export class FileService implements orion.FileClient {
     var timestamp = Date.now()
 
     //this.saves[location] = new Saved(normalizedPath.project, normalizedPath.path, ResourceType.file, hash, timestamp, contents, new Promise())
-    this.stompClient.notify(service.ResourceTopics.changed, {
+    this.stompClient.notify(ResourceTopics.changed, {
       'project': normalizedPath.project,
       'resource': normalizedPath.path,
       'hash': hash,

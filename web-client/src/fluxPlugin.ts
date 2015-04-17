@@ -3,7 +3,6 @@ import stompClient = require("stompClient")
 import fileSystem = require("FileSystem")
 import Editor = require("Editor")
 import IdePreferenceProvider = require("IdePreferenceProvider")
-import service = require("service")
 
 import PluginProvider = require("orion/plugin")
 
@@ -11,6 +10,11 @@ import {
   EditorService,
   EditorStyles,
   } from "api/editor"
+
+import {
+    ResourceService,
+    ContentTypeDescriptor,
+    } from "api/resource"
 
 const hostname = window.location.hostname
 let mqHost: string
@@ -59,8 +63,8 @@ stompConnector.connect(mqHost, "dev", "dev").done(() => {
   })
 
   Promise.all([
-    stompConnector.request(service.ResourceService.contentTypes)
-      .then((result: Array<service.ContentTypeDescriptor>) => {
+    stompConnector.request(ResourceService.contentTypes)
+      .then((result: Array<ContentTypeDescriptor>) => {
         for (let contentType of result) {
           //noinspection ReservedWordAsName
           if (contentType.extends == null) {
