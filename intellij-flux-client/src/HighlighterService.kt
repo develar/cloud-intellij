@@ -45,7 +45,7 @@ class HighlighterService(private val project: Project) : Disposable {
         entry = previous
       }
     }
-    return entry!!.highlighter
+    return entry.highlighter
   }
 
   override fun dispose() {
@@ -69,20 +69,33 @@ class HighlighterService(private val project: Project) : Disposable {
   fun sendHighlighting(document: Document, file: VirtualFile, resourcePath: String, replyTo: String, changedStart: Int, changedEnd: Int, messageConnector: MessageConnector) {
     messageConnector.replyToEvent(replyTo, EditorTopics.styleReady.name) {
       // we provide style per line, so, we cannot stop at changed end offset, we must compute style for the whole line
-      val maxLine = document.getLineNumber(changedEnd) + 1
-      val iterator = getHighlighter(document, file, resourcePath).createIterator(if (changedStart == 0) 0 else document.getLineStartOffset(document.getLineNumber(changedStart)))
+      val maxLine = document.getLineNumber(changedEnd)
+      val minLine = if (changedStart == 0) 0 else document.getLineNumber(changedStart)
+      val iterator = getHighlighter(document, file, resourcePath).createIterator(if (changedStart == 0) 0 else document.getLineStartOffset(minLine))
       var prevLine = -1
       map("lineStyles") {
         while (!iterator.atEnd()) {
           val start = iterator.getStart()
           val end = iterator.getEnd()
 
-          val startLine = document.getLineNumber(start)
-          if (startLine >= maxLine) {
+          // createIterator(87) (start of line 4 " ") -> iterator.getStart() -> 86 (end of line 3 "\n")
+          // to solve this problem we just ignore it - don't describe line 3, use initially computed line range
+          // for now it doesn't lead to any issues, but may be in the future some fix could be required
+          //
+          // 0 package com.company;
+          // 1
+          // 2 public class Main {
+          // 3  public static void main(String[] args) {_
+          // 4 __int f = 12313;
+          // 5  }
+          // 6 }
+          val startLine = Math.max(minLine, document.getLineNumber(start))
+          if (startLine > maxLine) {
             break
           }
 
-          val endLine = document.getLineNumber(end)
+          // the same problem as above. range: "\n  "
+          val endLine = Math.min(maxLine, document.getLineNumber(end))
 
           for (line in startLine..endLine) {
             if (line != prevLine) {
@@ -104,10 +117,12 @@ class HighlighterService(private val project: Project) : Disposable {
             val lineStartOffset = document.getLineStartOffset(line)
             (this as ArrayMemberWriter).map {
               // if start less than lineStartOffset, it means that range overlaps several lines and current line is not the first in the overlapped lines
-              "start"(if (start < lineStartOffset) 0 else (start - lineStartOffset))
+              val relativeStart = if (start < lineStartOffset) 0 else (start - lineStartOffset)
+              "start"(relativeStart)
 
               val effectiveEnd = if (line == endLine) end else Math.min(end, document.getLineEndOffset(line))
-              "end"(effectiveEnd - lineStartOffset)
+              val relativeEnd = effectiveEnd - lineStartOffset
+              "end"(relativeEnd)
 
               map("style") {
                 val textAttributes = iterator.getTextAttributes()
