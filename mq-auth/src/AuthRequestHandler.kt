@@ -62,7 +62,7 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
           val username = getUsername(urlDecoder)
           if ((exchangeName.length() - username.length() == 2) &&
                   (exchangeName[1] == '.' && (exchangeName[0] == 'd' || exchangeName[0] == 't')) &&
-                  exchangeName.regionMatches(false, 2, username, 0, username.length())) {
+                  exchangeName.regionMatches(2, username, 0, username.length(), false)) {
             allow
           }
           else {

@@ -6,12 +6,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.highlighter.HighlighterClient
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.flux.EditorTopics
 import org.jetbrains.flux.MessageConnector
-import org.jetbrains.json.ArrayMemberWriter
+import org.jetbrains.json.MapMemberWriter
+import org.jetbrains.json.PrimitiveWriter
 import java.awt.Font
 
 fun highlighterService(project: Project) = ServiceManager.getService(project, javaClass<HighlighterService>())
@@ -72,7 +74,7 @@ class HighlighterService(private val project: Project) : Disposable {
       val maxLine = document.getLineNumber(changedEnd)
       val minLine = if (changedStart == 0) 0 else document.getLineNumber(changedStart)
       val iterator = getHighlighter(document, file, resourcePath).createIterator(if (changedStart == 0) 0 else document.getLineStartOffset(minLine))
-      var prevLine = -1
+      val writer = StyleWriter(document.getImmutableCharSequence())
       map("lineStyles") {
         while (!iterator.atEnd()) {
           val start = iterator.getStart()
@@ -98,61 +100,128 @@ class HighlighterService(private val project: Project) : Disposable {
           val endLine = Math.min(maxLine, document.getLineNumber(end))
 
           for (line in startLine..endLine) {
-            if (line != prevLine) {
-              if (prevLine != -1) {
-                // end ranges array
-                endArray()
-                // end line style map
-                endObject()
-              }
-
-              // begin line style map
-              name(line.toString())
-              beginObject()
-              // begin ranges array
-              name("ranges")
-              beginArray()
-            }
-
             val lineStartOffset = document.getLineStartOffset(line)
-            (this as ArrayMemberWriter).map {
-              // if start less than lineStartOffset, it means that range overlaps several lines and current line is not the first in the overlapped lines
-              val relativeStart = if (start < lineStartOffset) 0 else (start - lineStartOffset)
-              "start"(relativeStart)
-
-              val effectiveEnd = if (line == endLine) end else Math.min(end, document.getLineEndOffset(line))
-              val relativeEnd = effectiveEnd - lineStartOffset
-              "end"(relativeEnd)
-
-              map("style") {
-                val textAttributes = iterator.getTextAttributes()
-                map("style") {
-                  val foreColor = textAttributes.getForegroundColor()
-                  if (foreColor != null) {
-                    "color"(foreColor.toHex())
-                  }
-                  if ((textAttributes.getFontType() and Font.BOLD) != 0) {
-                    "font-weight"("bold")
-                  }
-                  if ((textAttributes.getFontType() and Font.ITALIC) != 0) {
-                    "font-style"("italic")
-                  }
-                }
-              }
+            // if start less than lineStartOffset, it means that range overlaps several lines and current line is not the first in the overlapped lines
+            val relativeStart = if (start < lineStartOffset) 0 else (start - lineStartOffset)
+            val relativeEnd = (if (line == endLine) end else Math.min(end, document.getLineEndOffset(line))) - lineStartOffset
+            // "\n\n" from line 0 to line 2
+            if (relativeStart != relativeEnd) {
+              writer.line(this, line, lineStartOffset, relativeStart, relativeEnd, iterator.getTextAttributes())
             }
-
-            prevLine = line
           }
 
           iterator.advance()
         }
 
+        writer.end(this)
+      }
+    }
+  }
+
+  class StyleWriter(private val text: CharSequence) {
+    var prevLine = -1
+
+    // relative to line
+    var lineStartOffset = -1
+    var start = -1
+    var end = -1
+    var prevTextAttributes: TextAttributes? = null
+
+    fun line(mapWriter: MapMemberWriter, line: Int, lineStartOffset: Int, start: Int, end: Int, textAttributes: TextAttributes?) {
+      if (prevTextAttributes == null || flush(mapWriter, line, textAttributes)) {
+        this.start = start
+      }
+
+      this.end = end
+      prevTextAttributes = textAttributes
+
+      if (line != prevLine) {
         if (prevLine != -1) {
           // end ranges array
-          endArray()
+          mapWriter.endArray()
           // end line style map
-          endObject()
+          mapWriter.endObject()
         }
+
+        this.lineStartOffset = lineStartOffset
+        prevLine = line
+
+        if (line != -1) {
+          // begin line style map
+          mapWriter.name(line.toString())
+          mapWriter.beginObject()
+          // begin ranges array
+          mapWriter.name("ranges")
+          mapWriter.beginArray()
+        }
+      }
+    }
+
+    fun end(dataWriter: MapMemberWriter) {
+      line(dataWriter, -1, -1, -1, -1, null)
+    }
+
+    private fun TextAttributes.isTheSame(other: TextAttributes?): Boolean {
+      if (other == null) {
+        return false
+      }
+
+      if (this == other) {
+        return true
+      }
+
+      if (other.getBackgroundColor() != null) {
+        return false
+      }
+
+      var whiteSpaceOnly = true
+      for (offset in (start + lineStartOffset)..(end + lineStartOffset) - 1) {
+        val c = text.charAt(offset)
+        if (c != ' ' && c != '\t') {
+          whiteSpaceOnly = false
+          break
+        }
+      }
+      return whiteSpaceOnly
+    }
+
+    private fun flush(dataWriter: MapMemberWriter, line: Int, textAttributes: TextAttributes?): Boolean {
+      if (line != prevLine || !prevTextAttributes!!.isTheSame(textAttributes)) {
+        dataWriter.beginObject()
+        dataWriter.writeRange()
+        dataWriter.map("style") {
+          dataWriter.map("style") {
+            dataWriter.writeStyle(prevTextAttributes!!)
+          }
+        }
+        dataWriter.endObject()
+        return true
+      }
+
+      return false
+    }
+
+    private fun PrimitiveWriter.writeRange() {
+      "start"(start)
+      "end"(end)
+    }
+
+    private fun PrimitiveWriter.writeStyle(textAttributes: TextAttributes) {
+      val foreColor = textAttributes.getForegroundColor()
+      if (foreColor != null) {
+        "color"(foreColor.toHex())
+      }
+
+      val backgroundColor = textAttributes.getBackgroundColor()
+      if (backgroundColor != null) {
+        "background-color"(backgroundColor.toHex())
+      }
+
+      if ((textAttributes.getFontType() and Font.BOLD) != 0) {
+        "font-weight"("bold")
+      }
+      if ((textAttributes.getFontType() and Font.ITALIC) != 0) {
+        "font-style"("italic")
       }
     }
   }

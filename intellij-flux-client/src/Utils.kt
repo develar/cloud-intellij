@@ -19,11 +19,11 @@ import java.security.MessageDigest
 
 fun Color.toHex() = java.lang.String.format("#%06X", 0xFFFFFF and this.getRGB())
 
-public inline fun StringBuilder.plusAssign(s: String) {
+public fun StringBuilder.plusAssign(s: String) {
   append(s)
 }
 
-public inline fun StringBuilder.plusAssign(s: Char) {
+public fun StringBuilder.plusAssign(s: Char) {
   append(s)
 }
 
@@ -102,11 +102,11 @@ fun VirtualFile.findProject(): Project? {
 
 fun getTargetElement(offset: Int, referencedProject: Project, document: Document, nameElementAccepted: Boolean): PsiElement? {
   var psiFile = PsiDocumentManager.getInstance(referencedProject).getPsiFile(document)
-  if (psiFile is PsiCompiledFile) psiFile = (psiFile as PsiCompiledFile).getDecompiledPsiFile()
-  val referenceAt = if (psiFile != null) psiFile!!.findReferenceAt(offset) else null
+  if (psiFile is PsiCompiledFile) psiFile = psiFile.getDecompiledPsiFile()
+  val referenceAt = if (psiFile != null) psiFile.findReferenceAt(offset) else null
   if (referenceAt == null) {
     if (nameElementAccepted && psiFile != null) {
-      val parent = PsiTreeUtil.getParentOfType(psiFile!!.findElementAt(offset), javaClass<PsiNamedElement>())
+      val parent = PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), javaClass<PsiNamedElement>())
       if (parent != null) return parent
     }
     return null

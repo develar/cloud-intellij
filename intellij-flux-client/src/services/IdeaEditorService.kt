@@ -119,7 +119,7 @@ class IdeaEditorService() : IdeaContentAssistService {
         textRange = resolve.getTextRange()
       }
       "offset"(textRange!!.getStartOffset())
-      "length"(textRange!!.getLength())
+      "length"(textRange.getLength())
       return true
     }
     finally {
