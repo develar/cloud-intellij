@@ -127,6 +127,8 @@ class HighlighterService(private val project: Project) : Disposable {
     var end = -1
     var prevTextAttributes: TextAttributes? = null
 
+    var rangesStarted = false
+
     fun line(mapWriter: MapMemberWriter, line: Int, lineStartOffset: Int, start: Int, end: Int, textAttributes: TextAttributes?) {
       if (prevTextAttributes == null || flush(mapWriter, line, textAttributes)) {
         this.start = start
@@ -137,8 +139,12 @@ class HighlighterService(private val project: Project) : Disposable {
 
       if (line != prevLine) {
         if (prevLine != -1) {
-          // end ranges array
-          mapWriter.endArray()
+          if (rangesStarted) {
+            rangesStarted = false
+
+            // end ranges array
+            mapWriter.endArray()
+          }
           // end line style map
           mapWriter.endObject()
         }
@@ -150,9 +156,6 @@ class HighlighterService(private val project: Project) : Disposable {
           // begin line style map
           mapWriter.name(line.toString())
           mapWriter.beginObject()
-          // begin ranges array
-          mapWriter.name("ranges")
-          mapWriter.beginArray()
         }
       }
     }
@@ -187,14 +190,28 @@ class HighlighterService(private val project: Project) : Disposable {
 
     private fun flush(dataWriter: MapMemberWriter, line: Int, textAttributes: TextAttributes?): Boolean {
       if (line != prevLine || !prevTextAttributes!!.isTheSame(textAttributes)) {
-        dataWriter.beginObject()
-        dataWriter.writeRange()
+        if (line == prevLine && !rangesStarted) {
+          // begin ranges array
+          dataWriter.name("ranges")
+          dataWriter.beginArray()
+
+          rangesStarted = true
+        }
+
+        if (rangesStarted) {
+          dataWriter.beginObject()
+          dataWriter.writeRange()
+        }
+
         dataWriter.map("style") {
           dataWriter.map("style") {
             dataWriter.writeStyle(prevTextAttributes!!)
           }
         }
-        dataWriter.endObject()
+
+        if (rangesStarted) {
+          dataWriter.endObject()
+        }
         return true
       }
 
