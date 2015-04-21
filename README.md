@@ -15,7 +15,7 @@ We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](
 
 # Setting up development environment
 1. Install [Docker and Docker Compose](https://docs.docker.com/compose/install/).
-(If you have Parallels Desktop, consider to use [Vagrant](https://github.com/Parallels/vagrant-parallels/issues/115) ([sample Vagrantfile](https://dl.dropboxusercontent.com/u/43511007/Vagrantfile))).
+(If you have Parallels Desktop, consider to use [Vagrant](https://github.com/Parallels/boot2docker-vagrant-box) ([sample Vagrantfile](https://dl.dropboxusercontent.com/u/43511007/Vagrantfile))).
 1. Install IntelliJ IDEA plugins:
   * YAML to edit .yml files.
   * Markdown to edit .md files.
