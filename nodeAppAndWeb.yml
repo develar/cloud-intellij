@@ -1,13 +1,11 @@
 web:
   image: develar/orion-client
-#  links:
-#    - app
-  external_links:
-    - cloudintellij_mq_1:mq
   ports:
     - 80:80
+    - 443:443
   volumes:
-    - web-client/nginx-config:/config
+    - certs:/certs
+    - web-client/nginx-config:/sites
     - web-client/resources:/data-resources
     - web-client/out:/data-out
     - web-client/lib:/_lib

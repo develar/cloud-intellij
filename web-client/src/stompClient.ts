@@ -17,7 +17,7 @@ export class StompConnector {
   private eventHandlers: { [key: string]: Array<((data: any) => void) | ((replyTo: string, correlationId: string, data: any) => void)>; } = {}
 
   connect(host: string, user: string, password: string): Promise<void> {
-    var url = `ws://${host}/stomp/websocket`
+    var url = `wss://${host}/stomp/websocket`
     var webSocket = new WebSocket(url, ['v11.stomp'])
     this.client = Stomp.over(webSocket)
     this.client.heartbeat.outgoing = 25000
