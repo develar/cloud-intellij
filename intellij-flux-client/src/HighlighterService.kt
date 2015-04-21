@@ -18,9 +18,9 @@ import java.awt.Font
 
 fun highlighterService(project: Project) = ServiceManager.getService(project, javaClass<HighlighterService>())
 
-data class Entry(val highlighter: EditorHighlighter, val document: Document)
+private data class Entry(val highlighter: EditorHighlighter, val document: Document)
 
-class FluxHighlighterClient(private val project: Project, private val document: Document) : HighlighterClient {
+private class FluxHighlighterClient(private val project: Project, private val document: Document) : HighlighterClient {
   override fun getDocument() = document
 
   override fun getProject() = project

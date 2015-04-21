@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.codec.digest.DigestUtils
+import org.jetbrains.flux.EditorTopics
 import org.jetbrains.flux.LiveEditService
 import org.jetbrains.flux.MessageConnector
 
@@ -100,6 +101,9 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
             if (newFragment.isNullOrEmpty()) {
               document.deleteString(offset, offset + removeCount)
             }
+            else if (removeCount == 0) {
+              document.insertString(offset, newFragment!!)
+            }
             else {
               document.replaceString(offset, offset + removeCount, newFragment!!)
             }
@@ -112,11 +116,11 @@ class IdeaLiveEditService(messageConnector: MessageConnector) : LiveEditService(
           token.finish()
         }
 
-        highlighterService(project).sendHighlighting(document, file, resourcePath, replyTo, offset, offset + removeCount, messageConnector)
+        highlighterService(project).sendHighlighting(document, file, resourcePath, replyTo, offset, offset + (if (newFragment.isNullOrEmpty()) removeCount else newFragment!!.length()), messageConnector)
 
-//        messageConnector.notify(EditorTopics.metadataChanged) {
-//          computeProblems(document, project, projectName, resourcePath)
-//        }
+        messageConnector.notify(EditorTopics.metadataChanged) {
+          computeProblems(document, project, projectName, resourcePath)
+        }
       }, "Edit", null)
     }, ModalityState.any())
   }

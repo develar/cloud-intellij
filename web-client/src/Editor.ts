@@ -75,19 +75,19 @@ class Editor implements Validator, LiveEditor, ContentAssist {
       this.eventTarget.dispatchEvent(result)
     })
 
-    //this.stompClient.on(EditorTopics.metadataChanged, (result: service.EditorMetadataChanged) => {
-    //  var resourceMetadata = this.resourceMetadata
-    //  if (resourceMetadata == null || this.editorContext == null) {
-    //    return
-    //  }
-    //
-    //  var resourceUri = this.resourceUri
-    //  if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
-    //    return
-    //  }
-    //
-    //  this.editorContext.showMarkers(result.markers)
-    //})
+    this.stompClient.on(EditorTopics.metadataChanged, (result: service.EditorMetadataChanged) => {
+      var resourceMetadata = this.resourceMetadata
+      if (resourceMetadata == null || this.editorContext == null) {
+        return
+      }
+
+      var resourceUri = this.resourceUri
+      if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
+        return
+      }
+
+      this.editorContext.showMarkers(result.markers)
+    })
   }
 
   _createSocket() {
