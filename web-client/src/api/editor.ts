@@ -65,5 +65,5 @@ export interface EditorStartedResponse extends EditorEventResponse {
 }
 
 export interface EditorMetadataChanged extends EditorEventResponse {
-  markers: Array<EditorMarker>
+  problems: Array<EditorMarker>
 }

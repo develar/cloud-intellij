@@ -13,7 +13,8 @@ import {
   EditorStarted,
   EditorStartedResponse,
   DocumentChanged,
-  EditorService
+  EditorService,
+  EditorMetadataChanged,
   } from "api/editor"
 
 import {
@@ -75,18 +76,14 @@ class Editor implements Validator, LiveEditor, ContentAssist {
       this.eventTarget.dispatchEvent(result)
     })
 
-    this.stompClient.on(EditorTopics.metadataChanged, (result: service.EditorMetadataChanged) => {
-      var resourceMetadata = this.resourceMetadata
-      if (resourceMetadata == null || this.editorContext == null) {
-        return
+    this.stompClient.on(EditorTopics.metadataChanged, (event: EditorMetadataChanged) => {
+      for (let session of this.editSessions) {
+        var resourceUri = session.resourceUri
+        if (resourceUri.path === event.path || resourceUri.project === event.project) {
+          session.metadataChanged(event)
+          break
+        }
       }
-
-      var resourceUri = this.resourceUri
-      if (resourceUri == null || resourceUri.path !== result.resource || resourceUri.project !== result.project) {
-        return
-      }
-
-      this.editorContext.showMarkers(result.markers)
     })
   }
 

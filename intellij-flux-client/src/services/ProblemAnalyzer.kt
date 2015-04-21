@@ -46,10 +46,11 @@ private fun ArrayMemberWriter.writeInfos(marker: HighlightInfo) {
 
   map {
     "description"(marker.getDescription())
-    // default severity "error"
-    if (marker.getSeverity() != HighlightSeverity.ERROR) {
-      "severity"("warning")
-    }
+    "severity"(when (marker.getSeverity()) {
+      HighlightSeverity.ERROR -> "error"
+      HighlightSeverity.INFORMATION -> "task"
+      else -> "warning"
+    })
     "start"(marker.getStartOffset())
     "end"(marker.getEndOffset())
   }

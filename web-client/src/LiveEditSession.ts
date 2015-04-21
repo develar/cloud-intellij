@@ -8,6 +8,7 @@ import {
   EditorStartedResponse,
   EditorStarted,
   DocumentChanged,
+  EditorMetadataChanged,
   } from "api/editor"
 
 import {
@@ -69,6 +70,10 @@ class LiveEditSession {
 
   public externallyChanged(result: DocumentChanged) {
     this.setEditorText(result.newFragment, result.offset, result.offset + result.removedCharCount)
+  }
+
+  public metadataChanged(event: EditorMetadataChanged) {
+    this.editorContext.showMarkers(event.problems)
   }
 
   public modelChanging(event: ModelChangingEvent) {
