@@ -1,4 +1,4 @@
-package org.intellij.mq.auth
+package org.jetbrains.flux.mqAuth
 
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*

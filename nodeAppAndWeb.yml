@@ -8,4 +8,4 @@ web:
     - web-client/nginx-config:/sites
     - web-client/resources:/data-resources
     - web-client/out:/data-out
-    - web-client/lib:/_lib
+    - web-client/lib:/data-lib

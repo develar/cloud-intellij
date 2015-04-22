@@ -2,7 +2,9 @@
 .idea
 */src/*
 *.iml
-flux
-flux-core
+dependencies
+browser-ext
+idea-runner
+certs
 out/production/intellij-flux-client
 out/production/jvm-flux-client

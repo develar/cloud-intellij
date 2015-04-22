@@ -1,18 +1,19 @@
 mqAuth:
   image: develar/java:8u45
   environment:
-    _JAVA_OPTIONS: "-Dio.netty.machineId=9e43d860 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5050 -Xms48m -Xmx64M"
+    # -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5050
+    _JAVA_OPTIONS: "-Dio.netty.machineId=9e43d860 -Xms48m -Xmx64M"
     CLASSPATH: /app/lib/kotlin-runtime.jar:/app/moduleLib/netty-all-4.1.0.Beta5-SNAPSHOT.jar:/app/classes
     MANAGEMENT_USER: admin
   volumes:
     - out/production/mq-auth:/app/classes:ro
     - jvm-flux-client/lib:/app/lib:ro
     - mq-auth/lib:/app/moduleLib:ro
-  command: org.intellij.mq.auth.AuthPackage
+  command: org.jetbrains.flux.mqAuth.MqAuthPackage
   expose:
    - "80"
-  ports:
-    - "5050:5050"
+#  ports:
+#    - "5050:5050"
 mq:
   image: develar/rabbitmq-auth
   # https://github.com/docker-library/rabbitmq/issues/6 I have no idea how it will be going in a Tutum.
@@ -24,6 +25,6 @@ mq:
   ports:
     - "5672:5672"
     # web stomp
-    - "4433:4433"
+    - "4443:4443"
     # management
     - "15672:15672"

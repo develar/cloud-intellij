@@ -7,6 +7,8 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/dependencies/config-idea" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/download" />
+      <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/_CodeSignature" />
+      <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/bin" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/system-idea" />
       <excludeFolder url="file://$MODULE_DIR$/flux/node.server/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/flux/node.server/orion.client/modules/orionode/node_modules" />

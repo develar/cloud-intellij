@@ -26,7 +26,7 @@ const hostname = window.location.hostname
 let mqHost: string
 if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host)) {
   // ip address - dev machine
-  mqHost = hostname + ":" + 4433
+  mqHost = hostname + ":" + 4443
 }
 else {
   mqHost = `mq.${hostname}`

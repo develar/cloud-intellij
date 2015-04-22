@@ -1,0 +1,19 @@
+[req]
+x509_extensions = v3_ca
+distinguished_name = req_distinguished_name
+
+[req_distinguished_name]
+countryName = Country Name (2 letter code)
+countryName_default = DE
+stateOrProvinceName = State or Province Name (full name)
+stateOrProvinceName_default = Bavaria
+localityName = Locality Name (eg, city)
+localityName_default = Munich
+
+[v3_ca]
+subjectAltName = @alt_names
+
+[alt_names]
+IP.1 = 10.211.55.14
+
+# openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout key.pem -out cert.pem -config openssl.cnf

@@ -1,0 +1,40 @@
+mqAuth:
+  image: tutum.co/develar/mq-auth
+  target_num_containers: 2
+  autorestart: on_failure
+  tags:
+    - intellij-io
+  environment:
+    _JAVA_OPTIONS: "-Xms48m -Xmx64M"
+    MANAGEMENT_USER: admin
+certs:
+  image: tutum.co/develar/intellij-io-certs
+  deployment_strategy: every_node
+  tags:
+    - intellij-io
+mq:
+  image: develar/rabbitmq-auth
+  tags:
+    - intellij-io
+    - mq
+  links:
+    - mqAuth:mq-auth
+  volumes_from:
+    - certs
+  ports:
+    - "5672:5672"
+    # web stomp
+    - "443:4443"
+    # management
+    - "15672:15672"
+web:
+  image: tutum.co/develar/flux-web
+  autorestart: on_failure
+  tags:
+    - intellij-io
+    - web
+  volumes_from:
+    - certs
+  ports:
+    - 80:80
+    - 443:443

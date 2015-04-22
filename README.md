@@ -7,14 +7,14 @@
 1. Run: `docker-compose -f mqAndDb.yml up` to start a messaging broker and related services.
 1. Run: `docker-compose -f nodeAppAndWeb.yml up` to start a web server.
 1. Run IntelliJ IDEA (use run configuration "Idea").
-1. Open your browser to `http://<dockerd host ip>`
+1. Open your browser to `https://<dockerd host ip>`
 
 After project update, you should execute `docker-compose -f mqAndDb.yml pull && docker-compose -f nodeAppAndWeb.yml pull`.
 
 We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](https://youtrack.jetbrains.com/issue/IDEA-137765).
 
 # Setting up development environment
-1. Install [Docker and Docker Compose](https://docs.docker.com/compose/install/).
+1. Install [Docker and Docker Compose](https://docs.docker.com/compose/install/). Docker 1.6+ and Docker Compose 1.2+ required. 
 (If you have Parallels Desktop, consider to use [Vagrant](https://github.com/Parallels/boot2docker-vagrant-box) ([sample Vagrantfile](https://dl.dropboxusercontent.com/u/43511007/Vagrantfile))).
 1. Install IntelliJ IDEA plugins:
   * YAML to edit .yml files.
@@ -33,3 +33,12 @@ We use [Tutum](https://www.tutum.co) to build, deploy and manage, so, app images
 `$USER` used instead of real username, so, you can run command as is, without modification (assume that your OS username equals to tutum username).
 ## mq-auth
 `docker build -f mq-auth/Dockerfile -t tutum.co/$USER/mq-auth .`
+`docker push tutum.co/$USER/mq-auth`
+
+## SSL cert/key data container
+Copy cert.pem and key.pem to certs/production.
+`docker build -t tutum.co/$USER/intellij-io-certs certs`
+
+## flux-web
+`docker build -t tutum.co/$USER/flux-web web-client`
+`docker push tutum.co/$USER/flux-web`
