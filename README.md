@@ -4,8 +4,8 @@
 3. Run: `cd web-client && npm install && gulp compile` to install the web app dependencies. (todo: use gulp from docker).
 
 # Running from sources
-1. Run: `docker-compose -f mqAndDb.yml up` to start a messaging broker and related services.
-1. Run: `docker-compose -f nodeAppAndWeb.yml up` to start a web server.
+1. Run: `docker-compose -f mq.yml up` to start a messaging broker and related services.
+1. Run: `docker-compose -f web.yml up` to start a web server.
 1. Run IntelliJ IDEA (use run configuration "Idea").
 1. Open your browser to `https://<dockerd host ip>`
 

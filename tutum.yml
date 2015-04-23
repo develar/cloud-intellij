@@ -3,7 +3,7 @@ mqAuth:
   target_num_containers: 2
   autorestart: on_failure
   tags:
-    - intellij-io
+    - flux
   environment:
     _JAVA_OPTIONS: "-Xms48m -Xmx64M"
     MANAGEMENT_USER: admin
@@ -11,11 +11,11 @@ certs:
   image: tutum.co/develar/intellij-io-certs
   deployment_strategy: every_node
   tags:
-    - intellij-io
+    - flux
 mq:
   image: develar/rabbitmq-auth
   tags:
-    - intellij-io
+    - flux
     - mq
   links:
     - mqAuth:mq-auth
@@ -31,7 +31,7 @@ web:
   image: tutum.co/develar/flux-web
   autorestart: on_failure
   tags:
-    - intellij-io
+    - flux
     - web
   volumes_from:
     - certs
