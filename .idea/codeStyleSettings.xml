@@ -65,6 +65,9 @@
           </indentOptions>
         </codeStyleSettings>
         <codeStyleSettings language="jet">
+          <option name="ELSE_ON_NEW_LINE" value="true" />
+          <option name="CATCH_ON_NEW_LINE" value="true" />
+          <option name="FINALLY_ON_NEW_LINE" value="true" />
           <indentOptions>
             <option name="INDENT_SIZE" value="2" />
             <option name="TAB_SIZE" value="2" />

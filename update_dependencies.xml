@@ -1,5 +1,5 @@
 <project name="Update Dependencies" default="update">
-  <property name="ideaVersion" value="141.588.1"/>
+  <property name="ideaVersion" value="141.713.2"/>
 
   <condition property="os.tag" value="zip">
     <os family="windows"/>
@@ -30,14 +30,6 @@
     <execute_update_with_id_resolve
         teamcity.server.url="http://buildserver.labs.intellij.net"
         build.locator.request="buildType:bt3498,status:SUCCESS,branch:/idea/${ideaVersion}"/>
-  </target>
-
-  <target name="jb_update_continuous_141" depends="fetch-third-party,fetch-annotations">
-    <execute_update base.url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:ijplatform_IjPlatform141_IdeaTrunk_CommunityDist,status:SUCCESS"/>
-  </target>
-
-  <target name="jb_update_continuous_142" depends="fetch-third-party,fetch-annotations">
-    <execute_update base.url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:bt662,status:SUCCESS"/>
   </target>
 
   <target name="fetch-third-party">
@@ -108,40 +100,13 @@
       <property name="content.base.url" value="@{base.url}/artifacts/content"/>
 
       <property name="ideaSdk" value="dependencies/ideaSdk"/>
-      <property name="jps" value="${ideaSdk}/jps"/>
-      <property name="jps-test" value="${jps}/test"/>
 
       <if>
         <istrue value="${idea.sdk.fetch.needed}"/>
 
         <then>
           <delete dir="${ideaSdk}" failonerror="false"/>
-
-          <mkdir dir="${jps}"/>
-
-          <get src="${content.base.url}/jps/standalone-jps-IC-${idea.build.number}.zip" dest="dependencies/download/standalone-jps.zip" usetimestamp="true"/>
-
-          <property name="jps.extracted.dir" value="dependencies/download/standalone-jps"/>
-          <unzip src="dependencies/download/standalone-jps.zip" dest="${jps.extracted.dir}"/>
-
-          <copy todir="${jps}" flatten="true">
-            <resources>
-              <file file="${jps.extracted.dir}/groovy-jps-plugin.jar"/>
-              <file file="${jps.extracted.dir}/groovy_rt.jar"/>
-              <file file="${jps.extracted.dir}/jdom.jar"/>
-              <file file="${jps.extracted.dir}/jgoodies-forms.jar"/>
-              <file file="${jps.extracted.dir}/jna.jar"/>
-              <file file="${jps.extracted.dir}/jps-builders.jar"/>
-              <file file="${jps.extracted.dir}/jps-model.jar"/>
-              <file file="${jps.extracted.dir}/log4j.jar"/>
-              <file file="${jps.extracted.dir}/nanoxml-2.2.3.jar"/>
-              <file file="${jps.extracted.dir}/protobuf-2.5.0.jar"/>
-              <file file="${jps.extracted.dir}/trove4j.jar"/>
-              <file file="${jps.extracted.dir}/ui-designer-jps-plugin.jar"/>
-              <file file="${jps.extracted.dir}/util.jar"/>
-            </resources>
-          </copy>
-          <get src="http://download.jetbrains.com/idea/ideaIU-${ideaVersion}.${os.tag}" dest="dependencies/download/${idea.archive.name}" usetimestamp="true"/>
+          <get src="http://download.jetbrains.com/idea/ideaIU-14.1.2.${os.tag}" dest="dependencies/download/${idea.archive.name}" usetimestamp="true"/>
           <get src="${content.base.url}/sources.zip" dest="dependencies/idea-sdk-sources.zip" usetimestamp="true"/>
         </then>
       </if>
@@ -162,7 +127,7 @@
               <arg path="dependencies/download/${idea.archive.name}"/>
             </exec>
             <exec executable="bash">
-              <arg line="-c 'cp -R dependencies/download/mount/IntelliJ\ IDEA\ 14\ EAP.app/Contents/ ${ideaSdk}'"/>
+              <arg line="-c 'cp -R dependencies/download/mount/IntelliJ\ IDEA\ 14\.app/Contents/ ${ideaSdk}'"/>
             </exec>
             <exec executable="hdiutil">
               <arg value="detach"/>

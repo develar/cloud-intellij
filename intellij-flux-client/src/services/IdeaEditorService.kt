@@ -1,6 +1,7 @@
 package org.intellij.flux
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -47,21 +48,23 @@ class IdeaEditorService() : IdeaContentAssistService {
   }
 
   override fun computeProblems(projectName: String, resourcePath: String, result: Result) {
-    result.map {
-      val project = findReferencedProject(projectName)
-      val accessToken = ReadAction.start()
-      try {
-        val document = project?.findFile(resourcePath)?.getDocument()
-        if (document == null) {
-          "error"(404)
-        }
-        else {
-          computeProblems(document, project!!, null, null)
-        }
+    val project = findReferencedProject(projectName)
+    val document: Document?
+    val accessToken = ReadAction.start()
+    try {
+      document = project?.findFile(resourcePath)?.getDocument()
+    }
+    finally {
+      accessToken.finish()
+    }
+
+    if (document == null) {
+      result.map {
+        "error"(404)
       }
-      finally {
-        accessToken.finish()
-      }
+    }
+    else {
+      highlighterService(project!!).scheduleInspect(document, result)
     }
   }
 

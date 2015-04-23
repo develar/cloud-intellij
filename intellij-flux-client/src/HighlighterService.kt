@@ -10,8 +10,10 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.update.MergingUpdateQueue
 import org.jetbrains.flux.EditorTopics
 import org.jetbrains.flux.MessageConnector
+import org.jetbrains.flux.Result
 import org.jetbrains.json.MapMemberWriter
 import org.jetbrains.json.PrimitiveWriter
 import java.awt.Font
@@ -30,7 +32,8 @@ private class FluxHighlighterClient(private val project: Project, private val do
 }
 
 class HighlighterService(private val project: Project) : Disposable {
-  val pathToEditor = ContainerUtil.newConcurrentMap<String, Entry>()
+  private val pathToEditor = ContainerUtil.newConcurrentMap<String, Entry>()
+  private val inspectQueue = MergingUpdateQueue("flux inspect", 300, true, null, this, null, false)
 
   private fun getHighlighter(document: Document, file: VirtualFile, resourcePath: String): EditorHighlighter {
     var entry = pathToEditor.get(resourcePath)
@@ -51,7 +54,7 @@ class HighlighterService(private val project: Project) : Disposable {
   }
 
   override fun dispose() {
-    val list = pathToEditor.values().copyToArray()
+    val list = pathToEditor.values().toTypedArray()
     try {
       pathToEditor.clear()
     }
@@ -67,8 +70,14 @@ class HighlighterService(private val project: Project) : Disposable {
     }
   }
 
+  fun scheduleInspect(document: Document, result: Result? = null, resourcePath: String? = null) {
+    inspectQueue.queue(InspectTask(project, document, result, resourcePath))
+  }
+
   // see HTMLTextPainter
   fun sendHighlighting(document: Document, file: VirtualFile, resourcePath: String, replyTo: String, changedStart: Int, changedEnd: Int, messageConnector: MessageConnector) {
+    scheduleInspect(document, null, resourcePath)
+
     messageConnector.replyToEvent(replyTo, EditorTopics.styleReady.name) {
       // we provide style per line, so, we cannot stop at changed end offset, we must compute style for the whole line
       val maxLine = document.getLineNumber(changedEnd)
