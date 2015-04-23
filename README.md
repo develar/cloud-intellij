@@ -28,17 +28,19 @@ If you have strange mystic errors after editing volumes configuration in the doc
 Execute ```docker rm -v `docker ps --no-trunc -aq``` (be aware — all container volumes data will be lost, don't use it if you don't understand what does it mean).
 
 # Building docker images
-We use [Tutum](https://www.tutum.co) to build, deploy and manage, so, app images are publishing to [Tutum's private Docker image registry](https://support.tutum.co/support/articles/5000012183-using-tutum-s-private-docker-image-registry).
+Docker hub is used, see [cloudintellij](https://registry.hub.docker.com/repos/cloudintellij/) organization.
 
+[Tutum](https://www.tutum.co/) is used to deploy and manage, so, private app images (e.g. SSL certificates) are publishing to [Tutum's private image registry](https://support.tutum.co/support/articles/5000012183-using-tutum-s-private-docker-image-registry).
 `$USER` used instead of real username, so, you can run command as is, without modification (assume that your OS username equals to tutum username).
+
 ## mq-auth
-`docker build -f mq-auth/Dockerfile -t tutum.co/$USER/mq-auth .`
-`docker push tutum.co/$USER/mq-auth`
+`docker build -f mq-auth/Dockerfile -t cloudintellij/mq-auth .`
+`docker push cloudintellij/mq-auth`
+
+## flux-web
+`docker build -t cloudintellij/flux-web web-client`
+`docker push cloudintellij/flux-web`
 
 ## SSL cert/key data container
 Copy cert.pem and key.pem to certs/production.
 `docker build -t tutum.co/$USER/intellij-io-certs certs`
-
-## flux-web
-`docker build -t tutum.co/$USER/flux-web web-client`
-`docker push tutum.co/$USER/flux-web`

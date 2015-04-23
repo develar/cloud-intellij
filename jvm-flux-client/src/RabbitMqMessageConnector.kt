@@ -7,25 +7,26 @@ import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import java.net.URI
 import java.util.concurrent.ExecutorService
+import javax.net.ssl.TrustManager
 
 fun isProperty(name: String, default: Boolean = false): Boolean {
   val value = System.getProperty(name)
   return if (value == null) default else (value.isEmpty() || value.toBoolean())
 }
 
-val mqUri: String
+val mqHost: String
   get() {
     var host = System.getenv("MQ_HOST")
     if (host == null && isProperty("docker.host.as.mq.host")) {
       host = URI(System.getenv("DOCKER_HOST")).getHost()!!
     }
-    return "amqp://${host ?: "mq"}"
+    return host ?: "mq"
   }
 
 /**
  * rpcQueueName — see Implementation.md
  */
-public class RabbitMqMessageConnector(username: String, executor: ExecutorService, rpcQueueName: String, uri: String = mqUri) : BaseMessageConnector() {
+public class RabbitMqMessageConnector(username: String, executor: ExecutorService, rpcQueueName: String, host: String = mqHost, trustManager: TrustManager? = null) : BaseMessageConnector() {
   private val connection: Connection
   private val commandProcessor = CommandProcessor<ByteArray>()
 
@@ -37,7 +38,11 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
 
   init {
     val connectionFactory = ConnectionFactory()
-    connectionFactory.setUri(uri)
+    connectionFactory.setHost(host)
+    if (trustManager != null) {
+      connectionFactory.setPort(ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT)
+      connectionFactory.useSslProtocol(if (System.getProperty("java.version").startsWith("1.6.")) "TLSv1" else "TLSv1.2", trustManager)
+    }
     connectionFactory.setUsername(username)
     connectionFactory.setRequestedHeartbeat(60)
     connectionFactory.setAutomaticRecoveryEnabled(true)
@@ -50,7 +55,7 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
     })
 
     connection = connectionFactory.newConnection()
-    LOG.info("Connected to rabbitMQ: " + uri)
+    LOG.info("Connected to rabbitMQ: $host")
     channel = connection.createChannel()
     channel.addShutdownListener(object: ShutdownListener {
       override fun shutdownCompleted(cause: ShutdownSignalException) {

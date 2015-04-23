@@ -23,7 +23,7 @@ mq:
   volumes:
     - certs:/certs
   ports:
-    - "5672:5672"
+    - "5671:5671"
     # web stomp
     - "4443:4443"
     # management

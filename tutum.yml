@@ -1,5 +1,5 @@
 mqAuth:
-  image: tutum.co/develar/mq-auth
+  image: cloudintellij/mq-auth
   target_num_containers: 2
   autorestart: on_failure
   tags:
@@ -22,13 +22,13 @@ mq:
   volumes_from:
     - certs
   ports:
-    - "5672:5672"
+    - "5671:5671"
     # web stomp
     - "443:4443"
     # management
     - "15672:15672"
 web:
-  image: tutum.co/develar/flux-web
+  image: cloudintellij/flux-web
   autorestart: on_failure
   tags:
     - flux

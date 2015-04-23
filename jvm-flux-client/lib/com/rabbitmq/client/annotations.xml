@@ -5,6 +5,9 @@
   <item name='com.rabbitmq.client.AMQP.BasicProperties java.lang.String getType()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='com.rabbitmq.client.ConnectionFactory void useSslProtocol(javax.net.ssl.SSLContext) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='com.rabbitmq.client.Consumer void handleDelivery(java.lang.String, com.rabbitmq.client.Envelope, com.rabbitmq.client.AMQP.BasicProperties, byte[]) 2'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

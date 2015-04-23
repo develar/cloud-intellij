@@ -41,15 +41,15 @@ gulp.task("compile", function () {
 gulp.task("package", ['compile'], function () {
   var amdOptimize = require("amd-optimize")
   gulp.src(["out/*.js"])
-      .pipe(amdOptimize("main", {
+      .pipe(amdOptimize("fluxPlugin", {
               configFile: "out/requireConfig.js",
-              exclude: ["Deferred", "sockjs", "stomp", "bluebird", "sha1", "orion/plugin"]
-              //loader: amdOptimize.loader(function (moduleName) {
-              //  return "lib/empty.js"
-              //})
+              exclude: ["Deferred", "sockjs", "stomp", "bluebird", "sha1", "orion/plugin"],
+              loader: amdOptimize.loader(function (moduleName) {
+                return "lib/empty.js"
+              })
             }))
       .pipe(sourcemaps.init({loadMaps: true}))
-      .pipe(concat("main.js"))
+      .pipe(concat("fluxPlugin.js"))
       .pipe(sourcemaps.write('.', {includeContent: true, sourceRoot: path.resolve('src')}))
       .pipe(gulp.dest(outDir + "/dist"))
 })
