@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -108,6 +109,18 @@ class InspectTask(private val project: Project,
       })
       "start"(marker.getStartOffset())
       "end"(marker.getEndOffset())
+      map("rangeStyle") {
+        var styleClass = when (marker.type.getAttributesKey()) {
+          CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES -> "unknownSymbol"
+          CodeInsightColors.ERRORS_ATTRIBUTES -> "error"
+          CodeInsightColors.WARNINGS_ATTRIBUTES -> "warning"
+          else -> null
+        }
+
+        if (styleClass != null) {
+          "styleClass"("annotationRange $styleClass")
+        }
+      }
     }
   }
 

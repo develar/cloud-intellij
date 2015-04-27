@@ -39,6 +39,8 @@ export interface EditorColors {
 export interface EditorStyles {
   colors: EditorColors
 
+  styles: { [key: string]: any; }
+
   EDITOR_FONT_SIZE: number
   EDITOR_FONT_NAME: string
 }

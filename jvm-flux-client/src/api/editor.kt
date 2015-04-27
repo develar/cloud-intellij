@@ -88,11 +88,7 @@ trait EditorService : Service {
 
         computeContentAssist(project!!, path!!, offset, prefix!!, result)
       }
-
-      "styles" -> {
-        editorStyles(result)
-      }
-
+      "styles" -> editorStyles(result)
       else -> noMethod(methodName, result)
     }
   }

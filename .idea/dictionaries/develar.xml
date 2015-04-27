@@ -12,6 +12,8 @@
       <w>dequeue</w>
       <w>dockerfile</w>
       <w>inboxes</w>
+      <w>jscs</w>
+      <w>litcoffee</w>
       <w>menlo</w>
       <w>monospace</w>
       <w>onreceive</w>

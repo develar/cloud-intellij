@@ -48,9 +48,7 @@ trait ResourceService : Service {
 
         get(project!!, path, hash, contents, result)
       }
-      "contentTypes" -> {
-        contentTypes(result)
-      }
+      "contentTypes" -> contentTypes(result)
       else -> noMethod(methodName, result)
     }
   }

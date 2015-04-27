@@ -16,11 +16,14 @@ import org.jetbrains.flux.Result
 import org.jetbrains.json.MapMemberWriter
 
 class IdeaEditorService() : IdeaContentAssistService {
+  /**
+   * "Unknown symbol" -> WRONG_REFERENCES_ATTRIBUTES
+   * "Error" -> ERRORS_ATTRIBUTES
+   */
   override fun editorStyles(result: Result) {
     result.map {
       val xml = Element("dump")
       (EditorColorsManager.getInstance().getGlobalScheme() as AbstractColorsScheme).writeExternal(xml)
-      //System.out.println(JDOMUtil.writeElement(xml))
       for (option in xml.getChildren("option")) {
         val value = option.getAttributeValue("value")
         // why it could be null?
@@ -41,6 +44,37 @@ class IdeaEditorService() : IdeaContentAssistService {
           // why it could be null?
           if (value != null) {
             option.getAttributeValue("name")("#" + value)
+          }
+        }
+      }
+
+      map("styles") {
+        for (style in xml.getChild("attributes").getChildren("option")) {
+          val styleName = style.getAttributeValue("name")
+          if (!(styleName == "WRONG_REFERENCES_ATTRIBUTES" || styleName == "ERRORS_ATTRIBUTES")) {
+            continue
+          }
+
+          map(styleName) {
+            @loop for (attribute in style.getChild("value").getChildren("option")) {
+              val value = attribute.getAttributeValue("value")!!
+              if (value.isNullOrEmpty()) {
+                continue
+              }
+
+              var name = attribute.getAttributeValue("name")
+              when (name) {
+                "FOREGROUND" -> "color"("#$value")
+                "BACKGROUND" -> "background-color"("#$value")
+                "ERROR_STRIPE_COLOR" -> continue @loop
+                "EFFECT_TYPE" -> {
+                  // reuse orion style
+                }
+                else -> {
+                  LOG.warn("Unsupported style attribute $name ($styleName)")
+                }
+              }
+            }
           }
         }
       }

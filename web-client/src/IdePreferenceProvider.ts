@@ -3,8 +3,9 @@ import orion = require("orion-api")
 import {
   EditorStyles
   } from "api/editor"
+
 /*
-Caret row - annotationLine.currentLine.backgroundColor
+ Caret row - annotationLine.currentLine.backgroundColor
  */
 class IdePreferenceProvider implements orion.PreferenceProvider {
   private editorStyle: any
@@ -220,6 +221,13 @@ class IdePreferenceProvider implements orion.PreferenceProvider {
     prospecto.styles.textviewSelection = selection
     // todo: unfocused text color doesn't work
     prospecto.styles.textviewSelectionUnfocused = selection
+
+    var annotationRange: any = prospecto.styles.annotationRange
+    annotationRange.error = style.styles["ERRORS_ATTRIBUTES"]
+    annotationRange.error.backgroundImage = "url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAYAAAC09K7GAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sJDw4cOCW1/KIAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAHElEQVQI12NggIL/DAz/GdA5/xkY/qPKMDAwAADLZwf5rvm+LQAAAABJRU5ErkJggg==\")"
+
+    annotationRange.unknownSymbol = style.styles["WRONG_REFERENCES_ATTRIBUTES"]
+
     this.editorStyle = prospecto
   }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.*
+import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.DirectoryIndex
@@ -35,7 +36,7 @@ class IdeaResourceService : ResourceService {
         if (fileType is PlainTextFileType ||
                 fileType is UnknownFileType ||
                 fileType is ScratchFileType ||
-                fileType is RegExpFileType ||
+                fileType is FakeFileType ||
                 fileType is RegExpFileType ||
                 fileType.getName() == EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT ||
                 fileType.getDefaultExtension().isEmpty()) {
@@ -43,21 +44,43 @@ class IdeaResourceService : ResourceService {
         }
 
         map {
+          var extends: String? = null
           "id"(fun (): CharSequence? {
+            var mimeType: String? = null
             if (fileType is LanguageFileType) {
-              val mimeTypes = fileType.getLanguage().getMimeTypes()
-              if (!mimeTypes.isEmpty()) {
-                val id = mimeTypes[0]
-                return when (id) {
-                  "text/java" -> "text/x-java-source"
-                  "text/dtd" -> "application/xml-dtd"
-                  "text/xml" -> "application/xml"
-                  else -> id
+              mimeType = when (fileType.getName()) {
+                "JSCS", "JSHint", "ESLint", "SourceMap" -> {
+                  extends = "application/json"
+                  fileType.getName().toLowerCase()
+                }
+                "JavaScript" -> "application/javascript"
+                "TypeScript" -> "application/typescript"
+                "Literate CoffeeScript" -> "text/litcoffee"
+                else -> {
+                  val mimeTypes = fileType.getLanguage().getMimeTypes()
+                  if (mimeTypes.isEmpty()) {
+                    null
+                  }
+                  else {
+                    val id = mimeTypes[0]
+                    when (id) {
+                      "text/java" -> "text/x-java-source"
+                      "text/dtd" -> "application/xml-dtd"
+                      "text/xml" -> "application/xml"
+                      else -> id
+                    }
+                  }
                 }
               }
             }
 
-            return FILE_MIMETYPE_MAP.getContentType("f.${fileType.getDefaultExtension()}")
+            if (mimeType == null) {
+              mimeType = FILE_MIMETYPE_MAP.getContentType("f.${fileType.getDefaultExtension()}")
+            }
+            if (mimeType == null || (mimeType == "application/octet-stream" && !fileType.isBinary())) {
+              mimeType = "text/${fileType.getDefaultExtension().toLowerCase()}"
+            }
+            return mimeType
           })
 
           "name"(fun (): CharSequence {
@@ -71,6 +94,9 @@ class IdeaResourceService : ResourceService {
 
           if (fileType is ProjectFileType || fileType is ModuleFileType) {
             "extends"("application/xml")
+          }
+          else if (extends != null) {
+            "extends"(extends)
           }
 
           val icon = fileType.getIcon()

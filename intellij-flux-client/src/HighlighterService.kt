@@ -231,24 +231,24 @@ class HighlighterService(private val project: Project) : Disposable {
       "start"(start)
       "end"(end)
     }
+  }
+}
 
-    private fun PrimitiveWriter.writeStyle(textAttributes: TextAttributes) {
-      val foreColor = textAttributes.getForegroundColor()
-      if (foreColor != null) {
-        "color"(foreColor.toHex())
-      }
+private fun PrimitiveWriter.writeStyle(textAttributes: TextAttributes) {
+  val foreColor = textAttributes.getForegroundColor()
+  if (foreColor != null) {
+    "color"(foreColor.toHex())
+  }
 
-      val backgroundColor = textAttributes.getBackgroundColor()
-      if (backgroundColor != null) {
-        "background-color"(backgroundColor.toHex())
-      }
+  val backgroundColor = textAttributes.getBackgroundColor()
+  if (backgroundColor != null) {
+    "background-color"(backgroundColor.toHex())
+  }
 
-      if ((textAttributes.getFontType() and Font.BOLD) != 0) {
-        "font-weight"("bold")
-      }
-      if ((textAttributes.getFontType() and Font.ITALIC) != 0) {
-        "font-style"("italic")
-      }
-    }
+  if ((textAttributes.getFontType() and Font.BOLD) != 0) {
+    "font-weight"("bold")
+  }
+  if ((textAttributes.getFontType() and Font.ITALIC) != 0) {
+    "font-style"("italic")
   }
 }
