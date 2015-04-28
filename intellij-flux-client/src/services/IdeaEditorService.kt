@@ -67,7 +67,7 @@ class IdeaEditorService() : IdeaContentAssistService {
                 "FOREGROUND" -> "color"("#$value")
                 "BACKGROUND" -> "background-color"("#$value")
                 "ERROR_STRIPE_COLOR" -> continue @loop
-                "EFFECT_TYPE" -> {
+                "EFFECT_TYPE", "EFFECT_COLOR" -> {
                   // reuse orion style
                 }
                 else -> {
