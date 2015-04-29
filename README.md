@@ -9,7 +9,7 @@
 1. Run IntelliJ IDEA (use run configuration "Idea").
 1. Open your browser to `https://<dockerd host ip>`
 
-After project update, you should execute `docker-compose -f mq.yml pull && docker-compose -f web.yml pull`.
+After project update, you should execute `docker-compose -f mq.yml pull && docker-compose -f web.yml pull` (because `up` doesn't check updates).
 
 We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](https://youtrack.jetbrains.com/issue/IDEA-137765).
 

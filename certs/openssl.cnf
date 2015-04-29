@@ -1,19 +1,25 @@
+# openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout key.pem -out cert.pem -config openssl.cnf
+
 [req]
-x509_extensions = v3_ca
 distinguished_name = req_distinguished_name
+x509_extensions = v3_req
+prompt = no
 
 [req_distinguished_name]
-countryName = Country Name (2 letter code)
-countryName_default = DE
-stateOrProvinceName = State or Province Name (full name)
-stateOrProvinceName_default = Bavaria
-localityName = Locality Name (eg, city)
-localityName_default = Munich
+C = DE
+ST = Bavaria
+L = Munich
+CN = flux
 
-[v3_ca]
+[v3_req]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+basicConstraints = CA:TRUE
 subjectAltName = @alt_names
 
 [alt_names]
+DNS.1 = flux
 IP.1 = 10.211.55.14
-
-# openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout key.pem -out cert.pem -config openssl.cnf
+IP.2 = 10.211.55.18
+IP.3 = 10.211.55.5
+IP.4 = 10.211.55.15

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title></title>
+  <link rel="stylesheet" type="text/css" href="zocial/zocial.css" />
+  <script class="pre" src="hello.all-1.5.1.min.js"></script>
+
+  <style>
+    html {
+      font-family: "Helvetica Neue", sans-serif;
+    }
+    body {
+      background: #FFF;
+    }
+    body .zocial {
+      margin: 8px 4px;
+      font-size: 13px;
+    }
+  </style>
+
+  <script>
+    hello.init({
+      github: "6e734acbd7022cbd8ac4",
+      google: "1024251510901-l2nrrgnkuslolh79gs1dgu5a3om3dfg1.apps.googleusercontent.com"
+    }, {redirect_uri: 'auth.html'});
+  </script>
+</head>
+<body>
+<div style="text-align: center; margin-top: 3em;">
+  <a href="javascript:hello('github').login()" class="zocial github">Sign in with Github</a>
+  <br>
+  <a href="javascript:hello('google').login()" class="zocial googleplus">Sign in with Google+</a>
+</div>
+</body>
+</html>

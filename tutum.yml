@@ -7,11 +7,19 @@ mqAuth:
   environment:
     _JAVA_OPTIONS: "-Xms48m -Xmx64M"
     MANAGEMENT_USER: admin
-certs:
+# https://support.tutum.co/support/tickets/1287 we cannot use one certs service for mq and web
+certs-mq:
   image: tutum.co/develar/intellij-io-certs
   deployment_strategy: every_node
   tags:
     - flux
+    - mq
+certs-web:
+  image: tutum.co/develar/intellij-io-certs
+  deployment_strategy: every_node
+  tags:
+    - flux
+    - web
 mq:
   image: develar/rabbitmq-auth
   tags:
@@ -20,7 +28,7 @@ mq:
   links:
     - mqAuth:mq-auth
   volumes_from:
-    - certs
+    - certs-mq
   ports:
     - "5671:5671"
     # web stomp
@@ -34,7 +42,7 @@ web:
     - flux
     - web
   volumes_from:
-    - certs
+    - certs-web
   ports:
     - 80:80
     - 443:443
