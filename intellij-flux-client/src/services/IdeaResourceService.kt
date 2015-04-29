@@ -33,8 +33,7 @@ class IdeaResourceService : ResourceService {
       val byteOut = BufferExposingByteArrayOutputStream()
       val builder = StringBuilder()
       for (fileType in FileTypeManager.getInstance().getRegisteredFileTypes()) {
-        if (fileType is PlainTextFileType ||
-                fileType is UnknownFileType ||
+        if (fileType is UnknownFileType ||
                 fileType is ScratchFileType ||
                 fileType is FakeFileType ||
                 fileType is RegExpFileType ||
@@ -139,6 +138,7 @@ class IdeaResourceService : ResourceService {
       return
     }
 
+    val fileTypeRegistry = FileTypeRegistry.getInstance()
     array("children") {
       val directoryIndex = DirectoryIndex.getInstance(project)
       for (module in ModuleManager.getInstance(project).getModules()) {
@@ -171,28 +171,39 @@ class IdeaResourceService : ResourceService {
             "name"(contentRoot.getName())
             "location"("m:${module.getName()}")
 
-            describeDirectory(contentRoot)
+            describeDirectory(contentRoot, directoryIndex, fileTypeRegistry)
           }
         }
       }
     }
   }
 
-  private fun MapMemberWriter.describeDirectory(directory: VirtualFile) {
+  private fun MapMemberWriter.describeDirectory(directory: VirtualFile, directoryIndex: DirectoryIndex, fileTypeRegistry: FileTypeRegistry) {
     array("children") {
       val children = directory.getChildren()
       for (file in children) {
         try {
+          val isDirectory = file.isDirectory()
+          if (isDirectory) {
+            val info = directoryIndex.getInfoForFile(file)
+            if (!info.isInProject()) {
+              continue
+            }
+          }
+          else if (fileTypeRegistry.isFileIgnored(file)) {
+            continue
+          }
+
           map {
             "name"(file.getName())
-            if (!file.isDirectory()) {
+            if (!isDirectory) {
               "length"(file.getLength())
               val cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file)
               "hash"(if (cachedDocument == null) DigestUtils.sha1Hex(file.getInputStream()) else cachedDocument.getImmutableCharSequence().sha1())
               "lastSaved"(file.getTimeStamp())
             }
             else if (children.size() == 1) {
-              describeDirectory(file)
+              describeDirectory(file, directoryIndex, fileTypeRegistry)
             }
           }
         }
@@ -204,7 +215,8 @@ class IdeaResourceService : ResourceService {
   }
 
   private fun MapMemberWriter.getResource(projectName: String, resourcePath: String, requestorHash: String?, includeContents: Boolean) {
-    val file = findReferencedFile(resourcePath, projectName)
+    val project = findReferencedProject(projectName)
+    val file = project?.findFile(resourcePath)
     if (file == null) {
       "error"(404)
       return
@@ -212,7 +224,7 @@ class IdeaResourceService : ResourceService {
 
     if (file.isDirectory()) {
       if (includeContents) {
-        describeDirectory(file)
+        describeDirectory(file, DirectoryIndex.getInstance(project), FileTypeRegistry.getInstance())
       }
       return
     }

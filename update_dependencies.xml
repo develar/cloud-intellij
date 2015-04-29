@@ -1,5 +1,5 @@
 <project name="Update Dependencies" default="update">
-  <property name="ideaVersion" value="141.713.2"/>
+  <property name="ideaVersion" value="141.814.3"/>
 
   <condition property="os.tag" value="zip">
     <os family="windows"/>
@@ -106,7 +106,7 @@
 
         <then>
           <delete dir="${ideaSdk}" failonerror="false"/>
-          <get src="http://download.jetbrains.com/idea/ideaIU-14.1.2.${os.tag}" dest="dependencies/download/${idea.archive.name}" usetimestamp="true"/>
+          <get src="http://download.jetbrains.com/idea/ideaIU-${ideaVersion}.${os.tag}" dest="dependencies/download/${idea.archive.name}" usetimestamp="true"/>
           <get src="${content.base.url}/sources.zip" dest="dependencies/idea-sdk-sources.zip" usetimestamp="true"/>
         </then>
       </if>
@@ -127,7 +127,7 @@
               <arg path="dependencies/download/${idea.archive.name}"/>
             </exec>
             <exec executable="bash">
-              <arg line="-c 'cp -R dependencies/download/mount/IntelliJ\ IDEA\ 14\.app/Contents/ ${ideaSdk}'"/>
+              <arg line="-c 'cp -R dependencies/download/mount/IntelliJ*.app/Contents/ ${ideaSdk}'"/>
             </exec>
             <exec executable="hdiutil">
               <arg value="detach"/>
@@ -225,6 +225,9 @@
       <delete dir="${ideaSdk}/plugins/zkm" failonerror="false"/>
       <delete dir="${ideaSdk}/plugins/zkm" failonerror="false"/>
       <delete dir="${ideaSdk}/plugins/uml" failonerror="false"/>
+
+      <delete dir="${ideaSdk}/plugins/Play" failonerror="false"/>
+      <delete dir="${ideaSdk}/plugins/android" failonerror="false"/>
 
       <!-- remove, we don't use it yet -->
       <delete dir="${ideaSdk}/plugins/svn4idea" failonerror="false"/>

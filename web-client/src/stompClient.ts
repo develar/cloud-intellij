@@ -25,9 +25,8 @@ export class StompConnector {
     this.exchangeCommands = "/exchange/d." + user
     this.exchangeEvents = "/exchange/t." + user
 
-    this.client.debug = (message) => {
-      console.log(message)
-    }
+    // to debug, use chrome devtools, Network tab (you can filter by WebSockets)
+    this.client.debug = null
 
     return new Promise<void>((resolve: () => void, reject: (error?: any) => void) => {
       this.client.connect(user, password, (frame) => {

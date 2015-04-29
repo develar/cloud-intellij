@@ -1,12 +1,7 @@
 {
   "/plugins": {
     "edit/content/imageViewerPlugin.html": true,
-    "edit/content/jsonEditorPlugin.html": true,
-    "plugins/webEditingPlugin.html": true,
-    "plugins/helpPlugin.html": true,
-    "plugins/languages/xquery/xqueryPlugin.html": true,
     "plugins/pageLinksPlugin.html": true,
-    "webtools/plugins/webToolsPlugin.html": true,
     "/fluxPlugin.html": true
   },
   "/settingsContainer": {
