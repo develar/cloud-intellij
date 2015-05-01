@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting to IntelliJ Flux...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"/>
+  <link href="redirect.css" rel="stylesheet"/>
+</head>
+<body>
+
+<div class="loading"><span>&bull;</span><span>&bull;</span><span>&bull;</span></div>
+
+<h2>Please close this window to continue.</h2>
+<script>
+  window.onbeforeunload = function () {
+    document.getElementsByTagName('h2')[0].innerHTML = "Redirecting, please wait";
+  }
+</script>
+<script src="/hello.all-1.5.1.min.js"></script>
+</body>
+</html>

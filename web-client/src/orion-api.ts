@@ -1,11 +1,24 @@
 import Promise = require("bluebird")
 
+export interface AuthService {
+  getUser(): any
+
+  getAuthForm(): string
+
+  getLabel(): string
+
+  getKey(): string
+
+  logout(): Promise<any>
+}
+
+
 export interface PreferenceProvider {
   get(name: string, force?: boolean): any
 
-  put(name: string, data: any): void
+  put(name: string, data: any): Promise<void>
 
-  remove(name: string, key: string): void
+  remove(name: string, key: string): Promise<void>
 }
 
 // see fileClient.js

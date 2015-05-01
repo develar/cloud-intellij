@@ -22,36 +22,32 @@ var tsProject = ts.createProject({
 
 gulp.task("compile", function () {
   var tsResult = gulp.src([sources, "lib.d/**/*.d.ts"])
-      .pipe(sourcemaps.init())
-      //.pipe(newer(outDir + '/' + outFile))
-      .pipe(ts(tsProject));
+    .pipe(sourcemaps.init())
+    //.pipe(newer(outDir + '/' + outFile))
+    .pipe(ts(tsProject));
 
   tsResult.js
-      //.pipe(concat(outFile))
-      //.pipe(uglify({
-      //        output: {
-      //          beautify: true,
-      //          indent_level: 2
-      //        }
-      //      }))
-      .pipe(sourcemaps.write('.', {includeContent: true, sourceRoot: path.resolve('src')}))
-      .pipe(gulp.dest(outDir))
+    //.pipe(concat(outFile))
+    .pipe(sourcemaps.write('.', {includeContent: true, sourceRoot: path.resolve('src')}))
+    .pipe(gulp.dest(outDir))
 })
 
 gulp.task("package", ['compile'], function () {
   var amdOptimize = require("amd-optimize")
   gulp.src(["out/*.js"])
-      .pipe(amdOptimize("fluxPlugin", {
-              configFile: "out/requireConfig.js",
-              exclude: ["Deferred", "sockjs", "stomp", "bluebird", "sha1", "orion/plugin"],
-              loader: amdOptimize.loader(function (moduleName) {
-                return "lib/empty.js"
-              })
-            }))
-      .pipe(sourcemaps.init({loadMaps: true}))
-      .pipe(concat("fluxPlugin.js"))
-      .pipe(sourcemaps.write('.', {includeContent: true, sourceRoot: path.resolve('src')}))
-      .pipe(gulp.dest(outDir + "/dist"))
+    .pipe(amdOptimize("fluxPlugin", {
+      configFile: "out/requireConfig.js",
+      exclude: ["Deferred", "sockjs", "stomp", "bluebird", "sha1", "orion/plugin"],
+      loader: amdOptimize.loader(function (moduleName) {
+        // https://github.com/scalableminds/amd-optimize/issues/22
+        return "lib/empty.js"
+      })
+    }))
+    .pipe(sourcemaps.init({loadMaps: true}))
+    .pipe(uglify())
+    .pipe(concat("fluxPlugin.js"))
+    .pipe(sourcemaps.write('.', {includeContent: false, sourceRoot: path.resolve('src')}))
+    .pipe(gulp.dest(outDir + "/dist"))
 })
 
 gulp.task('watch', ['compile'], function () {

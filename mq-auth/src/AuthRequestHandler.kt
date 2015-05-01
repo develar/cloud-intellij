@@ -16,6 +16,9 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
 
   private val managementUser: String?
 
+  private val devUserName: String?
+  private val devUserToken: String?
+
   init {
     val allocator = ByteBufAllocator.DEFAULT
     allow = ioBuffer(allocator, "allow")
@@ -23,6 +26,9 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
     deny = ioBuffer(allocator, "deny")
 
     managementUser = System.getenv("MANAGEMENT_USER")
+
+    devUserName = System.getenv("DEV_USER_NAME")
+    devUserToken = System.getenv("DEV_USER_TOKEN")
   }
 
   private fun ioBuffer(allocator: ByteBufAllocator, string: String): ByteBuf {
@@ -41,13 +47,13 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
     val answer: ByteBuf
     val urlDecoder = QueryStringDecoder(request.uri())
     answer = when (urlDecoder.path()) {
-      // todo verify user - we should use password as a token and verify it (github - call /user and pass the token as "Authorization: 'token ' + token")
       "/user" -> {
-        if (getUsername(urlDecoder) == managementUser) {
+        val userName = getUserName(urlDecoder)
+        if (userName == managementUser) {
           allowMonitoring
         }
         else {
-          allow
+          verifyUser(userName, urlDecoder.parameters().get("password")?.get(0))
         }
       }
       "/vhost" -> allow
@@ -59,10 +65,10 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
         else {
           assert(type == "exchange")
           val exchangeName = urlDecoder.parameters().get("name")!![0]!!
-          val username = getUsername(urlDecoder)
-          if ((exchangeName.length() - username.length() == 2) &&
+          val userName = getUserName(urlDecoder)
+          if ((exchangeName.length() - userName.length() == 2) &&
                   (exchangeName[1] == '.' && (exchangeName[0] == 'd' || exchangeName[0] == 't')) &&
-                  exchangeName.regionMatches(2, username, 0, username.length(), false)) {
+                  exchangeName.regionMatches(2, userName, 0, userName.length(), false)) {
             allow
           }
           else {
@@ -89,7 +95,33 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
     }
   }
 
-  private fun getUsername(urlDecoder: QueryStringDecoder) = urlDecoder.parameters().get("username")!![0]!!
+  private fun verifyUser(userName: String, token: String?): ByteBuf {
+    val i = userName.indexOf('_', 0)
+    if (i < 0 || i > 2) {
+      return deny
+    }
+
+    val provider = when (userName.substring(0, i)) {
+      "jb" -> "jetbrains"
+      "gh" -> "github"
+      "g" -> "google"
+      "fb" -> "facebook"
+      else -> null
+    }
+
+    if (provider == null) {
+      return deny
+    }
+
+    if (userName == devUserName) {
+      return if (token == devUserToken) allow else deny
+    }
+
+    // todo verify user - we should use password as a token and verify it (github - call /user and pass the token as "Authorization: 'token ' + token")
+    return allow
+  }
+
+  private fun getUserName(urlDecoder: QueryStringDecoder) = urlDecoder.parameters().get("username")!![0]!!
 
   override fun channelReadComplete(context: ChannelHandlerContext) {
     context.flush()

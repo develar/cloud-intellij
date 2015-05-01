@@ -5,8 +5,12 @@ import IdePreferenceProvider = require("IdePreferenceProvider")
 import PluginProvider = require("orion/plugin")
 
 import {
-    FileService,
-    } from "ResourceService"
+  AuthService,
+  } from "orion-api"
+
+import {
+  FileService,
+  } from "ResourceService"
 
 import {
   EditorService,
@@ -14,80 +18,167 @@ import {
   } from "api/editor"
 
 import {
-    ResourceService,
-    ContentTypeDescriptor,
-    } from "api/resource"
+  ResourceService,
+  ContentTypeDescriptor,
+  } from "api/resource"
 
 import {
-    StompConnector,
-    } from "stompClient"
+  StompConnector,
+  } from "stompClient"
 
-const hostname = window.location.hostname
-let mqHost: string
-if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host)) {
-  // ip address - dev machine
-  mqHost = hostname + ":" + 4443
-}
-else {
-  mqHost = `mq.${hostname}`
+interface User {
+  name: string
+  provider: string
+  token: string
 }
 
-const stompConnector = new StompConnector()
-stompConnector.connect(mqHost, "dev", "dev").done(() => {
-  const rootLocation = "ide"
-  let headers = {
-    'Name': "IntelliJ Flux",
-    'Version': "0.1",
-    'Description': "IntelliJ Flux Integration",
-    'top': rootLocation,
-    // orion client: c12f972	07/08/14 18:35	change orion file client pattern to "/file" instead of "/"
-    'pattern': "^(" + rootLocation + ")|(/file)"
+class FluxAuthService implements AuthService {
+  getLabel(): string {
+    return "IntelliJ Flux"
   }
-  var provider = new PluginProvider(headers)
 
-  var fileService = new FileService(stompConnector, rootLocation);
-  provider.registerService("orion.core.file", fileService, headers)
+  getKey(): string {
+    return "OAuth"
+  }
 
-  var editorService = new Editor(stompConnector, fileService)
-
-  provider.registerService(["orion.edit.model", "orion.edit.live", "orion.edit.contentAssist", "orion.edit.validator"], editorService, {contentType: ["text/plain"]})
-
-  provider.registerService("orion.edit.command", {
-    execute: function (editorContext: any, context: any): void {
-      if (context.annotation != null && context.annotation.id) {
-        editorService.applyQuickfix(editorContext, context)
+  getUser(): User {
+    var serialized = localStorage.getItem("user")
+    try {
+      var user = JSON.parse(serialized)
+      if (user != null && user.name != null && user.provider != null && user.token != null) {
+        return user
+      }
+      else {
+        if (user != null) {
+          console.log("User data exists, but invalid", user)
+        }
       }
     }
-  }, {
-    id: "orion.css.quickfix.zeroQualifier",
-    image: "../images/compare-addition.gif",
-    scopeId: "orion.edit.quickfix",
-    name: "Apply quickfix",
-    contentType: ["text/x-java-source"],
-    tooltip: "Apply Quick Fix",
-    validationProperties: []
+    catch (e) {
+      console.warn("User data exists, but invalid", serialized)
+    }
+    return null
+  }
+
+  getAuthForm(): string {
+    return "/auth/login.html"
+  }
+
+  logout(): Promise<any> {
+    localStorage.removeItem("user")
+    localStorage.removeItem("hello")
+    // todo real sign out from provider
+    return Promise.resolve(null)
+  }
+}
+
+function endsWith(str: string, suffix: string): boolean {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1
+}
+
+function checkAuthAndConnect() {
+  var provider = new PluginProvider({
+    Name: "IntelliJ Flux",
+    Version: "0.1",
+    Description: "IntelliJ Flux Integration",
   })
 
-  Promise.all([
-    stompConnector.request(ResourceService.contentTypes)
-      .then((result: Array<ContentTypeDescriptor>) => {
-        for (let contentType of result) {
-          //noinspection ReservedWordAsName
-          if (contentType.extends == null) {
-            contentType.extends = "text/plain"
-          }
-        }
+  var authService = new FluxAuthService()
+  provider.registerService("orion.core.auth", authService)
+  var user = authService.getUser()
+  if (user == null) {
+    // bootstrap will use our authService and redirect to login page
+    console.log("User is not authenticated, redirect to login page")
+    provider.connect()
+    return
+  }
 
-        //noinspection SpellCheckingInspection
-        provider.registerServiceProvider("orion.core.contenttype", {}, {contentTypes: result})
-        provider.registerServiceProvider("orion.edit.highlighter", editorService.eventTarget, {type: "highlighter", contentType: result})
-      }),
-    stompConnector.request(EditorService.styles)
-      .then((result: EditorStyles) => {
-        provider.registerService("orion.core.preference.provider", new IdePreferenceProvider(result))
-      })
-  ])
+  const hostname = window.location.hostname
+  let mqHost: string
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host) || location.host.indexOf('.') === -1 || endsWith(location.host, ".dev")) {
+    // ip address or local domain - dev machine
+    mqHost = hostname + ":" + 4443
+  }
+  else {
+    mqHost = "mq." + hostname
+  }
+
+  connect(mqHost, user, provider)
+}
+
+function authProviderToPrefix(provider: string): string {
+  switch (provider) {
+    case "jetbrains":
+      return "jb"
+
+    case "github":
+      return "gh"
+
+    case "google":
+      return "g"
+
+    case "facebook":
+      return "fb"
+
+    default:
+      throw new Error("Unknown provider: " + provider)
+  }
+}
+
+function connect(mqHost: string, user: User, provider: PluginProvider) {
+  const stompConnector = new StompConnector()
+
+  stompConnector.connect(mqHost, authProviderToPrefix(user.provider) + "_" + user.name, user.token)
     .done(() => {
-      provider.connect()
+      provider.registerService("orion.core.preference.provider", new IdePreferenceProvider(stompConnector.request<EditorStyles>(EditorService.styles)))
+
+      const rootLocation = "ide"
+      var fileService = new FileService(stompConnector, rootLocation);
+      provider.registerService("orion.core.file", fileService, {
+        Name: "IntelliJ Flux",
+        top: rootLocation,
+        // orion client: c12f972	07/08/14 18:35	change orion file client pattern to "/file" instead of "/"
+        pattern: "^(" + rootLocation + ")|(/file)"
+      })
+
+      var editorService = new Editor(stompConnector, fileService)
+
+      provider.registerService(["orion.edit.model", "orion.edit.live", "orion.edit.contentAssist", "orion.edit.validator"], editorService, {contentType: ["text/plain"]})
+
+      //provider.registerService("orion.edit.command", {
+      //  execute: function (editorContext: any, context: any): void {
+      //    if (context.annotation != null && context.annotation.id) {
+      //      editorService.applyQuickfix(editorContext, context)
+      //    }
+      //  }
+      //}, {
+      //  id: "orion.css.quickfix.zeroQualifier",
+      //  image: "../images/compare-addition.gif",
+      //  scopeId: "orion.edit.quickfix",
+      //  name: "Apply quickfix",
+      //  contentType: ["text/x-java-source"],
+      //  tooltip: "Apply Quick Fix",
+      //  validationProperties: []
+      //})
+
+      stompConnector.request(ResourceService.contentTypes)
+        .then((result: Array<ContentTypeDescriptor>) => {
+          for (let contentType of result) {
+            //noinspection ReservedWordAsName
+            if (contentType.extends == null) {
+              contentType.extends = "text/plain"
+            }
+          }
+
+          provider.registerServiceProvider("orion.core.contenttype", {}, {contentTypes: result})
+          provider.registerServiceProvider("orion.edit.highlighter", editorService.eventTarget, {
+            type: "highlighter",
+            contentType: result
+          })
+
+          provider.connect()
+        })
     })
-})
+}
+
+checkAuthAndConnect()

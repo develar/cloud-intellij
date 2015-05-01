@@ -10,4 +10,18 @@ For RPC non-exclusive, autodelete, non-durable queue used. Not the event queue b
 IntelliJ IDEA plugin currently uses "idea-client" as a rpcQueueName.
 
 # Eclipse Orion
-Eclipse Orion has very suitable and appropriate API — [AsyncStyler](https://orion.eclipse.org/jsdoc/symbols/orion.editor.AsyncStyler.html) to provide highlighting. IDE implementation could be used directly without intermediate model. Performance — yes, on each typing we ask IDE to provide style information, but in any case we must do it to annotate code.  
+## Plugins
+ * webEditingPlugin — register default editor service [orion.edit.editor](https://wiki.eclipse.org/Orion/Documentation/Developer_Guide/Plugging_into_the_editor#orion.edit.editor). So, we must use.
+
+Eclipse Orion has very suitable and appropriate API — [AsyncStyler](https://orion.eclipse.org/jsdoc/symbols/orion.editor.AsyncStyler.html) to provide highlighting. IDE implementation could be used directly without intermediate model. Performance — yes, on each typing we ask IDE to provide style information, but in any case we must do it to annotate code.
+
+# Tutum
+Note about tutum.yml: One certs service cannot be used for both mq and web services due to https://support.tutum.co/support/tickets/1287:
+
+> Tutum does "volumes-from" associations based on the container name suffix.
+  Therefore, web-1 gets its "volumes-from" from certs-1, and mq-1 also gets its "volumes-from" from certs-1,
+  that is why web-1 fails to deploy with this message.
+
+> We will fix this in the future, but it is not between our priorities in the short term.
+  For now, you could split the "certs" service in two services, "web-certs" and "mq-certs",
+  and deploy each of them with the same tags as "web" and "mq" respectively.

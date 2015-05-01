@@ -18,7 +18,8 @@ class IdeaFluxManager : ApplicationComponent {
 
     public override fun initComponent() {
     ApplicationManager.getApplication().executeOnPooledThread {
-      fluxService = IdeaFluxServiceManager(System.getProperty("flux.user", "dev"))
+      fluxService = IdeaFluxServiceManager()
+      fluxService!!.connect(System.getProperty("flux.user.name"), System.getProperty("flux.user.token"))
     }
   }
 

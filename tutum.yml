@@ -1,13 +1,14 @@
 mqAuth:
   image: cloudintellij/mq-auth
   target_num_containers: 2
+  deployment_strategy: high_availability
   autorestart: on_failure
   tags:
     - flux
   environment:
     _JAVA_OPTIONS: "-Xms48m -Xmx64M"
     MANAGEMENT_USER: admin
-# https://support.tutum.co/support/tickets/1287 we cannot use one certs service for mq and web
+# https://support.tutum.co/support/tickets/1287 we cannot use one certs service for mq and web (see Implementation.md)
 certs-mq:
   image: tutum.co/develar/intellij-io-certs
   deployment_strategy: every_node
@@ -22,6 +23,7 @@ certs-web:
     - web
 mq:
   image: develar/rabbitmq-auth
+  autorestart: on_failure
   tags:
     - flux
     - mq

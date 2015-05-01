@@ -23,11 +23,32 @@ val mqHost: String
     return host ?: "mq"
   }
 
+public fun connectToMq(username: String, token: String, executor: ExecutorService, host: String = mqHost, trustManager: TrustManager? = null): Connection {
+  val connectionFactory = ConnectionFactory()
+  connectionFactory.setHost(host)
+  if (trustManager != null) {
+    connectionFactory.setPort(ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT)
+    connectionFactory.useSslProtocol(if (System.getProperty("java.version").startsWith("1.6.")) "TLSv1" else "TLSv1.2", trustManager)
+  }
+  connectionFactory.setUsername(username)
+  connectionFactory.setPassword(token)
+  connectionFactory.setRequestedHeartbeat(60)
+  connectionFactory.setAutomaticRecoveryEnabled(true)
+
+  connectionFactory.setSharedExecutor(executor)
+  connectionFactory.setExceptionHandler(object : DefaultExceptionHandler() {
+    override fun handleUnexpectedConnectionDriverException(conn: Connection, exception: Throwable) {
+      LOG.error(exception.getMessage(), exception)
+    }
+  })
+
+  return connectionFactory.newConnection()
+}
+
 /**
  * rpcQueueName — see Implementation.md
  */
-public class RabbitMqMessageConnector(username: String, executor: ExecutorService, rpcQueueName: String, host: String = mqHost, trustManager: TrustManager? = null) : BaseMessageConnector() {
-  private val connection: Connection
+public class RabbitMqMessageConnector(username: String, rpcQueueName: String, private val connection: Connection) : BaseMessageConnector() {
   private val commandProcessor = CommandProcessor<ByteArray>()
 
   val channel: Channel
@@ -37,25 +58,6 @@ public class RabbitMqMessageConnector(username: String, executor: ExecutorServic
   val exchangeEvents: String
 
   init {
-    val connectionFactory = ConnectionFactory()
-    connectionFactory.setHost(host)
-    if (trustManager != null) {
-      connectionFactory.setPort(ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT)
-      connectionFactory.useSslProtocol(if (System.getProperty("java.version").startsWith("1.6.")) "TLSv1" else "TLSv1.2", trustManager)
-    }
-    connectionFactory.setUsername(username)
-    connectionFactory.setRequestedHeartbeat(60)
-    connectionFactory.setAutomaticRecoveryEnabled(true)
-
-    connectionFactory.setSharedExecutor(executor)
-    connectionFactory.setExceptionHandler(object : DefaultExceptionHandler() {
-      override fun handleUnexpectedConnectionDriverException(conn: Connection, exception: Throwable) {
-        LOG.error(exception.getMessage(), exception)
-      }
-    })
-
-    connection = connectionFactory.newConnection()
-    LOG.info("Connected to rabbitMQ: $host")
     channel = connection.createChannel()
     channel.addShutdownListener(object: ShutdownListener {
       override fun shutdownCompleted(cause: ShutdownSignalException) {

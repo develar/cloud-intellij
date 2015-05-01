@@ -1,1 +1,0 @@
-"https://github.com/scalableminds/amd-optimize/issues/22"

@@ -9,7 +9,7 @@ prompt = no
 C = DE
 ST = Bavaria
 L = Munich
-CN = flux
+CN = flux.dev
 
 [v3_req]
 subjectKeyIdentifier = hash
@@ -18,7 +18,8 @@ basicConstraints = CA:TRUE
 subjectAltName = @alt_names
 
 [alt_names]
-DNS.1 = flux
+DNS.1 = flux.dev
+DNS.2 = flux
 IP.1 = 10.211.55.14
 IP.2 = 10.211.55.18
 IP.3 = 10.211.55.5
