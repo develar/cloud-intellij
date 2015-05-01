@@ -27,7 +27,7 @@ public fun connectToMq(username: String, token: String, executor: ExecutorServic
   val connectionFactory = ConnectionFactory()
   connectionFactory.setHost(host)
   if (trustManager != null) {
-    connectionFactory.setPort(ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT)
+    connectionFactory.setPort(System.getenv("MQ_PORT")?.toInt() ?: ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT)
     connectionFactory.useSslProtocol(if (System.getProperty("java.version").startsWith("1.6.")) "TLSv1" else "TLSv1.2", trustManager)
   }
   connectionFactory.setUsername(username)

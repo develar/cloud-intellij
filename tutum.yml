@@ -32,7 +32,7 @@ mq:
   volumes_from:
     - certs-mq
   ports:
-    - "5671:5671"
+    - "80:5671"
     # web stomp
     - "443:4443"
     # management
