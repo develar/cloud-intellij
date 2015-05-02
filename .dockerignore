@@ -8,3 +8,4 @@ idea-runner
 certs
 out/production/intellij-flux-client
 out/production/jvm-flux-client
+web-client

@@ -24,7 +24,7 @@ import {
     ModelChangingEvent,
     } from "orion-api"
 
-class LiveEditSession {
+export default class LiveEditSession {
   private muteRequests = 0
   private modificationCount = 0
 
@@ -102,5 +102,3 @@ class LiveEditSession {
     this.editorContext.setText(content, start, end).then(handler, handler)
   }
 }
-
-export = LiveEditSession

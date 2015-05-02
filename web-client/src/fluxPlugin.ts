@@ -1,5 +1,6 @@
+"use strict"
+
 import Promise = require("bluebird")
-import Editor = require("Editor")
 import IdePreferenceProvider = require("IdePreferenceProvider")
 
 import PluginProvider = require("orion/plugin")
@@ -25,6 +26,8 @@ import {
 import {
   StompConnector,
   } from "stompClient"
+
+import EditorManager from "EditorManager"
 
 interface User {
   name: string
@@ -141,7 +144,7 @@ function connect(mqHost: string, user: User, provider: PluginProvider) {
         pattern: "^(" + rootLocation + ")|(/file)"
       })
 
-      var editorService = new Editor(stompConnector, fileService)
+      var editorService = new EditorManager(stompConnector, fileService)
 
       provider.registerService(["orion.edit.model", "orion.edit.live", "orion.edit.contentAssist", "orion.edit.validator"], editorService, {contentType: ["text/plain"]})
 

@@ -1,12 +1,20 @@
 "use strict"
 
+import OrionEventTarget = require("orion/EventTarget")
+
 import sha1 = require("sha1")
-import stompClient = require("stompClient")
-import editor = require("api/editor")
+
+import {
+  StompConnector
+  } from "stompClient"
+
 import Promise = require("bluebird")
 
-import fileSystem = require("ResourceService")
-import LiveEditSession = require("LiveEditSession")
+import {
+  FileService
+  } from "ResourceService"
+
+import LiveEditSession from "LiveEditSession"
 
 import {
   EditorTopics,
@@ -18,29 +26,26 @@ import {
   } from "api/editor"
 
 import {
-    GetResourceResponse,
-    } from "api/resource"
+  GetResourceResponse,
+  } from "api/resource"
 
 import {
-    EditorContext,
-    EditorOptions,
-    Validator,
-    ContentAssist,
-    LiveEditor,
-    Problems,
-    ModelChangingEvent,
-    ContentAssistOptions,
-    } from "orion-api"
+  EditorContext,
+  EditorOptions,
+  Validator,
+  ContentAssist,
+  LiveEditor,
+  Problems,
+  ModelChangingEvent,
+  ContentAssistOptions,
+  } from "orion-api"
 
-
-import EventTarget = require("orion/EventTarget")
-
-class Editor implements Validator, LiveEditor, ContentAssist {
-  public eventTarget = new EventTarget()
+export default class EditorManager implements Validator, LiveEditor, ContentAssist {
+  public eventTarget = new OrionEventTarget()
 
   private editSessions: Array<LiveEditSession> = []
 
-  constructor(private stompClient: stompClient.StompConnector, private fileService: fileSystem.FileService) {
+  constructor(private stompClient: StompConnector, private fileService: FileService) {
     stompClient.on(EditorTopics.started.response, (result: EditorStartedResponse) => {
       for (let session of this.editSessions) {
         var resourceUri = session.resourceUri
@@ -224,5 +229,3 @@ class Editor implements Validator, LiveEditor, ContentAssist {
     //  })
   }
 }
-
-export = Editor

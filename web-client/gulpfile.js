@@ -2,12 +2,12 @@ var gulp = require('gulp')
 var ts = require('gulp-typescript')
 var concat = require('gulp-concat')
 var uglify = require('gulp-uglify')
-var newer = require('gulp-newer')
 var sourcemaps = require('gulp-sourcemaps')
 var path = require('path')
+var amdOptimize = require("amd-optimize")
 
-var outDir = 'out'
-var sources = "src/**/*.ts";
+var outDir = "out"
+var sources = ["src/**/*.ts", "lib.d/**/*.d.ts"]
 
 var tsProject = ts.createProject({
   target: "ES5",
@@ -17,41 +17,45 @@ var tsProject = ts.createProject({
   noExternalResolve: true,
   noEmitOnError: true,
   module: "amd",
-  typescript: require('typescript')
+  typescript: require("typescript")
 });
 
-gulp.task("compile", function () {
-  var tsResult = gulp.src([sources, "lib.d/**/*.d.ts"])
+function compile() {
+  var tsResult = gulp.src(sources)
     .pipe(sourcemaps.init())
-    //.pipe(newer(outDir + '/' + outFile))
-    .pipe(ts(tsProject));
+    .pipe(ts(tsProject))
+  return tsResult.js
+}
 
-  tsResult.js
-    //.pipe(concat(outFile))
-    .pipe(sourcemaps.write('.', {includeContent: true, sourceRoot: path.resolve('src')}))
-    .pipe(gulp.dest(outDir))
+gulp.task("compile", function () {
+  return compile()
+    .pipe(sourcemaps.write('.', {includeContent: false, sourceRoot: "file://" + path.resolve('src')}))
+    .pipe(gulp.dest(outDir + "/files"))
 })
 
-gulp.task("package", ['compile'], function () {
-  var amdOptimize = require("amd-optimize")
-  gulp.src(["out/*.js"])
-    .pipe(amdOptimize("fluxPlugin", {
-      configFile: "out/requireConfig.js",
-      exclude: ["Deferred", "sockjs", "stomp", "bluebird", "sha1", "orion/plugin"],
-      loader: amdOptimize.loader(function (moduleName) {
-        // https://github.com/scalableminds/amd-optimize/issues/22
-        return "lib/empty.js"
-      })
-    }))
-    .pipe(sourcemaps.init({loadMaps: true}))
-    .pipe(uglify())
+var excludedModules = ["Deferred", "stomp", "bluebird", "sha1", "orion/plugin", "orion/EventTarget"]
+var amdOptimizeConf = {
+  exclude: excludedModules,
+  loader: amdOptimize.loader(function (moduleName) {
+    if (excludedModules.indexOf(moduleName) === -1) {
+      throw new Error("Unresolved module " + moduleName)
+    }
+    // https://github.com/scalableminds/amd-optimize/issues/22
+    return "lib/empty.js"
+  })
+}
+
+gulp.task("package", function () {
+  return compile()
+    .pipe(amdOptimize("fluxPlugin", amdOptimizeConf))
     .pipe(concat("fluxPlugin.js"))
-    .pipe(sourcemaps.write('.', {includeContent: false, sourceRoot: path.resolve('src')}))
+    .pipe(uglify({output: {preamble: '"use strict"'}}))
+    .pipe(sourcemaps.write("."))
     .pipe(gulp.dest(outDir + "/dist"))
 })
 
 gulp.task('watch', ['compile'], function () {
-  gulp.watch([sources, "lib.d/**/*.d.ts"], ['compile']);
-});
+  gulp.watch(sources, ['compile']);
+})
 
-gulp.task('default', ['compile']);
+gulp.task('default', ['package'])
