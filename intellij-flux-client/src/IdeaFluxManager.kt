@@ -1,29 +1,55 @@
 package org.intellij.flux
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.util.Time
 import org.jetbrains.flux.MessageConnector
+import org.jetbrains.flux.RabbitMqMessageConnector
+import org.jetbrains.util.concurrency.AsyncPromise
+import org.jetbrains.util.concurrency.Promise
 
 val fluxManager: IdeaFluxManager
   get() = ApplicationManager.getApplication().getComponent(javaClass<IdeaFluxManager>())
 
 class IdeaFluxManager : ApplicationComponent {
-  private var fluxService: IdeaFluxServiceManager? = null
+  private val fluxService = IdeaFluxServiceManager()
 
   override public fun getComponentName() = "FluxConnector"
 
   val messageConnector: MessageConnector?
-    get() = fluxService?.messageConnector
+    get() = fluxService.messageConnector
 
-    public override fun initComponent() {
-    ApplicationManager.getApplication().executeOnPooledThread {
-      fluxService = IdeaFluxServiceManager()
-      fluxService!!.connect(System.getProperty("flux.user.name"), System.getProperty("flux.user.token"))
+  private volatile var connectPromise: AsyncPromise<RabbitMqMessageConnector>? = null
+
+  val connectionState: Promise.State?
+    get() = connectPromise?.state
+
+  public override fun initComponent() {
+    if (PropertiesComponent.getInstance().getBoolean("flux.auto.connect", false)) {
+      connect()
     }
   }
 
+  fun connect(): Promise<RabbitMqMessageConnector> {
+    val promise = AsyncPromise<RabbitMqMessageConnector>()
+    connectPromise = promise
+    ApplicationManager.getApplication().executeOnPooledThread {
+      fluxService.connect(System.getProperty("flux.user.name"), System.getProperty("flux.user.token"), promise)
+    }
+    return promise
+  }
+
   override public fun disposeComponent() {
-    messageConnector?.close(30 * Time.SECOND)
+    disconnect()
+  }
+
+  fun disconnect() {
+    val messageConnector = fluxService.messageConnector
+    if (messageConnector != null) {
+      connectPromise = null
+      fluxService.messageConnector = null
+      messageConnector.close(30 * Time.SECOND)
+    }
   }
 }

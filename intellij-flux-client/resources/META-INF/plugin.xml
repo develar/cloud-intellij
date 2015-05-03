@@ -5,6 +5,8 @@
   <description>IntelliJ in the Cloud</description>
   <idea-version since-build="141.0"/>
 
+  <resource-bundle>FluxBundle</resource-bundle>
+
   <application-components>
     <component>
       <implementation-class>org.intellij.flux.IdeaFluxManager</implementation-class>
@@ -14,4 +16,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.intellij.flux.HighlighterService"/>
   </extensions>
+
+  <actions>
+    <action id="ConnectToFlux" class="org.intellij.flux.ConnectToFluxAction">
+      <add-to-group group-id="ToolsMenu"/>
+    </action>
+  </actions>
 </idea-plugin>
