@@ -6,10 +6,6 @@ import IdePreferenceProvider = require("IdePreferenceProvider")
 import PluginProvider = require("orion/plugin")
 
 import {
-  AuthService,
-  } from "orion-api"
-
-import {
   FileService,
   } from "ResourceService"
 
@@ -29,51 +25,11 @@ import {
 
 import EditorManager from "EditorManager"
 
-interface User {
-  name: string
-  provider: string
-  token: string
-}
-
-class FluxAuthService implements AuthService {
-  getLabel(): string {
-    return "IntelliJ Flux"
-  }
-
-  getKey(): string {
-    return "OAuth"
-  }
-
-  getUser(): User {
-    var serialized = localStorage.getItem("user")
-    try {
-      var user = JSON.parse(serialized)
-      if (user != null && user.name != null && user.provider != null && user.token != null) {
-        return user
-      }
-      else {
-        if (user != null) {
-          console.log("User data exists, but invalid", user)
-        }
-      }
-    }
-    catch (e) {
-      console.warn("User data exists, but invalid", serialized)
-    }
-    return null
-  }
-
-  getAuthForm(): string {
-    return "/auth/login.html"
-  }
-
-  logout(): Promise<any> {
-    localStorage.removeItem("user")
-    localStorage.removeItem("hello")
-    // todo real sign out from provider
-    return Promise.resolve(null)
-  }
-}
+import {
+  FluxAuthService,
+  User,
+  providerToPrefix,
+  } from "authService"
 
 function endsWith(str: string, suffix: string): boolean {
   return str.indexOf(suffix, str.length - suffix.length) !== -1
@@ -88,50 +44,39 @@ function checkAuthAndConnect() {
 
   var authService = new FluxAuthService()
   provider.registerService("orion.core.auth", authService)
-  var user = authService.getUser()
-  if (user == null) {
-    // bootstrap will use our authService and redirect to login page
-    console.log("User is not authenticated, redirect to login page")
-    provider.connect()
-    return
-  }
+  authService.getUser()
+    .then((user: User) => {
+      if (user == null) {
+        debugger;
+        // bootstrap will use our authService and redirect to login page
+        console.log("User is not authenticated, redirect to login page")
+        provider.connect()
+        return
+      }
 
-  const hostname = window.location.hostname
-  let mqHost: string
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host) || location.host.indexOf('.') === -1 || endsWith(location.host, ".dev")) {
-    // ip address or local domain - dev machine
-    mqHost = hostname + ":" + 4443
-  }
-  else {
-    mqHost = "mq." + hostname
-  }
+      const hostname = window.location.hostname
+      let mqHost: string
+      if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host) || location.host.indexOf('.') === -1 || endsWith(location.host, ".dev")) {
+        // ip address or local domain - dev machine
+        mqHost = hostname + ":" + 4443
+      }
+      else {
+        mqHost = "mq." + hostname
+      }
 
-  connect(mqHost, user, provider)
-}
-
-function authProviderToPrefix(provider: string): string {
-  switch (provider) {
-    case "jetbrains":
-      return "jb"
-
-    case "github":
-      return "gh"
-
-    case "google":
-      return "g"
-
-    case "facebook":
-      return "fb"
-
-    default:
-      throw new Error("Unknown provider: " + provider)
-  }
+      connect(mqHost, user, provider)
+    },
+    (error) => {
+      debugger;
+      console.error(error)
+      provider.connect()
+    })
 }
 
 function connect(mqHost: string, user: User, provider: PluginProvider) {
   const stompConnector = new StompConnector()
 
-  stompConnector.connect(mqHost, authProviderToPrefix(user.provider) + "_" + user.name, user.token)
+  stompConnector.connect(mqHost, providerToPrefix(user.provider) + "_" + user.name, user.token)
     .done(() => {
       provider.registerService("orion.core.preference.provider", new IdePreferenceProvider(stompConnector.request<EditorStyles>(EditorService.styles)))
 

@@ -48,3 +48,11 @@ web:
   ports:
     - 80:80
     - 443:443
+oauth-shim:
+  image: develar/oauth-shim
+  autorestart: on_failure
+  tags:
+    - flux
+    - web
+  ports:
+    - 3000:80

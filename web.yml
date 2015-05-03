@@ -7,5 +7,5 @@ web:
     - certs:/certs
     - web-client/nginx-config:/sites
     - web-client/resources:/data-resources
-    - web-client/out:/data-out
+    - web-client/out/files:/data-out
     - web-client/lib:/data-lib

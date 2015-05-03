@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head lang="en">
+<head>
   <meta charset="UTF-8">
   <title>Log in to IntelliJ Flux</title>
   <link rel="stylesheet" type="text/css" href="zocial/zocial.css" />
-  <script src="/hello.all-1.5.1.min.js"></script>
+  <script src="/hello-1.5.1.js"></script>
 
   <style>
     html {
@@ -44,17 +44,28 @@
       })
 
       hello.init({
-        github: "6e734acbd7022cbd8ac4",
-        google: "1024251510901-l2nrrgnkuslolh79gs1dgu5a3om3dfg1.apps.googleusercontent.com"
-      }, {redirect_uri: 'redirect.html'})
+          github: "6e734acbd7022cbd8ac4",
+          google: "1024251510901-l2nrrgnkuslolh79gs1dgu5a3om3dfg1.apps.googleusercontent.com"
+        },
+        {
+          redirect_uri: "/auth/redirect.html",
+          page_uri: "/edit/edit.html",
+          oauth_proxy: "http://oauth-shim.intellij-io.develar.svc.tutum.io:3000/",
+          display: "page"
+        })
+    }
+
+    function login(provider) {
+      localStorage.setItem("user", JSON.stringify({provider: provider}))
+      hello.use(provider).login()
     }
   </script>
 </head>
 <body>
 <div style="text-align: center; margin-top: 3em;">
-  <a href="javascript:hello('github').login()" class="zocial github">Sign in with Github</a>
+  <a href="javascript:login('github')" class="zocial github">Sign in with Github</a>
   <br>
-  <a href="javascript:hello('google').login()" class="zocial googleplus">Sign in with Google+</a>
+  <a href="javascript:login('google')" class="zocial googleplus">Sign in with Google+</a>
 </div>
 </body>
 </html>

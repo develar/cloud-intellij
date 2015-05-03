@@ -1,5 +1,5 @@
-var gulp = require('gulp')
-var ts = require('gulp-typescript')
+var gulp = require("gulp")
+var ts = require("gulp-typescript")
 var concat = require('gulp-concat')
 var uglify = require('gulp-uglify')
 var sourcemaps = require('gulp-sourcemaps')
@@ -29,11 +29,11 @@ function compile() {
 
 gulp.task("compile", function () {
   return compile()
-    .pipe(sourcemaps.write('.', {includeContent: false, sourceRoot: "file://" + path.resolve('src')}))
+    .pipe(sourcemaps.write("."))
     .pipe(gulp.dest(outDir + "/files"))
 })
 
-var excludedModules = ["Deferred", "stomp", "bluebird", "sha1", "orion/plugin", "orion/EventTarget"]
+var excludedModules = ["Deferred", "stomp", "bluebird", "sha1", "hello", "orion/plugin", "orion/EventTarget"]
 var amdOptimizeConf = {
   exclude: excludedModules,
   loader: amdOptimize.loader(function (moduleName) {
@@ -54,8 +54,8 @@ gulp.task("package", function () {
     .pipe(gulp.dest(outDir + "/dist"))
 })
 
-gulp.task('watch', ['compile'], function () {
-  gulp.watch(sources, ['compile']);
+gulp.task('watch', ["compile"], function () {
+  gulp.watch(sources, ["compile"])
 })
 
 gulp.task('default', ['package'])
