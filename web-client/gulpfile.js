@@ -54,8 +54,8 @@ gulp.task("package", function () {
     .pipe(gulp.dest(outDir + "/dist"))
 })
 
-gulp.task('watch', ["compile"], function () {
+gulp.task("watch", ["compile"], function () {
   gulp.watch(sources, ["compile"])
 })
 
-gulp.task('default', ['package'])
+gulp.task('default', ["compile"])

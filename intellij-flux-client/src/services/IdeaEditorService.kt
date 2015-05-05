@@ -15,7 +15,7 @@ import org.jdom.Element
 import org.jetbrains.flux.Result
 import org.jetbrains.json.MapMemberWriter
 
-class IdeaEditorService() : IdeaContentAssistService {
+class IdeaEditorService() : IdeaContentAssistService, SelectWordAction {
   /**
    * "Unknown symbol" -> WRONG_REFERENCES_ATTRIBUTES
    * "Error" -> ERRORS_ATTRIBUTES

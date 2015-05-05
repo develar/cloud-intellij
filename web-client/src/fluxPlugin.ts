@@ -23,6 +23,12 @@ import {
   StompConnector,
   } from "stompClient"
 
+import {
+  EditorCommand,
+  EditorCommandOptions,
+  EditorContext,
+  } from "orion-api"
+
 import EditorManager from "EditorManager"
 
 import {
@@ -73,6 +79,33 @@ function checkAuthAndConnect() {
     })
 }
 
+class SelectWord implements EditorCommand {
+  constructor(private stompClient: StompConnector, private fileService: FileService) {
+  }
+
+  execute(context: EditorContext, options: EditorCommandOptions): Promise<void> {
+    var uri = this.fileService.toResourceUri(options.input)
+    return context.getSelection()
+      .then((selection) => {
+        return this.stompClient.request(EditorService.selectWord, {
+          project: uri.project,
+          path: uri.path,
+          offset: options.offset,
+          selectionStart: selection.start,
+          selectionEnd: selection.end
+        })
+      })
+      .then((selection: Array<number>) => {
+        if (selection == null) {
+          return Promise.reject("Unable to select")
+        }
+        else {
+          context.setSelection(selection[0], selection[1])
+        }
+      })
+  }
+}
+
 function connect(mqHost: string, user: User, provider: PluginProvider) {
   const stompConnector = new StompConnector()
 
@@ -108,6 +141,12 @@ function connect(mqHost: string, user: User, provider: PluginProvider) {
       //  tooltip: "Apply Quick Fix",
       //  validationProperties: []
       //})
+
+      provider.registerServiceProvider("orion.edit.command", new SelectWord(stompConnector, fileService), {
+        name : "Extend Selection",
+        id : "EditorSelectWord",
+        key : ["control W"]
+      })
 
       stompConnector.request(ResourceService.contentTypes)
         .then((result: Array<ContentTypeDescriptor>) => {

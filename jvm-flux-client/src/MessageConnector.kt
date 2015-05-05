@@ -23,6 +23,8 @@ trait Service {
   }
 }
 
+private val NULL_BYTES = "null".toByteArray()
+
 open class Topic(val name: String) {
   open val response: Topic? = null
 }
@@ -33,6 +35,16 @@ class TopicWithResponse(name: String) : Topic(name) {
 }
 
 public trait Result {
+  public final fun notFound(): Unit {
+    map {
+      "error"(404)
+    }
+  }
+
+  public final fun empty(): Unit {
+    write(NULL_BYTES)
+  }
+
   inline final fun map(f: MapMemberWriter.() -> Unit) {
     val bytes: ByteArray
     try {

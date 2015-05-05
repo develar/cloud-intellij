@@ -62,6 +62,8 @@ trait MapMemberWriter : PrimitiveWriter {
 trait ArrayMemberWriter : MessageWriter {
   fun string(value: CharSequence)
 
+  public fun int(value: Int)
+
   public inline final fun map(f: MapMemberWriter.() -> Unit) {
     _map(null, f)
   }
@@ -70,10 +72,14 @@ trait ArrayMemberWriter : MessageWriter {
     _array(null, f)
   }
 
-
   public final fun CharSequence.plus() {
     string(this)
   }
+
+  // kotlin bug, doesn't work
+//  public final fun Int.plus() {
+//    int(this)
+//  }
 }
 
 private inline fun MessageWriter._map(name: String? = null, f: MapMemberWriter.() -> Unit) {

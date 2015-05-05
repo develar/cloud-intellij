@@ -368,6 +368,11 @@ public class JsonWriterEx() : Closeable, PrimitiveWriter, MapMemberWriter, Array
     return this
   }
 
+  override public fun int(value: Int) {
+    beforeValue(false)
+    out.write(java.lang.Integer.toString(value))
+  }
+
   public fun value(value: Number?): JsonWriterEx {
     if (value == null) {
       return nullValue()

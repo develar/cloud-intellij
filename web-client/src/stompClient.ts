@@ -59,7 +59,7 @@ export class StompConnector {
             else {
               // response
               var data = frame.body.length == 0 ? {} : JSON.parse(frame.body)
-              var error: number = data.error
+              var error: number = data == null ? null : data.error
               var promiseCallback = this.callbacks[correlationId]
               if (error == null) {
                 promiseCallback.resolve(data)

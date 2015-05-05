@@ -21,6 +21,11 @@ We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](
   * Markdown to edit .md files.
   * nginx Support to edit .conf files.
   * .ignore to edit .md files.
+  
+Optional, but recommended:
+
+1. Trust the self signed development certificate `certs/cert.pem`.
+1. Configure flux.dev domain (point to `DOCKER_HOST` ip) to avoid HTTPS warning and using IP address. Use dnsmasq to resolve all `*.dev` domains ([OS X](https://gist.github.com/develar/8c3a9430fd6682960c83)) or just `/etc/hosts` (on OS X is not recommended due to possible slow DNS lookup).
 
 To maintain dependencies of web client, use [npm-check-updates](https://www.npmjs.com/package/npm-check-updates).
 
@@ -40,6 +45,8 @@ Docker hub is used, see [cloudintellij](https://registry.hub.docker.com/repos/cl
 ## flux-web
 `docker build -t cloudintellij/flux-web web-client`
 `docker push cloudintellij/flux-web`
+
+Service will be redeployed automatically after push (Tutum [web hook](https://support.tutum.co/support/solutions/articles/5000513815-webhook-handlers) configured). 
 
 ## SSL cert/key data container
 Copy cert.pem and key.pem to certs/production.

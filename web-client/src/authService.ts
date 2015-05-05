@@ -35,6 +35,12 @@ export class FluxAuthService implements AuthService {
       return Promise.resolve<User>(null)
     }
 
+    // development environment
+    if (user.token != null) {
+      console.assert(user.name != null)
+      return Promise.resolve(user)
+    }
+
     var provider = oauth.use(user.provider)
     return provider.login({force: false})
       .then((result) => {

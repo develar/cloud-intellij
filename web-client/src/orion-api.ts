@@ -12,7 +12,6 @@ export interface AuthService {
   logout(): Promise<any>
 }
 
-
 export interface PreferenceProvider {
   get(name: string, force?: boolean): any
 
@@ -215,6 +214,11 @@ export interface EditorFileMetadata {
   location: string
 }
 
+export interface Selection {
+  start: number
+  end: number
+}
+
 export interface EditorContext {
   setText(value: string, start?: number, end?: number): Promise<any>
 
@@ -223,6 +227,10 @@ export interface EditorContext {
   showMarkers(markers: Array<EditorMarker>): void
 
   getFileMetadata(): Promise<EditorFileMetadata>
+
+  getSelection(): Promise<Selection>
+
+  setSelection(start: number, end: number): void
 }
 
 export interface ServiceFile {
@@ -250,4 +258,14 @@ export interface LiveEditor {
   endEdit(location: string): void
 
   onModelChanging(event: ModelChangingEvent): void
+}
+
+export interface EditorCommandOptions {
+  contentType: any
+  input: string
+  offset: number
+}
+
+export interface EditorCommand {
+  execute(context: EditorContext, options: EditorCommandOptions): Promise<void>
 }

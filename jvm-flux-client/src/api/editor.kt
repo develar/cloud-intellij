@@ -39,6 +39,8 @@ trait EditorService : Service {
 
   public fun editorStyles(result: Result)
 
+  public fun selectWord(projectName: String, resourcePath: String, offset: Int, selectionStart: Int, selectionEnd: Int, result: Result)
+
   override fun reply(methodName: String, request: ByteArray, result: Result) {
     when (methodName) {
       "navigate" -> {
@@ -69,6 +71,26 @@ trait EditorService : Service {
         }
 
         computeProblems(project!!, path!!, result)
+      }
+
+      "selectWord" -> {
+        var project: String? = null
+        var path: String? = null
+        var offset: Int = -1
+        var selectionStart: Int = -1
+        var selectionEnd: Int = -1
+        request.map {
+          when (nextName()) {
+            "project" -> project = nextString()
+            "path" -> path = nextString()
+            "offset" -> offset = nextInt()
+            "selectionStart" -> selectionStart = nextInt()
+            "selectionEnd" -> selectionEnd = nextInt()
+            else -> skipValue()
+          }
+        }
+
+        selectWord(project!!, path!!, offset, selectionStart, selectionEnd, result)
       }
 
       "contentAssist" -> {

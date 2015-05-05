@@ -29,6 +29,9 @@ export class EditorService<R> extends Service<R> {
   public static contentAssist = new EditorService<any>("contentAssist")
 
   public static styles = new EditorService<EditorStyles>("styles")
+
+  public static selectWord = new EditorService<Array<number>>("selectWord")
+  public static unselectWord = new EditorService<Array<number>>("unselectWord")
 }
 
 export interface EditorColors {
