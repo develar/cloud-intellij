@@ -34,7 +34,6 @@ import EditorManager from "EditorManager"
 import {
   FluxAuthService,
   User,
-  providerToPrefix,
   } from "authService"
 
 function endsWith(str: string, suffix: string): boolean {
@@ -49,34 +48,19 @@ function checkAuthAndConnect() {
   })
 
   var authService = new FluxAuthService()
-  provider.registerService("orion.core.auth", authService)
-  authService.getUser()
-    .then((user: User) => {
-      if (user == null) {
-        debugger;
-        // bootstrap will use our authService and redirect to login page
-        console.log("User is not authenticated, redirect to login page")
-        provider.connect()
-        return
-      }
+  //provider.registerService("orion.core.auth", authService)
+  var user = authService.getUser()
+  const hostname = window.location.hostname
+  let mqHost: string
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host) || location.host.indexOf('.') === -1 || endsWith(location.host, ".dev")) {
+    // ip address or local domain - dev machine
+    mqHost = hostname + ":" + 4443
+  }
+  else {
+    mqHost = "mq." + hostname
+  }
 
-      const hostname = window.location.hostname
-      let mqHost: string
-      if (/^\d+\.\d+\.\d+\.\d+$/.test(location.host) || location.host.indexOf('.') === -1 || endsWith(location.host, ".dev")) {
-        // ip address or local domain - dev machine
-        mqHost = hostname + ":" + 4443
-      }
-      else {
-        mqHost = "mq." + hostname
-      }
-
-      connect(mqHost, user, provider)
-    },
-    (error) => {
-      debugger;
-      console.error(error)
-      provider.connect()
-    })
+  connect(mqHost, user, provider)
 }
 
 class SelectWord implements EditorCommand {
@@ -109,7 +93,7 @@ class SelectWord implements EditorCommand {
 function connect(mqHost: string, user: User, provider: PluginProvider) {
   const stompConnector = new StompConnector()
 
-  stompConnector.connect(mqHost, providerToPrefix(user.provider) + "_" + user.name, user.token)
+  stompConnector.connect(mqHost, user.id, user.token)
     .done(() => {
       provider.registerService("orion.core.preference.provider", new IdePreferenceProvider(stompConnector.request<EditorStyles>(EditorService.styles)))
 
@@ -125,22 +109,6 @@ function connect(mqHost: string, user: User, provider: PluginProvider) {
       var editorService = new EditorManager(stompConnector, fileService)
 
       provider.registerService(["orion.edit.model", "orion.edit.live", "orion.edit.contentAssist", "orion.edit.validator"], editorService, {contentType: ["text/plain"]})
-
-      //provider.registerService("orion.edit.command", {
-      //  execute: function (editorContext: any, context: any): void {
-      //    if (context.annotation != null && context.annotation.id) {
-      //      editorService.applyQuickfix(editorContext, context)
-      //    }
-      //  }
-      //}, {
-      //  id: "orion.css.quickfix.zeroQualifier",
-      //  image: "../images/compare-addition.gif",
-      //  scopeId: "orion.edit.quickfix",
-      //  name: "Apply quickfix",
-      //  contentType: ["text/x-java-source"],
-      //  tooltip: "Apply Quick Fix",
-      //  validationProperties: []
-      //})
 
       provider.registerServiceProvider("orion.edit.command", new SelectWord(stompConnector, fileService), {
         name : "Extend Selection",

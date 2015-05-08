@@ -44,8 +44,7 @@
       })
 
       hello.init({
-          github: "6e734acbd7022cbd8ac4",
-          google: "1024251510901-l2nrrgnkuslolh79gs1dgu5a3om3dfg1.apps.googleusercontent.com"
+          jbHub: "ece36e85-0232-4e6f-91d9-dce1a2d93128",
         },
         {
           redirect_uri: "/auth/redirect.html",
@@ -57,13 +56,13 @@
 
     function login(provider) {
       localStorage.setItem("user", JSON.stringify({provider: provider}))
-      hello.use(provider).login()
+      hello.use(provider).login({scope: "0-0-0-0-0123"})
     }
   </script>
 </head>
 <body>
 <div style="text-align: center; margin-top: 3em;">
-  <a href="javascript:login('github')" class="zocial github">Sign in with Github</a>
+  <a href="javascript:login('jbHub')" class="zocial github">Sign in with Github</a>
   <br>
   <a href="javascript:login('google')" class="zocial googleplus">Sign in with Google+</a>
 </div>

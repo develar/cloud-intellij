@@ -56,24 +56,18 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
           verifyUser(userName, urlDecoder.parameters().get("password")?.get(0))
         }
       }
-      "/vhost" -> allow
       "/resource" -> {
         val type = urlDecoder.parameters().get("resource")!![0]!!
-        if (type == "queue") {
+        assert(type == "exchange")
+        val exchangeName = urlDecoder.parameters().get("name")!![0]!!
+        val userName = getUserName(urlDecoder)
+        if ((exchangeName.length() - userName.length() == 2) &&
+          (exchangeName[1] == '.' && (exchangeName[0] == 'd' || exchangeName[0] == 't')) &&
+          exchangeName.regionMatches(2, userName, 0, userName.length(), false)) {
           allow
         }
         else {
-          assert(type == "exchange")
-          val exchangeName = urlDecoder.parameters().get("name")!![0]!!
-          val userName = getUserName(urlDecoder)
-          if ((exchangeName.length() - userName.length() == 2) &&
-                  (exchangeName[1] == '.' && (exchangeName[0] == 'd' || exchangeName[0] == 't')) &&
-                  exchangeName.regionMatches(2, userName, 0, userName.length(), false)) {
-            allow
-          }
-          else {
-            deny
-          }
+          deny
         }
       }
       else -> deny
@@ -95,25 +89,8 @@ class AuthRequestHandler() : SimpleChannelInboundHandler<HttpRequest>() {
     }
   }
 
-  private fun verifyUser(userName: String, token: String?): ByteBuf {
-    val i = userName.indexOf('_', 0)
-    if (i < 0 || i > 2) {
-      return deny
-    }
-
-    val provider = when (userName.substring(0, i)) {
-      "jb" -> "jetbrains"
-      "gh" -> "github"
-      "g" -> "google"
-      "fb" -> "facebook"
-      else -> null
-    }
-
-    if (provider == null) {
-      return deny
-    }
-
-    if (userName == devUserName) {
+  private fun verifyUser(user: String, token: String?): ByteBuf {
+    if (user == devUserName) {
       return if (token == devUserToken) allow else deny
     }
 

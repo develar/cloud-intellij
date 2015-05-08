@@ -5,7 +5,7 @@ mqAuth:
     _JAVA_OPTIONS: "-Dio.netty.machineId=9e43d860 -Xms48m -Xmx64M"
     CLASSPATH: /app/lib/kotlin-runtime.jar:/app/moduleLib/netty-all-4.1.0.Beta5-SNAPSHOT.jar:/app/classes
     MANAGEMENT_USER: admin
-    DEV_USER_NAME: gh_dev
+    DEV_USER_NAME: "0-0-0-0-0"
     DEV_USER_TOKEN: 42
   volumes:
     - out/production/mq-auth:/app/classes:ro
@@ -17,7 +17,7 @@ mqAuth:
 #  ports:
 #    - "5050:5050"
 mq:
-  image: develar/rabbitmq-auth
+  image: cloudintellij/rabbitmq-auth
   # https://github.com/docker-library/rabbitmq/issues/6 I have no idea how it will be going in a Tutum.
   hostname: flux
   links:

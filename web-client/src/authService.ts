@@ -2,11 +2,21 @@ import {
   AuthService,
   } from "orion-api"
 
-import oauth = require("hello")
+function getFromStore<T>(key: string): T {
+  var serialized = localStorage.getItem(key)
+  var data: T
+  try {
+    data = JSON.parse(serialized)
+  }
+  catch (e) {
+    console.warn("User data exists, but invalid", serialized, e)
+    localStorage.removeItem(key)
+    throw e
+  }
+  return data
+}
 
 export class FluxAuthService implements AuthService {
-  private static DATA_KEY = "user"
-
   getLabel(): string {
     return "IntelliJ Flux"
   }
@@ -15,54 +25,22 @@ export class FluxAuthService implements AuthService {
     return "OAuth"
   }
 
-  getUser(): Promise<User | Promise<User>> {
-    var serialized = localStorage.getItem(FluxAuthService.DATA_KEY)
-    var user: User
-    try {
-      user = JSON.parse(serialized)
-    }
-    catch (e) {
-      console.warn("User data exists, but invalid", serialized, e)
-      localStorage.removeItem(FluxAuthService.DATA_KEY)
-      return Promise.reject(e)
+  getUser(): User {
+    var session: any = getFromStore("hello")
+    session = session == null ? null : session.jbHub
+    if (session == null) {
+      throw new Error("must be checked before")
     }
 
-    if (user == null || user.provider == null) {
-      if (user != null) {
-        console.log("User data exists, but invalid", user)
-        localStorage.removeItem(FluxAuthService.DATA_KEY)
-      }
-      return Promise.resolve<User>(null)
+    var userId: string = localStorage.getItem("user")
+    if (userId == null) {
+      throw new Error("must be checked before")
     }
-
-    // development environment
-    if (user.token != null) {
-      console.assert(user.name != null)
-      return Promise.resolve(user)
-    }
-
-    var provider = oauth.use(user.provider)
-    return provider.login({force: false})
-      .then((result) => {
-        user.token = result.authResponse.access_token
-        if (user.name != null) {
-          return user
-        }
-
-        return provider.api("/me")
-          .then((result) => {
-            user.name = result.login
-            localStorage.setItem("user", JSON.stringify({
-              name: user.name,
-              provider: user.provider
-            }))
-            return user
-          })
-      })
+    return {id: userId, token: session.access_token}
   }
 
   getAuthForm(): string {
-    return "/auth/login.html"
+    throw new Error("Must not be called")
   }
 
   logout(): Promise<any> {
@@ -71,33 +49,11 @@ export class FluxAuthService implements AuthService {
     if (document.cookie.indexOf("userData=") !== -1) {
       document.cookie = "userData=; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
     }
-
-    // todo real sign out from provider
-    return Promise.resolve(null)
+    return Promise.resolve()
   }
 }
 
 export interface User {
-  name: string
-  provider: string
+  id: string
   token: string
-}
-
-export function providerToPrefix(provider: string): string {
-  switch (provider) {
-    case "jetbrains":
-      return "jb"
-
-    case "github":
-      return "gh"
-
-    case "google":
-      return "g"
-
-    case "facebook":
-      return "fb"
-
-    default:
-      throw new Error("Unknown provider: " + provider)
-  }
 }
