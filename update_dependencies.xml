@@ -1,5 +1,5 @@
 <project name="Update Dependencies" default="update">
-  <property name="ideaVersion" value="141.814.3"/>
+  <property name="ideaVersion" value="141.914.3"/>
 
   <condition property="os.tag" value="zip">
     <os family="windows"/>
@@ -54,7 +54,7 @@
     <get src="https://raw.githubusercontent.com/jmesnil/stomp-websocket/master/lib/stomp.min.js" dest="web-client/lib/stomp-2.3.4.min.js" usetimestamp="true"/>
     <get src="https://raw.githubusercontent.com/emn178/js-sha1/master/build/sha1.min.js" dest="web-client/lib/sha1-0.3.min.js" usetimestamp="true"/>
 
-    <get src="https://raw.githubusercontent.com/MrSwitch/hello.js/master/dist/hello.all.min.js" dest="web-client/lib/hello.all-1.5.1.min.js" usetimestamp="true"/>
+    <!-- we use custom build of hello.js lib — https://github.com/develar/hello.js -->
   </target>
 
   <macrodef name="execute_update_with_id_resolve">
