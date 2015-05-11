@@ -235,6 +235,9 @@
       <delete dir="${ideaSdk}/plugins/svn4idea" failonerror="false"/>
       <delete dir="${ideaSdk}/plugins/hg4idea" failonerror="false"/>
       <delete dir="${ideaSdk}/plugins/maven" failonerror="false"/>
+
+
+      <delete dir="${ideaSdk}/lib/src" failonerror="false"/>
     </sequential>
   </macrodef>
 

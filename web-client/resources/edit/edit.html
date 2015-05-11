@@ -18,8 +18,12 @@
       }
     })
 
-    require(["auth"], function (a) {
-      require(["edit/edit"])
+    require(["auth"], function (auth) {
+      auth.init("/edit/edit.html")
+      auth.check()
+        .done(function () {
+          require(["edit/edit"])
+        })
     })
   </script>
 </head>

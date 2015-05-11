@@ -6,34 +6,55 @@ function getCookie(name: string): string {
   return match == null ? null : decodeURIComponent(match[1])
 }
 
-var userId = getCookie("user")
-if (userId != null) {
-  localStorage.setItem("user", userId)
-  localStorage.setItem("hello", JSON.stringify({jbHub: {access_token: "42"}}))
+function endsWith(str: string, suffix: string): boolean {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1
 }
-else {
+
+function init(pageUri: string) {
   oauth.init({
-      jbHub: "e36c2ef7-735d-4ae1-a0ec-71ea19052e0a"
+      jbHub: endsWith(location.host, ".dev") ? "e36c2ef7-735d-4ae1-a0ec-71ea19052e0a" : "0799e9c5-849d-40e8-bbc6-5d5d6c9e711f"
     },
     {
       redirect_uri: "/auth/redirect.html",
-      page_uri: "/edit/edit.html",
+      page_uri: pageUri,
       display: "page"
     })
+}
+
+export interface Credential {
+  id: string
+  token: string
+}
+
+export function login(): Promise<Credential> {
+  var session = oauth.getAuthResponse("jbHub")
+  var id = localStorage.getItem("user")
+  if (id != null && session != null && "access_token" in session && session.access_token != null && "expires" in session && session.expires > (Date.now() / 1000)) {
+    return Promise.resolve({id: id, token: session.access_token})
+  }
 
   var provider = oauth.use("jbHub")
-  provider.login({force: false})
-    .then(() => {
-      var id = localStorage.getItem("user")
-      if (id != null) {
-        return id
-      }
-
+  return provider.login({force: false})
+    .then((result) => {
+      var token = result.authResponse.access_token
+      // if session expires, we update user id in any case, to avoid stale data (user can log in using different credentials)
       return provider.api("/me?fields=id")
         .then((result) => {
-          id = result.id
+          var id = result.id
           localStorage.setItem("user", id)
-          return id
+          return Promise.resolve({id: id, token: token})
         })
     })
+}
+
+export function check(): Promise<any> {
+  var userId = getCookie("user")
+  if (userId != null) {
+    localStorage.setItem("user", userId)
+    localStorage.setItem("hello", JSON.stringify({jbHub: {access_token: "42"}}))
+    return Promise.resolve()
+  }
+  else {
+    return login()
+  }
 }
