@@ -14,15 +14,17 @@
         text: "requirejs/text",
         i18n: "requirejs/i18n",
         domReady: "requirejs/domReady",
-        "hello": "hello-1.5.1"
+        "hello": "hello-1.5.1",
       }
     })
 
     require(["auth"], function (auth) {
       auth.init("/edit/edit.html")
       auth.check()
-        .done(function () {
+        .then(function () {
           require(["edit/edit"])
+        }, function (e) {
+          console.error(e)
         })
     })
   </script>

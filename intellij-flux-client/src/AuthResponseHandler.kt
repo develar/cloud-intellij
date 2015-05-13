@@ -28,6 +28,14 @@ class AuthResponseHandler : HttpRequestHandler() {
     private val LOG = Logger.getInstance(javaClass<WebSocketHandshakeHandler>())
 
     fun requestAuth(host: String, project: Project?): Promise<Credential> {
+      val userId = System.getProperty("flux.user.name")
+      if (userId != null) {
+        val token = System.getProperty("flux.user.token")
+        if (token != null) {
+          return Promise.resolve(Credential(userId, token))
+        }
+      }
+
       val responseHandler = HttpRequestHandler.EP_NAME.findExtension(javaClass<AuthResponseHandler>())
       val requestId = UUID.randomUUID().toString()
       val promise = AsyncPromise<Credential>()

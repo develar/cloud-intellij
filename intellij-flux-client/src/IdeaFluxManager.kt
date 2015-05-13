@@ -3,6 +3,7 @@ package org.intellij.flux
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.project.Project
 import com.intellij.util.Time
 import org.jetbrains.flux.MessageConnector
 import org.jetbrains.flux.RabbitMqMessageConnector
@@ -31,11 +32,14 @@ class IdeaFluxManager : ApplicationComponent {
     }
   }
 
-  fun connect(): Promise<RabbitMqMessageConnector> {
+  fun connect(project: Project? = null): Promise<RabbitMqMessageConnector> {
     val promise = AsyncPromise<RabbitMqMessageConnector>()
     connectPromise = promise
     ApplicationManager.getApplication().executeOnPooledThread {
-      fluxService.connect(System.getProperty("flux.user.name"), System.getProperty("flux.user.token"), promise)
+      AuthResponseHandler.requestAuth("https://flux.dev", project)
+        .done {
+          fluxService.connect(it.id, it.token, promise)
+        }
     }
     return promise
   }

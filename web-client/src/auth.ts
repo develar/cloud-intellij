@@ -10,11 +10,13 @@ function endsWith(str: string, suffix: string): boolean {
   return str.indexOf(suffix, str.length - suffix.length) !== -1
 }
 
-function init(pageUri: string) {
+export function init(pageUri: string) {
   oauth.init({
       jbHub: endsWith(location.host, ".dev") ? "e36c2ef7-735d-4ae1-a0ec-71ea19052e0a" : "0799e9c5-849d-40e8-bbc6-5d5d6c9e711f"
     },
     {
+      response_type: "code",
+      oauth_proxy: "http://oauth-shim.intellij-io.develar.svc.tutum.io:3000",
       redirect_uri: "/auth/redirect.html",
       page_uri: pageUri,
       display: "page"

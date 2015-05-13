@@ -22,7 +22,7 @@ We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](
   * nginx Support to edit .conf files.
   * .ignore to edit .md files.
   
-Optional, but recommended:
+Optional, but strongly recommended:
 
 1. Trust the self signed development certificate `certs/cert.pem`.
 1. Configure flux.dev domain (point to `DOCKER_HOST` ip) to avoid HTTPS warning and using IP address. Use dnsmasq to resolve all `*.dev` domains ([OS X](https://gist.github.com/develar/8c3a9430fd6682960c83)) or just `/etc/hosts` (on OS X is not recommended due to possible slow DNS lookup).

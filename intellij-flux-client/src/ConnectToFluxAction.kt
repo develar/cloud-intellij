@@ -21,7 +21,7 @@ class ConnectToFluxAction : DumbAwareAction(FluxBundle.message(getActionText()))
 
   override fun actionPerformed(e: AnActionEvent?) {
     if (fluxManager.messageConnector == null) {
-      fluxManager.connect()
+      fluxManager.connect(e?.getProject())
       PropertiesComponent.getInstance().setValue("flux.auto.connect", "true", "false")
     }
     else {
