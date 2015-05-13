@@ -15,7 +15,7 @@ if (requestId != null) {
   sessionStorage.setItem("port", getParameterByName("port"))
 }
 
-init("/ide.html")
+init("/ide-auth.html")
 
 login()
   .then((credential) => {

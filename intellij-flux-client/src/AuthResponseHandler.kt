@@ -1,7 +1,6 @@
 package org.intellij.flux
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -16,56 +15,66 @@ import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.ChannelBufferToString
 import org.jetbrains.io.JsonReaderEx
-import org.jetbrains.io.webSocket.WebSocketHandshakeHandler
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import java.util.UUID
 
 public data class Credential(val id: String, val token: String)
 
-class AuthResponseHandler : HttpRequestHandler() {
-  companion object {
-    private val LOG = Logger.getInstance(javaClass<WebSocketHandshakeHandler>())
+fun requestAuth(host: String, project: Project?): Promise<Credential> {
+  val userId = System.getProperty("flux.user.name")
+  if (userId != null) {
+    val token = System.getProperty("flux.user.token")
+    if (token != null) {
+      return Promise.resolve(Credential(userId, token))
+    }
+  }
+  return HttpRequestHandler.EP_NAME.findExtension(javaClass<AuthResponseHandler>()).requestAuth(host, project)
+}
 
-    fun requestAuth(host: String, project: Project?): Promise<Credential> {
-      val userId = System.getProperty("flux.user.name")
-      if (userId != null) {
-        val token = System.getProperty("flux.user.token")
-        if (token != null) {
-          return Promise.resolve(Credential(userId, token))
+class AuthResponseHandler : HttpRequestHandler() {
+  private val idToPromise = ContainerUtil.newConcurrentMap<String, AsyncPromise<Credential>>()
+
+  fun requestAuth(host: String, project: Project?): Promise<Credential> {
+    val promise = AsyncPromise<Credential>()
+    val requestId = UUID.randomUUID().toString()
+    idToPromise.put(requestId, promise)
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Waiting authentication response from browser", true, PerformInBackgroundOption.DEAF) {
+      override fun onCancel() {
+        cancelPromise()
+      }
+
+      override fun run(indicator: ProgressIndicator) {
+        BrowserUtil.open("$host/ide-auth.html?r=$requestId&port=${BuiltInServerManager.getInstance().waitForStart().getPort()}")
+
+        while (promise.state == Promise.State.PENDING) {
+          try {
+            //noinspection BusyWait
+            Thread.sleep(500)
+          }
+          catch (ignored: InterruptedException) {
+            break
+          }
+
+          if (indicator.isCanceled()) {
+            cancelPromise()
+            break
+          }
         }
       }
 
-      val responseHandler = HttpRequestHandler.EP_NAME.findExtension(javaClass<AuthResponseHandler>())
-      val requestId = UUID.randomUUID().toString()
-      val promise = AsyncPromise<Credential>()
-      responseHandler.idToPromise.put(requestId, promise)
-      ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Waiting authentication response from browser", false, PerformInBackgroundOption.DEAF) {
-        override fun run(indicator: ProgressIndicator) {
-          BrowserUtil.open("$host/auth/ide.html?r=$requestId&port=${BuiltInServerManager.getInstance().waitForStart().getPort()}")
-
-          while (promise.state == Promise.State.PENDING) {
-            try {
-              //noinspection BusyWait
-              Thread.sleep(500)
-            }
-            catch (ignored: InterruptedException) {
-              break
-            }
-
-            if (indicator.isCanceled()) {
-              LOG.warn("Response waiting canceled")
-              promise.setError(Promise.createError("canceled"))
-              break
-            }
-          }
+      private fun cancelPromise() {
+        try {
+          idToPromise.remove(requestId)
+          LOG.warn("Response waiting canceled")
         }
-      })
-      return promise
-    }
+        finally {
+          promise.setError(Promise.createError("canceled"))
+        }
+      }
+    })
+    return promise
   }
-
-  private val idToPromise = ContainerUtil.newConcurrentMap<String, AsyncPromise<Credential>>()
 
   override fun isSupported(request: FullHttpRequest): Boolean {
     return request.method() == HttpMethod.POST && HttpRequestHandler.checkPrefix(request.uri(), "67822818-87E4-4FF9-81C5-75433D57E7B3")

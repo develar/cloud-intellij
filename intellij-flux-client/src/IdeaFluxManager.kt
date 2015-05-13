@@ -35,12 +35,12 @@ class IdeaFluxManager : ApplicationComponent {
   fun connect(project: Project? = null): Promise<RabbitMqMessageConnector> {
     val promise = AsyncPromise<RabbitMqMessageConnector>()
     connectPromise = promise
-    ApplicationManager.getApplication().executeOnPooledThread {
-      AuthResponseHandler.requestAuth("https://flux.dev", project)
-        .done {
+    requestAuth("https://flux.dev", project)
+      .done {
+        ApplicationManager.getApplication().executeOnPooledThread {
           fluxService.connect(it.id, it.token, promise)
         }
-    }
+      }
     return promise
   }
 

@@ -1,5 +1,5 @@
 <idea-plugin version="2">
-  <id>org.intellij.FluxConnector</id>
+  <id>org.intellij.flux</id>
   <name>IntelliJ in the Cloud</name>
   <version>0.1</version>
   <description>IntelliJ in the Cloud</description>
@@ -15,6 +15,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.intellij.flux.HighlighterService"/>
+    <httpRequestHandler implementation="org.intellij.flux.AuthResponseHandler"/>
   </extensions>
 
   <actions>
