@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="jna">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/jna.jar!/" />
+      <root url="jar://$PROJECT_DIR$/dependencies/ideaSdk/lib/jna-utils.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

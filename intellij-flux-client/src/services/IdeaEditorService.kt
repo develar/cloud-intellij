@@ -56,7 +56,7 @@ class IdeaEditorService() : IdeaContentAssistService, SelectWordAction {
           }
 
           map(styleName) {
-            @loop for (attribute in style.getChild("value").getChildren("option")) {
+            loop@ for (attribute in style.getChild("value").getChildren("option")) {
               val value = attribute.getAttributeValue("value")!!
               if (value.isNullOrEmpty()) {
                 continue
@@ -66,7 +66,7 @@ class IdeaEditorService() : IdeaContentAssistService, SelectWordAction {
               when (name) {
                 "FOREGROUND" -> "color"("#$value")
                 "BACKGROUND" -> "background-color"("#$value")
-                "ERROR_STRIPE_COLOR" -> continue @loop
+                "ERROR_STRIPE_COLOR" -> continue@loop
                 "EFFECT_TYPE", "EFFECT_COLOR" -> {
                   // reuse orion style
                 }

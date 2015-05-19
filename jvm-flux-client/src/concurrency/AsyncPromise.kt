@@ -56,7 +56,7 @@ public class AsyncPromise<T> : Promise<T> {
       Promise.State.PENDING -> {
       }
       Promise.State.FULFILLED -> {
-        [suppress("UNCHECKED_CAST")]
+        @suppress("UNCHECKED_CAST")
         done(result as T)
         return this
       }
@@ -87,7 +87,7 @@ public class AsyncPromise<T> : Promise<T> {
   }
 
   public fun get(): T {
-    [suppress("UNCHECKED_CAST")]
+    @suppress("UNCHECKED_CAST")
     return when (state) {
       Promise.State.FULFILLED -> result as T
       else -> null
@@ -135,7 +135,7 @@ public class AsyncPromise<T> : Promise<T> {
       Promise.State.PENDING -> {
       }
       Promise.State.FULFILLED -> {
-        [suppress("UNCHECKED_CAST")]
+        @suppress("UNCHECKED_CAST")
         return DonePromise(done(result as T))
       }
       Promise.State.REJECTED -> return RejectedPromise(result as Throwable)
@@ -170,7 +170,7 @@ public class AsyncPromise<T> : Promise<T> {
       Promise.State.PENDING -> {
       }
       Promise.State.FULFILLED -> {
-        [suppress("UNCHECKED_CAST")]
+        @suppress("UNCHECKED_CAST")
         child.setResult(result as T)
         return
       }
@@ -199,7 +199,7 @@ public class AsyncPromise<T> : Promise<T> {
       Promise.State.PENDING -> {
       }
       Promise.State.FULFILLED -> {
-        [suppress("UNCHECKED_CAST")]
+        @suppress("UNCHECKED_CAST")
         return done.`fun`(result as T)
       }
       Promise.State.REJECTED -> return Promise.reject<SUB_RESULT>(result as Throwable)
@@ -234,7 +234,7 @@ public class AsyncPromise<T> : Promise<T> {
       Promise.State.PENDING -> {
       }
       Promise.State.FULFILLED -> {
-        [suppress("UNCHECKED_CAST")]
+        @suppress("UNCHECKED_CAST")
         fulfilled.setResult(result as T)
         return this
       }

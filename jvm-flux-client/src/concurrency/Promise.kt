@@ -48,7 +48,7 @@ public trait Promise<T> {
 
     public fun <T> resolve(result: T): Promise<T> {
       if (result == null) {
-        [suppress("UNCHECKED_CAST")]
+        @suppress("UNCHECKED_CAST")
         return DONE as Promise<T>
       }
       else {
@@ -62,7 +62,7 @@ public trait Promise<T> {
 
     public fun <T> reject(error: Throwable?): Promise<T> {
       if (error == null) {
-        [suppress("UNCHECKED_CAST")]
+        @suppress("UNCHECKED_CAST")
         return REJECTED as Promise<T>
       }
       else {
@@ -72,7 +72,7 @@ public trait Promise<T> {
 
     public fun <T> all(promises: Collection<Promise<*>>, totalResult: T = null): Promise<T> {
       if (promises.isEmpty()) {
-        [suppress("UNCHECKED_CAST")]
+        @suppress("UNCHECKED_CAST")
         return DONE as Promise<T>
       }
 

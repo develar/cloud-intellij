@@ -24,18 +24,12 @@ import java.beans.PropertyChangeListener
 trait IdeaContentAssistService : EditorServiceBase {
   override fun ArrayMemberWriter.computeContentAssist(projectName: String, resourcePath: String, offset: Int, prefix: String): Boolean {
     val file = findReferencedFile(resourcePath, projectName)
-    val project = file?.findProject()
-    if (project == null) {
-      return false
-    }
+    val project = file?.findProject() ?: return false
 
     var items: Array<LookupElement> = LookupElement.EMPTY_ARRAY
     ApplicationManager.getApplication().invokeAndWait(object : Runnable {
       override fun run() {
-        val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file!!, offset), false)
-        if (editor == null) {
-          return
-        }
+        val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file!!, offset), false) ?: return
 
         val lookupRef = Ref<LookupImpl>()
         val propertyChangeListener = object : PropertyChangeListener {
@@ -49,7 +43,7 @@ trait IdeaContentAssistService : EditorServiceBase {
         CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor)
         LookupManager.getInstance(project).removePropertyChangeListener(propertyChangeListener)
         val lookup = lookupRef.get()
-        items = if (lookup == null) LookupElement.EMPTY_ARRAY else lookup.getItems().copyToArray()
+        items = if (lookup == null) LookupElement.EMPTY_ARRAY else lookup.getItems().toTypedArray()
       }
     }, ModalityState.any())
 

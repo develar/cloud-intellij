@@ -15,28 +15,20 @@ import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.ChannelBufferToString
 import org.jetbrains.io.JsonReaderEx
+import org.jetbrains.keychain.Credentials
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import java.util.UUID
 
-public data class Credential(val id: String, val token: String)
-
-fun requestAuth(host: String, project: Project?): Promise<Credential> {
-  val userId = System.getProperty("flux.user.name")
-  if (userId != null) {
-    val token = System.getProperty("flux.user.token")
-    if (token != null) {
-      return Promise.resolve(Credential(userId, token))
-    }
-  }
+fun login(host: String, project: Project?): Promise<Credentials> {
   return HttpRequestHandler.EP_NAME.findExtension(javaClass<AuthResponseHandler>()).requestAuth(host, project)
 }
 
 class AuthResponseHandler : HttpRequestHandler() {
-  private val idToPromise = ContainerUtil.newConcurrentMap<String, AsyncPromise<Credential>>()
+  private val idToPromise = ContainerUtil.newConcurrentMap<String, AsyncPromise<Credentials>>()
 
-  fun requestAuth(host: String, project: Project?): Promise<Credential> {
-    val promise = AsyncPromise<Credential>()
+  fun requestAuth(host: String, project: Project?): Promise<Credentials> {
+    val promise = AsyncPromise<Credentials>()
     val requestId = UUID.randomUUID().toString()
     idToPromise.put(requestId, promise)
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Waiting authentication response from browser", true, PerformInBackgroundOption.DEAF) {
@@ -45,7 +37,7 @@ class AuthResponseHandler : HttpRequestHandler() {
       }
 
       override fun run(indicator: ProgressIndicator) {
-        BrowserUtil.open("$host/ide-auth.html?r=$requestId&port=${BuiltInServerManager.getInstance().waitForStart().getPort()}")
+        BrowserUtil.open("https://$host/ide-auth.html?r=$requestId&port=${BuiltInServerManager.getInstance().waitForStart().getPort()}")
 
         while (promise.state == Promise.State.PENDING) {
           try {
@@ -93,7 +85,7 @@ class AuthResponseHandler : HttpRequestHandler() {
       LOG.warn("No request for id $requestId")
     }
     else {
-      promise.setResult(Credential(user, token))
+      promise.setResult(Credentials(user, token))
     }
     return true
   }
