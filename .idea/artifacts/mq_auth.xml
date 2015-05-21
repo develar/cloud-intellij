@@ -3,8 +3,6 @@
     <output-path>$PROJECT_DIR$/out/artifacts</output-path>
     <root id="archive" name="mq-auth.jar">
       <element id="module-output" name="mq-auth" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/jvm-flux-client/lib/kotlin-runtime.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/mq-auth/lib/netty-all-4.1.0.Beta5-SNAPSHOT.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
