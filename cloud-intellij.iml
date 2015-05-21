@@ -5,10 +5,14 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/dependencies/config-idea" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/download" />
+      <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/MacOS" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/Resources" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/_CodeSignature" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/bin" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/license" />
+      <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/plugins" />
+      <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/plugins/JavaScriptLanguage/grunt_js" />
+      <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/plugins/JavaScriptLanguage/typescriptCompiler" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/ideaSdk/redist" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/system-idea" />
       <excludeFolder url="file://$MODULE_DIR$/flux/node.server/node_modules" />
