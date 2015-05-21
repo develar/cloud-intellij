@@ -16,16 +16,14 @@ We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](
 # Setting up development environment
 1. Install [Docker and Docker Compose](https://docs.docker.com/compose/install/). Docker 1.6+ and Docker Compose 1.2+ required. 
 (If you have Parallels Desktop, consider to use [Vagrant](https://github.com/Parallels/boot2docker-vagrant-box) ([sample Vagrantfile](https://dl.dropboxusercontent.com/u/43511007/Vagrantfile))).
-1. Install IntelliJ IDEA plugins:
+1. Trust the self signed development certificate `certs/cert.pem`.
+1. Configure flux.dev and hub.dev domains (point to `DOCKER_HOST` ip) to avoid HTTPS warning and using IP address. Use dnsmasq to resolve all `*.dev` domains ([OS X](https://gist.github.com/develar/8c3a9430fd6682960c83)) or just `/etc/hosts` (on OS X is not recommended due to possible slow DNS lookup).
+
+Useful IntelliJ IDEA plugins:
   * YAML to edit .yml files.
   * Markdown to edit .md files.
   * nginx Support to edit .conf files.
   * .ignore to edit .md files.
-  
-Optional, but strongly recommended:
-
-1. Trust the self signed development certificate `certs/cert.pem`.
-1. Configure flux.dev domain (point to `DOCKER_HOST` ip) to avoid HTTPS warning and using IP address. Use dnsmasq to resolve all `*.dev` domains ([OS X](https://gist.github.com/develar/8c3a9430fd6682960c83)) or just `/etc/hosts` (on OS X is not recommended due to possible slow DNS lookup).
 
 To maintain dependencies of web client, use [npm-check-updates](https://www.npmjs.com/package/npm-check-updates).
 

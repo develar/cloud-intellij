@@ -18,10 +18,13 @@ function endsWith(str: string, suffix: string): boolean {
   return str.indexOf(suffix, str.length - suffix.length) !== -1
 }
 
+declare const OAUTH_CLIENT_ID_DEV: string
+declare const OAUTH_CLIENT_ID_PROD: string
+
 var oauth: Auth = null
 
 export function init(implicit: boolean = false) {
-  var jbHub = endsWith(location.host, ".dev") ? new JbHub("5e190e8e-31c4-462d-b74a-be8025988c8f", "hub.dev") : new JbHub("0799e9c5-849d-40e8-bbc6-5d5d6c9e711f")
+  var jbHub = endsWith(location.host, ".dev") ? new JbHub(OAUTH_CLIENT_ID_DEV, "hub.dev") : new JbHub(OAUTH_CLIENT_ID_PROD)
   oauth = new Auth(jbHub, new Store<Session>(), {
     response_type: implicit ? "token" : "code",
   })

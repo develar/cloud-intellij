@@ -69,23 +69,22 @@ export function xhr(method: string, url: string, callback: any, headers?: { [key
     method = "get"
   }
 
-  // Xhr.responseType 'json' is not supported in any of the vendors yet.
   r.onload = function () {
-    var json = r.response;
+    var json = r.response
     try {
       json = JSON.parse(r.responseText)
     }
     catch (_e) {
       if (r.status === 401) {
-        json = createError('access_denied', r.statusText);
+        json = createError("access_denied", r.statusText);
       }
     }
 
     var headers = headersToJSON(r.getAllResponseHeaders())
     headers["statusCode"] = r.status
 
-    callback(json || (method === "GET" ? createError('empty_response', 'Could not get resource') : {}), headers);
-  };
+    callback(json || (method === "GET" ? createError('empty_response', 'Could not get resource') : {}), headers)
+  }
 
   r.onerror = function (e) {
     console.error(e)
@@ -98,15 +97,11 @@ export function xhr(method: string, url: string, callback: any, headers?: { [key
       console.error(_e)
     }
 
-    callback(json || createError('access_denied', 'Could not get resource'));
+    callback(json || createError('access_denied', "Could not get resource"))
   };
 
-  if (method === "GET" || method === "DELETE") {
-    data = null;
-  }
-  else if (data && typeof (data) !== 'string' && !(data instanceof FormData) && !(data instanceof File) && !(data instanceof Blob)) {
-    // Loop through and add formData
-    var f = new FormData();
+  if (data != null && typeof (data) !== 'string' && !(data instanceof FormData) && !(data instanceof File) && !(data instanceof Blob)) {
+    var f = new FormData()
     for (let x in data) if (data.hasOwnProperty(x)) {
       if (data[x] instanceof HTMLInputElement) {
         if ('files' in data[x] && data[x].files.length > 0) {
@@ -124,12 +119,13 @@ export function xhr(method: string, url: string, callback: any, headers?: { [key
     data = f;
   }
 
-  r.open(method, url);
+  r.open(method, url)
 
-  // Set any bespoke headers
   if (headers != null) {
-    for (let x in Object.keys(headers)) {
-      r.setRequestHeader(x, headers[x]);
+    for (let name in headers) {
+      if (headers.hasOwnProperty(name)) {
+        r.setRequestHeader(name, headers[name])
+      }
     }
   }
 
