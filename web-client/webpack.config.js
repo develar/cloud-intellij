@@ -1,5 +1,7 @@
 var path = require("path")
 var CommonsChunkPlugin = require("webpack/lib/optimize/CommonsChunkPlugin")
+// HtmlWebpackPlugin doesn't support CommonsChunkPlugin, so, in the chunks we must specify common chunks explicitly
+var HtmlWebpackPlugin = require("html-webpack-plugin")
 
 var production = process.env.MODE === "production"
 
@@ -16,6 +18,12 @@ module.exports = {
   },
   plugins: [
     new CommonsChunkPlugin("auth.js", ["ideAuth", "webAuth"]),
+    new HtmlWebpackPlugin({
+      title: "IDE login",
+      filename: "ide-auth.html",
+      chunks: ["auth.js", "ideAuth"],
+      minify: true
+    }),
   ],
   output: {
     path: production ? "./dist" : "./build",
@@ -37,8 +45,8 @@ module.exports = {
         loader: "expose?Auth",
       },
     ],
-    //noParse: [
-    //  path.join(__dirname, "lib", "sha1"),
-    //],
+    noParse: [
+      path.join(__dirname, "lib", "bluebird"),
+    ],
   },
 }

@@ -1,9 +1,18 @@
-import sha1 = require("bluebird")
-import stomp = require("stomp")
-import service = require("./api/service")
+import Promise = require("bluebird")
+
+import {
+  Service,
+  Topic,
+} from "./api/service"
+
+import {
+  Stomp,
+  Client,
+  Frame,
+} from "stomp"
 
 export class StompConnector {
-  private client: stomp.Client
+  private client: Client
 
   private exchangeCommands: string
   private exchangeEvents: string
@@ -17,7 +26,7 @@ export class StompConnector {
   connect(host: string, user: string, password: string): Promise<void> {
     var url = `wss://${host}/stomp/websocket`
     var webSocket = new WebSocket(url, ['v11.stomp'])
-    this.client = stomp.over(webSocket)
+    this.client = Stomp.over(webSocket)
     this.client.heartbeat.outgoing = 25000
     this.client.heartbeat.incoming = 0
     this.exchangeCommands = "/exchange/d." + user
@@ -99,7 +108,7 @@ export class StompConnector {
     })
   }
 
-  private handleEvent(topicName: string, properties: { [key: string]: any; }, frame: stomp.Frame) {
+  private handleEvent(topicName: string, properties: { [key: string]: any; }, frame: Frame) {
     let handlers = this.eventHandlers[topicName]
     if (handlers != null) {
       var data = JSON.parse(frame.body)
@@ -114,7 +123,7 @@ export class StompConnector {
     }
   }
 
-  request<R>(service: service.Service<R>, message: any = {}): Promise<R> {
+  request<R>(service: Service<R>, message: any = {}): Promise<R> {
     return new Promise((resolve: (result: R) => void, reject: (error?: any) => void) => {
       var id = this.messageIdCounter++;
       if (id === Number.MAX_VALUE) {
@@ -125,7 +134,7 @@ export class StompConnector {
     })
   }
 
-  notify(topic: service.Topic, message: any = {}): void {
+  notify(topic: Topic, message: any = {}): void {
     var headers: { [key: string]: any; }
     if (topic.response == null) {
       headers = {"app-id": this.queue};
@@ -140,11 +149,11 @@ export class StompConnector {
     this.client.send(this.exchangeEvents + "/" + topic.name, headers, JSON.stringify(message))
   }
 
-  on(topic: service.Topic, handler: (data: any) => void): void {
+  on(topic: Topic, handler: (data: any) => void): void {
     this.replyOn(topic, handler)
   }
 
-  replyOn(topic: service.Topic, handler: (replyTo: string, correlationId: string, data: any) => void) {
+  replyOn(topic: Topic, handler: (replyTo: string, correlationId: string, data: any) => void) {
     var list = this.eventHandlers[topic.name]
     if (list == null) {
       this.eventHandlers[topic.name] = [handler]

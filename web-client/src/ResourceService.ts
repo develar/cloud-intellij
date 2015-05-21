@@ -1,9 +1,9 @@
-/// <reference path="../lib.d/bluebird.d.ts" />
-/// <amd-dependency path="bluebird" name="Promise"/>
-
+import Promise = require("bluebird")
 import sha1 = require("sha1")
 
-import stompClient = require("./stompClient")
+import {
+  StompConnector,
+} from "./stompClient"
 
 import {
   File,
@@ -120,7 +120,7 @@ class VirtualFileSystem {
 export class FileService implements FileClient {
   private vfs: VirtualFileSystem
   
-  constructor(private stompClient: stompClient.StompConnector, private rootLocation: string) {
+  constructor(private stompClient: StompConnector, private rootLocation: string) {
     this.vfs = new VirtualFileSystem(new Directory(rootLocation))
   }
 

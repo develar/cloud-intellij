@@ -5,7 +5,7 @@ mqAuth:
     _JAVA_OPTIONS: "-Dio.netty.machineId=9e43d860 -Xms48m -Xmx64M"
     CLASSPATH: /app/lib/kotlin-runtime.jar:/app/moduleLib/netty-all-4.1.0.Beta5.jar:/app/classes
     MANAGEMENT_USER: admin
-    DEV_USER_NAME: "0-0-0-0-0"
+    DEV_USER_NAME: "6ff87f46-e7e6-4d94-9066-eedffc8125c6"
     DEV_USER_TOKEN: 42
   volumes:
     - out/production/mq-auth:/app/classes:ro
@@ -32,5 +32,7 @@ mq:
     - "15672:15672"
 hub:
   image: develar/jetpass
+  environment:
+    _JAVA_OPTIONS: "-Xms48m -Xmx64M -Djetbrains.jetpass.database.location=/data/data"
   volumes:
     - jetpass-data:/data

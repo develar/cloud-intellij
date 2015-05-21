@@ -4,7 +4,6 @@
 out/
 node_modules/
 dependencies/
-jetpass/
 jetpass-data/logs/
 jetpass-data/work/
 dist/

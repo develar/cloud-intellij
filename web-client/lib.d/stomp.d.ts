@@ -1,7 +1,8 @@
 declare module "stomp" {
-  function over(webSocket: any): Client
-
-  function client(url: string, protocols?: Array<string>): Client
+  export class Stomp {
+    static over(webSocket: any): Client;
+    static client(url: string, protocols?: Array<string>): Client;
+  }
 
   export interface Client {
     debug: (message: string) => void

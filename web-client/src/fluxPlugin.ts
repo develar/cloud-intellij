@@ -1,9 +1,6 @@
-/// <reference path="../lib.d/bluebird.d.ts" />
-/// <amd-dependency path="bluebird" name="Promise"/>
-
-import IdePreferenceProvider from "./IdePreferenceProvider"
-
+import Promise = require("bluebird")
 import PluginProvider = require("orion/plugin")
+import IdePreferenceProvider from "./IdePreferenceProvider"
 
 import {
   FileService,

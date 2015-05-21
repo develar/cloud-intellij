@@ -1,3 +1,5 @@
+import Promise = require("bluebird")
+
 import {
   Store,
   JsonStorage,

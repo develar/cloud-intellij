@@ -10,7 +10,7 @@ import LiveEditSession from "./LiveEditSession"
 
 import EventTarget = require("orion/EventTarget")
 import sha1 = require("sha1")
-import bluebird = require("bluebird")
+import Promise = require("bluebird")
 
 import {
   EditorTopics,
