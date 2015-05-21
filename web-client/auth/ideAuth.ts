@@ -2,7 +2,7 @@ import {
   login,
   init,
   Credential,
-  } from "auth"
+  } from "./auth"
 
 function getParameterByName(name: string) {
   var match = new RegExp("[?&]" + name + "=([^&]*)").exec(window.location.search)
@@ -15,7 +15,7 @@ if (requestId != null) {
   sessionStorage.setItem("port", getParameterByName("port"))
 }
 
-init("/ide-auth.html")
+init(false)
 
 login()
   .then((credential) => {

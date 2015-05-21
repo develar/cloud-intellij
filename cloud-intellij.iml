@@ -13,6 +13,8 @@
       <excludeFolder url="file://$MODULE_DIR$/dependencies/system-idea" />
       <excludeFolder url="file://$MODULE_DIR$/flux/node.server/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/flux/node.server/orion.client/modules/orionode/node_modules" />
+      <excludeFolder url="file://$MODULE_DIR$/jetpass" />
+      <excludeFolder url="file://$MODULE_DIR$/jetpass-data" />
       <excludeFolder url="file://$MODULE_DIR$/web-client/lib" />
       <excludeFolder url="file://$MODULE_DIR$/web-client/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/web-client/out" />

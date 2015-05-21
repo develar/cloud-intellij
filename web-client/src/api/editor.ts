@@ -1,12 +1,12 @@
 import {
-    Problems,
-    EditorMarker,
-    } from "orion-api"
+  Problems,
+  EditorMarker,
+} from "../orion-api"
 
 import {
-    Service,
-    Topic,
-    } from "api/service"
+  Service,
+  Topic,
+} from "./service"
 
 export class EditorTopics {
   public static started = new Topic("editor.started", true)

@@ -1,4 +1,5 @@
-import Promise = require("bluebird")
+/// <reference path="../lib.d/bluebird.d.ts" />
+/// <amd-dependency path="bluebird" name="Promise"/>
 
 export interface AuthService {
   getUser(): any

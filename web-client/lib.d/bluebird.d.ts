@@ -354,8 +354,7 @@ declare class Promise<R> implements Promise.Thenable<R>, Promise.Inspection<R> {
 	 * Create a promise that is resolved with the given `value`. If `value` is a thenable or promise, the returned promise will assume its state.
 	 */
 	static resolve(): Promise<void>;
-	static resolve<R>(value: Promise.Thenable<R>): Promise<R>;
-	static resolve<R>(value: R): Promise<R>;
+	static resolve<R>(value: R | Promise.Thenable<R>): Promise<R>;
 
 	/**
 	 * Create a promise that is rejected with the given `reason`.

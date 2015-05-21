@@ -1,26 +1,27 @@
-"use strict"
+/// <reference path="../lib.d/bluebird.d.ts" />
+/// <amd-dependency path="bluebird" name="Promise"/>
 
 import sha1 = require("sha1")
-import stompClient = require("stompClient")
-import Promise = require("bluebird")
+
+import stompClient = require("./stompClient")
 
 import {
-    File,
-    Directory,
-    FileClient,
-    } from "orion-api"
+  File,
+  Directory,
+  FileClient,
+} from "./orion-api"
 
 import {
-    ResourceService,
-    ResourceTopics,
-    GetResourceResponse,
-    } from "api/resource"
+  ResourceService,
+  ResourceTopics,
+  GetResourceResponse,
+} from "./api/resource"
 
 import {
-    ProjectTopics,
-    ProjectService,
-    ProjectGetAllResult,
-    } from "api/project"
+  ProjectTopics,
+  ProjectService,
+  ProjectGetAllResult,
+} from "./api/project"
 
 export class ResourceUri {
   constructor(public project: string, public path?: string) {

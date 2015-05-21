@@ -1,20 +1,16 @@
-"use strict"
-
-import OrionEventTarget = require("orion/EventTarget")
-
-import sha1 = require("sha1")
-
 import {
   StompConnector
-  } from "stompClient"
-
-import Promise = require("bluebird")
+} from "./stompClient"
 
 import {
   FileService
-  } from "ResourceService"
+} from "./ResourceService"
 
-import LiveEditSession from "LiveEditSession"
+import LiveEditSession from "./LiveEditSession"
+
+import EventTarget = require("orion/EventTarget")
+import sha1 = require("sha1")
+import bluebird = require("bluebird")
 
 import {
   EditorTopics,
@@ -23,11 +19,11 @@ import {
   DocumentChanged,
   EditorService,
   EditorMetadataChanged,
-  } from "api/editor"
+} from "./api/editor"
 
 import {
   GetResourceResponse,
-  } from "api/resource"
+} from "./api/resource"
 
 import {
   EditorContext,
@@ -38,10 +34,10 @@ import {
   Problems,
   ModelChangingEvent,
   ContentAssistOptions,
-  } from "orion-api"
+} from "./orion-api"
 
 export default class EditorManager implements Validator, LiveEditor, ContentAssist {
-  public eventTarget = new OrionEventTarget()
+  public eventTarget = new EventTarget()
 
   private editSessions: Array<LiveEditSession> = []
 

@@ -3,9 +3,10 @@ web:
   ports:
     - 80:80
     - 443:443
+  external_links:
+    - cloudintellij_hub_1:hub
   volumes:
     - certs:/certs
     - web-client/nginx-config:/sites
     - web-client/resources:/data-resources
-    - web-client/out/files:/data-out
-    - web-client/lib:/data-lib
+    - web-client/build:/data-out

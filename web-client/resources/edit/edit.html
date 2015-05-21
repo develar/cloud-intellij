@@ -7,6 +7,8 @@
   <title>Editor</title>
   <link rel="stylesheet" type="text/css" href="edit.css" />
   <script src="../requirejs/require.min.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/webAuth.js"></script>
   <script type="text/javascript">
     require({
       baseUrl: "..",
@@ -14,19 +16,16 @@
         text: "requirejs/text",
         i18n: "requirejs/i18n",
         domReady: "requirejs/domReady",
-        "hello": "hello-1.5.1",
       }
     })
-
-    require(["auth"], function (auth) {
-      auth.init("/edit/edit.html")
-      auth.check()
-        .then(function () {
-          require(["edit/edit"])
-        }, function (e) {
+    Auth.check()
+      .then(function () {
+        require(["edit/edit"])
+      }, function (e) {
+        if (e != null) {
           console.error(e)
-        })
-    })
+        }
+      })
   </script>
 </head>
 

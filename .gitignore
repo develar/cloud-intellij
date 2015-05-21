@@ -1,7 +1,11 @@
-flux
-.idea/copyright
-.idea/inspectionProfiles
+.idea/copyright/
+.idea/inspectionProfiles/
 .idea/workspace.xml
-out
-node_modules
-dependencies
+out/
+node_modules/
+dependencies/
+jetpass/
+jetpass-data/logs/
+jetpass-data/work/
+dist/
+build/

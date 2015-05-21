@@ -1,40 +1,40 @@
-"use strict"
+/// <reference path="../lib.d/bluebird.d.ts" />
+/// <amd-dependency path="bluebird" name="Promise"/>
 
-import Promise = require("bluebird")
-import IdePreferenceProvider = require("IdePreferenceProvider")
+import IdePreferenceProvider from "./IdePreferenceProvider"
 
 import PluginProvider = require("orion/plugin")
 
 import {
   FileService,
-  } from "ResourceService"
+} from "./ResourceService"
 
 import {
   EditorService,
   EditorStyles,
-  } from "api/editor"
+} from "./api/editor"
 
 import {
   ResourceService,
   ContentTypeDescriptor,
-  } from "api/resource"
+} from "./api/resource"
 
 import {
   StompConnector,
-  } from "stompClient"
+} from "./stompClient"
 
 import {
   EditorCommand,
   EditorCommandOptions,
   EditorContext,
-  } from "orion-api"
+} from "./orion-api"
 
-import EditorManager from "EditorManager"
+import EditorManager from "./EditorManager"
 
 import {
   FluxAuthService,
   User,
-  } from "authService"
+} from "./authService"
 
 function endsWith(str: string, suffix: string): boolean {
   return str.indexOf(suffix, str.length - suffix.length) !== -1

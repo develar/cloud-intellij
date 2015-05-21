@@ -1,6 +1,6 @@
 import {
   AuthService,
-  } from "orion-api"
+} from "./orion-api"
 
 function getFromStore<T>(key: string): T {
   var serialized = localStorage.getItem(key)
@@ -26,7 +26,7 @@ export class FluxAuthService implements AuthService {
   }
 
   getUser(): User {
-    var session: any = getFromStore("hello")
+    var session: any = getFromStore("auth")
     session = session == null ? null : session.jbHub
     if (session == null) {
       throw new Error("must be checked before")
@@ -45,7 +45,7 @@ export class FluxAuthService implements AuthService {
 
   logout(): Promise<any> {
     localStorage.removeItem("user")
-    localStorage.removeItem("hello")
+    localStorage.removeItem("auth")
     if (document.cookie.indexOf("userData=") !== -1) {
       document.cookie = "userData=; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
     }

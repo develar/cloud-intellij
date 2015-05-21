@@ -20,6 +20,7 @@ subjectAltName = @alt_names
 [alt_names]
 DNS.1 = flux.dev
 DNS.2 = flux
+DNS.3 = hub.dev
 IP.1 = 10.211.55.14
 IP.2 = 10.211.55.18
 IP.3 = 10.211.55.5

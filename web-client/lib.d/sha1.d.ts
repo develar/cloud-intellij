@@ -1,5 +1,5 @@
-declare function sha1(message: string): string
-
 declare module "sha1" {
+  function sha1(message: string): string
+
   export = sha1
 }

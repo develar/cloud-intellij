@@ -1,7 +1,4 @@
-"use strict"
-
 import sha1 = require("sha1")
-import Promise = require("bluebird")
 
 import {
   EditorTopics,
@@ -9,20 +6,20 @@ import {
   EditorStarted,
   DocumentChanged,
   EditorMetadataChanged,
-  } from "api/editor"
+} from "./api/editor"
 
 import {
-    StompConnector,
-    } from "stompClient"
+  StompConnector,
+} from "./stompClient"
 
 import {
-    ResourceUri,
-    } from "ResourceService"
+  ResourceUri,
+} from "./ResourceService"
 
 import {
-    EditorContext,
-    ModelChangingEvent,
-    } from "orion-api"
+  EditorContext,
+  ModelChangingEvent,
+} from "./orion-api"
 
 export default class LiveEditSession {
   private muteRequests = 0

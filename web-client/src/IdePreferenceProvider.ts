@@ -1,13 +1,15 @@
-import orion = require("orion-api")
+import {
+  PreferenceProvider
+} from "./orion-api"
 
 import {
   EditorStyles
-  } from "api/editor"
+} from "./api/editor"
 
 /*
  Caret row - annotationLine.currentLine.backgroundColor
  */
-class IdePreferenceProvider implements orion.PreferenceProvider {
+export default class IdePreferenceProvider implements PreferenceProvider {
   private themesPromise: Promise<any>
 
   constructor(promise: Promise<EditorStyles>) {
@@ -255,5 +257,3 @@ class IdePreferenceProvider implements orion.PreferenceProvider {
     return Promise.resolve()
   }
 }
-
-export = IdePreferenceProvider

@@ -1,11 +1,9 @@
-"use strict"
-
-import Stomp = require("stomp")
-import Promise = require("bluebird")
-import service = require("api/service")
+import sha1 = require("bluebird")
+import stomp = require("stomp")
+import service = require("./api/service")
 
 export class StompConnector {
-  private client: Stomp.Client
+  private client: stomp.Client
 
   private exchangeCommands: string
   private exchangeEvents: string
@@ -19,7 +17,7 @@ export class StompConnector {
   connect(host: string, user: string, password: string): Promise<void> {
     var url = `wss://${host}/stomp/websocket`
     var webSocket = new WebSocket(url, ['v11.stomp'])
-    this.client = Stomp.over(webSocket)
+    this.client = stomp.over(webSocket)
     this.client.heartbeat.outgoing = 25000
     this.client.heartbeat.incoming = 0
     this.exchangeCommands = "/exchange/d." + user
@@ -101,7 +99,7 @@ export class StompConnector {
     })
   }
 
-  private handleEvent(topicName: string, properties: { [key: string]: any; }, frame: Stomp.Frame) {
+  private handleEvent(topicName: string, properties: { [key: string]: any; }, frame: stomp.Frame) {
     let handlers = this.eventHandlers[topicName]
     if (handlers != null) {
       var data = JSON.parse(frame.body)

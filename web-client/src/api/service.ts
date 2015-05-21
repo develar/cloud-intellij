@@ -1,5 +1,3 @@
-import orion = require("orion-api")
-
 export class Service<R> {
   get serviceName(): string {
     throw new Error("abstract")
