@@ -8,5 +8,5 @@ web:
   volumes:
     - certs:/certs
     - web-client/nginx-config:/sites
-    - web-client/resources:/data-resources
+    - web-client/modules/resources:/data-resources
     - web-client/build:/data-out

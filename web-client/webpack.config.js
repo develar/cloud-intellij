@@ -10,12 +10,12 @@ module.exports = {
   resolve: {
     extensions: ["", ".ts", ".js"],
     modulesDirectories: [],
-    root: [__dirname, path.resolve("lib"), path.resolve("lib.d")]
+    root: [path.resolve("modules"), path.resolve("lib"), path.resolve("lib.d")]
   },
   entry: {
-    ideAuth: "./auth/ideAuth",
-    webAuth: "./auth/webAuth",
-    fluxPlugin: "./src/fluxPlugin",
+    ideAuth: "./modules/auth/ideAuth",
+    webAuth: "./modules/auth/webAuth",
+    fluxPlugin: "./modules/src/fluxPlugin",
   },
   plugins: [
     new CommonsChunkPlugin("auth.js", ["ideAuth", "webAuth"]),
