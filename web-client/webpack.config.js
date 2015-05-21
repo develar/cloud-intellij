@@ -15,7 +15,7 @@ module.exports = {
   entry: {
     ideAuth: "./modules/auth/ideAuth",
     webAuth: "./modules/auth/webAuth",
-    fluxPlugin: "./modules/src/fluxPlugin",
+    fluxPlugin: "./modules/flux-orion-plugin/fluxPlugin",
   },
   plugins: [
     new CommonsChunkPlugin("auth.js", ["ideAuth", "webAuth"]),
