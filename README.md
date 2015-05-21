@@ -1,15 +1,15 @@
 # Building
 1. Run: `ant -f update_dependencies.xml` (append `jb_update` if you have access to internal JetBrains server (could be faster)). (todo: use ant from docker).
 2. Open project in IntelliJ IDEA and make (Build -> Make Project).
-3. Run: `cd web-client && npm install && gulp` to install the web app dependencies. (todo: use gulp from docker).
+3. Run: `cd web-client && npm run build` to build web app. (todo: use webpack from docker).
 
 # Running from sources
-1. Run: `docker-compose -f mq.yml up` to start a messaging broker and related services.
+1. Run: `docker-compose up` to start a messaging broker and related services.
 1. Run: `docker-compose -f web.yml up` to start a web server.
 1. Run IntelliJ IDEA (use run configuration "Idea").
 1. Open your browser to `https://<dockerd host ip>`
 
-After project update, you should execute `docker-compose -f mq.yml pull && docker-compose -f web.yml pull` (because `up` doesn't check updates).
+After project update, you should execute `docker-compose pull && docker-compose -f web.yml pull` (because `up` doesn't check updates).
 
 We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](https://youtrack.jetbrains.com/issue/IDEA-137765).
 

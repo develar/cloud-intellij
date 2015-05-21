@@ -12,7 +12,8 @@
     "webpack": "^1.9.7"
   },
   "scripts": {
-    "dev": "webpack-dev-server --devtool eval --progress --colors",
-    "package": "MODE=production webpack -p"
+    "prebuild": "npm install",
+    "build": "webpack --colors --progress",
+    "dist": "MODE=production webpack -p --colors --progress"
   }
 }
