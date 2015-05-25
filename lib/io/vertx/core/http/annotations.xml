@@ -1,0 +1,5 @@
+<root>
+  <item name='io.vertx.core.http.HttpServerRequest java.lang.String getParam(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+</root>

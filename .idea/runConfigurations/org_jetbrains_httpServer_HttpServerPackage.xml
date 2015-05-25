@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="org.jetbrains.httpServer.HttpServerPackage" type="JetRunConfigurationType" factoryName="Kotlin" singleton="true">
+    <option name="MAIN_CLASS_NAME" value="org.jetbrains.httpServer.HttpServerPackage" />
+    <option name="VM_PARAMETERS" value="-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.impl.SLF4JLogDelegateFactory -Dorg.slf4j.simpleLogger.defaultLogLevel=trace -Dorg.slf4j.simpleLogger.showThreadName=false" />
+    <option name="PROGRAM_PARAMETERS" value="" />
+    <option name="WORKING_DIRECTORY" value="" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <option name="PASS_PARENT_ENVS" value="true" />
+    <module name="mq-auth" />
+    <envs>
+      <env name="PORT" value="8080" />
+      <env name="HUB_HOST" value="hub.dev" />
+      <env name="CERT_PEM" value="certs/cert.pem" />
+    </envs>
+    <method />
+  </configuration>
+</component>

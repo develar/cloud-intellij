@@ -1,0 +1,9 @@
+<root>
+  <item
+    name='io.vertx.ext.apex.Route io.vertx.ext.apex.Route handler(io.vertx.core.Handler&lt;io.vertx.ext.apex.RoutingContext&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='io.vertx.ext.apex.RoutingContext io.vertx.core.http.HttpServerRequest request()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

@@ -8,20 +8,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library name="netty">
-        <ANNOTATIONS>
-          <root url="file://$MODULE_DIR$/lib" />
-        </ANNOTATIONS>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/netty-all-4.1.0.Beta5.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/netty-all-4.1.0.Beta5-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="vertx" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
+    <orderEntry type="library" name="slf4j-simple" level="project" />
+    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>

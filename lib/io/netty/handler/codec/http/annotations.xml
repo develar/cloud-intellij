@@ -2,6 +2,9 @@
   <item name='io.netty.handler.codec.http.HttpRequest java.lang.String uri()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='io.netty.handler.codec.http.HttpResponseStatus BAD_REQUEST'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='io.netty.handler.codec.http.QueryStringDecoder java.util.Map&lt;java.lang.String,java.util.List&lt;java.lang.String&gt;&gt; parameters()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

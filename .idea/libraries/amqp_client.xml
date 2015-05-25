@@ -4,11 +4,11 @@
       <root url="file://$PROJECT_DIR$/jvm-flux-client/lib" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/jvm-flux-client/lib/amqp-client-3.5.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jvm-flux-client/lib/amqp-client-3.5.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/jvm-flux-client/lib/amqp-client-3.5.1-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jvm-flux-client/lib/amqp-client-3.5.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

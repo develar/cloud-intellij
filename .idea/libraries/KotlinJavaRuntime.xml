@@ -1,8 +1,7 @@
 <component name="libraryTable">
   <library name="KotlinJavaRuntime">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/jvm-flux-client/lib/kotlin-runtime.jar!/" />
-      <root url="jar://$PROJECT_DIR$/jvm-flux-client/lib/kotlin-reflect.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-runtime.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -2,16 +2,20 @@ mqAuth:
   image: develar/java:8u45
   environment:
     # -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5050
-    _JAVA_OPTIONS: "-Dio.netty.machineId=9e43d860 -Xms48m -Xmx64M"
-    CLASSPATH: /app/lib/kotlin-runtime.jar:/app/moduleLib/netty-all-4.1.0.Beta5.jar:/app/classes
+    _JAVA_OPTIONS: "-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.impl.SLF4JLogDelegateFactory
+      -Dorg.slf4j.simpleLogger.defaultLogLevel=info
+      -Dorg.slf4j.simpleLogger.showThreadName=false
+      -Xms48m -Xmx64M"
+    CLASSPATH: /app/lib/*:/app/classes
     MANAGEMENT_USER: admin
-    DEV_USER_NAME: "6ff87f46-e7e6-4d94-9066-eedffc8125c6"
-    DEV_USER_TOKEN: 42
+    HUB_PORT: 80
   volumes:
     - out/production/mq-auth:/app/classes:ro
-    - jvm-flux-client/lib:/app/lib:ro
-    - mq-auth/lib:/app/moduleLib:ro
-  command: org.jetbrains.flux.mqAuth.MqAuthPackage
+    - lib:/app/lib:ro
+    - certs/cert.pem:/cert.pem:ro
+  command: org.jetbrains.httpServer.HttpServerPackage
+  links:
+   - hub
   expose:
    - "80"
 #  ports:
@@ -32,7 +36,5 @@ mq:
     - "15672:15672"
 hub:
   image: develar/jetpass
-  environment:
-    _JAVA_OPTIONS: "-Xms48m -Xmx64M -Djetbrains.jetpass.database.location=/data/data"
   volumes:
     - jetpass-data:/data

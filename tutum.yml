@@ -24,6 +24,8 @@ certs-web:
 mq:
   image: develar/rabbitmq-auth
   autorestart: on_failure
+  environment:
+    HUB_HOST: sso.jetbrains.com
   tags:
     - flux
     - mq
