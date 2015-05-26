@@ -10,7 +10,7 @@ import {
   extend,
   toUrl,
   unique,
-  toQs,
+  toQueryString,
   iframe,
   merge,
   xhr,
@@ -55,17 +55,13 @@ interface Options {
   oauth_proxy?: string
 }
 
-interface LoginOptions extends Options {
-  force?: boolean
-}
-
 export class Auth {
   private settings: Options = {
     redirect_uri: window.location.href.split('#')[0],
     response_type: "token",
     display: "page",
 
-    oauth_proxy: "http://oauth-shim.intellij-io.develar.svc.tutum.io:3000",
+    oauth_proxy: "/oauth",
   }
 
   private loginStateStorage = new JsonStorage<LoginState>("loginState", sessionStorage)
@@ -75,7 +71,7 @@ export class Auth {
     if (options != null) {
       extend(this.settings, options)
 
-      // Do this immediately in case the browser changes the current path.
+      // do this immediately in case the browser changes the current path.
       if ("redirect_uri" in options) {
         this.settings.redirect_uri = toUrl(options.redirect_uri).href;
       }
@@ -108,9 +104,8 @@ export class Auth {
     return unique(scopes)
   }
 
-  public login(options?: LoginOptions): Promise<LoginResult> {
-    var opts: LoginOptions = extend(this.settings, options)
-
+  public login(force: Boolean = false, state: string = null): Promise<LoginResult> {
+    var options = this.settings
     var session = this.getSession()
     if (session != null && session.client_id !== this.provider.clientId) {
       this.store.set(this.provider.providerId, null)
@@ -118,8 +113,8 @@ export class Auth {
     }
 
     var oldScopes: string[] = session == null ? null : session.scope
-    var scopes = this.computeEffectiveScope(opts.scopes, oldScopes)
-    if (!opts.force && session != null && session.access_token && session.expires > (Date.now() / 1000)) {
+    var scopes = this.computeEffectiveScope(options.scopes, oldScopes)
+    if (!force && session != null && session.access_token && session.expires > (Date.now() / 1000)) {
       var diff = oldScopes == null ? null : computeDiff(oldScopes, scopes)
       if (diff == null || diff.length === 0) {
         var isNew = session.isNew
@@ -131,32 +126,30 @@ export class Auth {
       }
     }
 
-    var redirectUri: string = toUrl(opts.redirect_uri).href
     this.loginStateStorage.set({
       client_id: this.provider.clientId,
       network: this.provider.providerId,
-      display: opts.display,
-      redirect_uri: redirectUri,
     })
 
     var queryString = {
       client_id: this.provider.clientId,
-      response_type: opts.response_type,
-      redirect_uri: redirectUri,
+      response_type: options.response_type,
+      redirect_uri: toUrl(options.response_type === "token" ? options.redirect_uri : options.oauth_proxy).href,
       scope: scopes.join(this.provider.scopeDelimiter || ","),
       refresh_token: <string>null,
+      state: state
     }
 
     var url: string
-    if (opts.display === "none" && session != null && session.refresh_token != null) {
+    if (options.display === "none" && session != null && session.refresh_token != null) {
       queryString.refresh_token = session.refresh_token
-      url = toQs(opts.oauth_proxy, queryString)
+      url = toQueryString(options.oauth_proxy, queryString)
     }
     else {
-      url = toQs(this.provider.oauth.auth, queryString)
+      url = toQueryString(this.provider.oauth.auth, queryString)
     }
 
-    if (opts.display === "none") {
+    if (options.display === "none") {
       iframe(url)
       throw new Error("unsupported")
     }
@@ -169,7 +162,7 @@ export class Auth {
   // Remove any data associated with a given service
   // @param string name of the service
   // @param function callback
-  public logout(options?: LoginOptions): Promise<any> {
+  public logout(force: Boolean = false): Promise<any> {
     var session = this.getSession()
     if (session == null) {
       return Promise.resolve()
@@ -179,7 +172,7 @@ export class Auth {
       this.store.set(this.provider.providerId, null)
     }
 
-    if (options.force) {
+    if (force) {
       var logout = this.provider.logout
       // todo check
       if (logout != null) {
@@ -249,34 +242,28 @@ export class Auth {
     }
 
     var state = this.loginStateStorage.get()
-    if (response.code != null) {
-      response.redirect_uri = state.redirect_uri || location.href.replace(/[\?#].*$/, "")
-      location.assign((this.settings.oauth_proxy || response.proxy_url) + "?" + encodeQuery(response))
+    if (response.error != null) {
+      var error = new Error(response.error_message || response.error_description)
+      error.name = response.error
+      throw error
     }
-    else {
-      if (response.error != null) {
-        var error = new Error(response.error_message || response.error_description)
-        error.name = response.error
-        throw error
-      }
 
-      if (response.access_token != null) {
-        this.loginStateStorage.set(null)
+    if (response.access_token != null) {
+      this.loginStateStorage.set(null)
 
-        // github token never expires
-        var expiresIn = state.network === "github" ? null : response.expires_in
-        var parsedExpiresIn = expiresIn == null ? 0 : parseInt(expiresIn, 10)
+      // github token never expires
+      var expiresIn = state.network === "github" ? null : response.expires_in
+      var parsedExpiresIn = expiresIn == null ? 0 : parseInt(expiresIn, 10)
 
-        this.store.set(state.network, {
-          client_id: state.client_id,
-          access_token: response.access_token,
-          expires: (Date.now() / 1000) + (parsedExpiresIn === 0 ? (60 * 60 * 24 * 365) : parsedExpiresIn),
-          scope: response.scope.split(","),
-          refresh_token: response.refresh_token,
-          isNew: true,
-        })
-        setHash("")
-      }
+      this.store.set(state.network, {
+        client_id: state.client_id,
+        access_token: response.access_token,
+        expires: (Date.now() / 1000) + (parsedExpiresIn === 0 ? (60 * 60 * 24 * 365) : parsedExpiresIn),
+        scope: response.scope.split(","),
+        refresh_token: response.refresh_token,
+        isNew: true,
+      })
+      setHash("")
     }
   }
 }
@@ -299,7 +286,6 @@ function readAuthResponseFromUrl(): { [key: string]: string; } {
 interface LoginState {
   network: string
   client_id: string
-  redirect_uri: string
 }
 
 interface OAuthResponse {

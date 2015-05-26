@@ -1,0 +1,5 @@
+<root>
+  <item name='io.vertx.core.Vertx io.vertx.core.http.HttpClient createHttpClient(io.vertx.core.http.HttpClientOptions)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

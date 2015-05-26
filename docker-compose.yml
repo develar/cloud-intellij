@@ -1,14 +1,17 @@
 mqAuth:
-  image: develar/java:8u45
+  image: develar/java:8u45-dcevm
   environment:
-    # -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5050
     _JAVA_OPTIONS: "-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.impl.SLF4JLogDelegateFactory
-      -Dorg.slf4j.simpleLogger.defaultLogLevel=info
+      -Dorg.slf4j.simpleLogger.defaultLogLevel=trace
       -Dorg.slf4j.simpleLogger.showThreadName=false
+      -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5050
       -Xms48m -Xmx64M"
     CLASSPATH: /app/lib/*:/app/classes
     MANAGEMENT_USER: admin
     HUB_PORT: 80
+    CORS_ORIGIN: flux\.dev
+    CLIENT_ID: 5e190e8e-31c4-462d-b74a-be8025988c8f
+    CLIENT_SECRET: BtcwqolwABtK
   volumes:
     - out/production/mq-auth:/app/classes:ro
     - lib:/app/lib:ro
@@ -18,8 +21,8 @@ mqAuth:
    - hub
   expose:
    - "80"
-#  ports:
-#    - "5050:5050"
+  ports:
+    - "5050:5050"
 mq:
   image: cloudintellij/rabbitmq-auth
   # https://github.com/docker-library/rabbitmq/issues/6 I have no idea how it will be going in a Tutum.
@@ -38,3 +41,16 @@ hub:
   image: develar/jetpass
   volumes:
     - jetpass-data:/data
+web:
+  image: develar/orion-client
+  ports:
+    - 80:80
+    - 443:443
+  links:
+    - hub
+    - mqAuth:oauth-proxy
+  volumes:
+    - certs:/certs
+    - web-client/nginx-config:/sites
+    - web-client/modules/resources:/data-resources
+    - web-client/build:/data-out

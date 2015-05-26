@@ -4,14 +4,11 @@
 3. Run: `cd web-client && npm run build` to build web app. (todo: use webpack from docker).
 
 # Running from sources
-1. Run: `docker-compose up` to start a messaging broker and related services.
-1. Run: `docker-compose -f web.yml up` to start a web server.
+1. Run: `docker-compose up`.
 1. Run IntelliJ IDEA (use run configuration "Idea").
 1. Open your browser to `https://<dockerd host ip>`
 
 After project update, you should execute `docker-compose pull && docker-compose -f web.yml pull` (because `up` doesn't check updates).
-
-We have to split docker-compose.yml due to [IDEA-137765 Support docker-compose](https://youtrack.jetbrains.com/issue/IDEA-137765).
 
 # Setting up development environment
 1. Install [Docker and Docker Compose](https://docs.docker.com/compose/install/). Docker 1.6+ and Docker Compose 1.2+ required. 

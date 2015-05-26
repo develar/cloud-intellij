@@ -29,14 +29,9 @@ export function encodeQuery(o: any): string {
   return a.length === 0 ? null : a.join("&")
 }
 
-export function toQs(url: string, params: any): string {
+export function toQueryString(url: string, params: any): string {
   var query = encodeQuery(params)
-  if (query == null) {
-    return url
-  }
-  else {
-    return url + "?" + query
-  }
+  return query == null ? url : (url + "?" + query)
 }
 
 export function extend(to: any, from: any) {

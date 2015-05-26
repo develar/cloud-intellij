@@ -21,11 +21,11 @@ function endsWith(str: string, suffix: string): boolean {
 declare const OAUTH_CLIENT_ID_DEV: string
 declare const OAUTH_CLIENT_ID_PROD: string
 
-var oauth: Auth = null
+export var oauth: Auth = null
 
 export function init(implicit: boolean = false) {
   var jbHub = endsWith(location.host, ".dev") ? new JbHub(OAUTH_CLIENT_ID_DEV, "hub.dev") : new JbHub(OAUTH_CLIENT_ID_PROD)
-  oauth = new Auth(jbHub, new Store<Session>(), {
+  oauth = new Auth(jbHub, new Store<Session>(implicit ? localStorage : sessionStorage), {
     response_type: implicit ? "token" : "code",
   })
 }
@@ -36,7 +36,7 @@ export interface Credential {
 }
 
 export function login(): Promise<Credential> {
-  return oauth.login({force: false})
+  return oauth.login()
     .then((result) => {
       if (result.state == LoginResultState.REDIRECTED) {
         return Promise.reject(null)

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="org.jetbrains.httpServer.HttpServerPackage" type="JetRunConfigurationType" factoryName="Kotlin" singleton="true">
+  <configuration default="false" name="Auth Server" type="JetRunConfigurationType" factoryName="Kotlin" singleton="true">
     <option name="MAIN_CLASS_NAME" value="org.jetbrains.httpServer.HttpServerPackage" />
     <option name="VM_PARAMETERS" value="-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.impl.SLF4JLogDelegateFactory -Dorg.slf4j.simpleLogger.defaultLogLevel=trace -Dorg.slf4j.simpleLogger.showThreadName=false" />
     <option name="PROGRAM_PARAMETERS" value="" />

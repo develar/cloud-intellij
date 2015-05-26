@@ -13,8 +13,6 @@ import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.io.ChannelBufferToString
-import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.keychain.Credentials
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
@@ -69,23 +67,20 @@ class AuthResponseHandler : HttpRequestHandler() {
   }
 
   override fun isSupported(request: FullHttpRequest): Boolean {
-    return request.method() == HttpMethod.POST && HttpRequestHandler.checkPrefix(request.uri(), "67822818-87E4-4FF9-81C5-75433D57E7B3")
+    return request.method() == HttpMethod.GET && HttpRequestHandler.checkPrefix(request.uri(), "67822818-87E4-4FF9-81C5-75433D57E7B3")
   }
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
-    val reader = JsonReaderEx(ChannelBufferToString.readChars(request.content()))
-    reader.beginArray()
-    val requestId = reader.nextString()
-    val user = reader.nextString()
-    val token = reader.nextString()
-    reader.endArray()
+    val requestId = urlDecoder.parameters().get("r")!!.get(0)
+    val accessToken = urlDecoder.parameters().get("at")!!.get(0)
+    val refreshToken = urlDecoder.parameters().get("rt")!!.get(0)
 
     val promise = idToPromise.remove(requestId)
     if (promise == null) {
       LOG.warn("No request for id $requestId")
     }
     else {
-      promise.setResult(Credentials(user, token))
+      promise.setResult(Credentials("", refreshToken))
     }
     return true
   }
