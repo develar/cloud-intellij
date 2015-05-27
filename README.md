@@ -6,7 +6,7 @@
 # Running from sources
 1. Run: `docker-compose up`.
 1. Run IntelliJ IDEA (use run configuration "Idea").
-1. Open your browser to `https://<dockerd host ip>`
+1. Open your browser to `https://flux.dev`.
 
 After project update, you should execute `docker-compose pull && docker-compose -f web.yml pull` (because `up` doesn't check updates).
 

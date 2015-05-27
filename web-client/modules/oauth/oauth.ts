@@ -131,18 +131,19 @@ export class Auth {
       network: this.provider.providerId,
     })
 
+    var isImplicitAuth = options.response_type === "token"
     var queryString = {
       client_id: this.provider.clientId,
       response_type: options.response_type,
-      redirect_uri: toUrl(options.response_type === "token" ? options.redirect_uri : options.oauth_proxy).href,
+      redirect_uri: toUrl(isImplicitAuth ? options.redirect_uri : options.oauth_proxy).href,
       scope: scopes.join(this.provider.scopeDelimiter || ","),
-      refresh_token: <string>null,
+      access_type: isImplicitAuth ? null : "offline",
       state: state
     }
 
     var url: string
-    if (options.display === "none" && session != null && session.refresh_token != null) {
-      queryString.refresh_token = session.refresh_token
+    if (options.display === "none" && session != null) {
+      throw new Error("unsupported")
       url = toQueryString(options.oauth_proxy, queryString)
     }
     else {
@@ -260,7 +261,6 @@ export class Auth {
         access_token: response.access_token,
         expires: (Date.now() / 1000) + (parsedExpiresIn === 0 ? (60 * 60 * 24 * 365) : parsedExpiresIn),
         scope: response.scope.split(","),
-        refresh_token: response.refresh_token,
         isNew: true,
       })
       setHash("")
@@ -294,8 +294,6 @@ interface OAuthResponse {
   redirect_uri?: string
   proxy_url?: string
 
-  refresh_token?: string
-
   access_token?: string
   expires_in?: string
   scope?: string
@@ -311,8 +309,6 @@ export interface Session {
   access_token: string
   expires: number
   scope: string[]
-
-  refresh_token?: string
 
   isNew?: boolean
 }
