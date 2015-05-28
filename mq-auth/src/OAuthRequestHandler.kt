@@ -9,11 +9,8 @@ import io.vertx.core.http.HttpHeaders
 import io.vertx.ext.apex.Router
 import org.jetbrains.flux.mqAuth.map
 import org.jetbrains.io.JsonReaderEx
-import org.slf4j.LoggerFactory
 import java.net.URLEncoder
 import java.util.Base64
-
-private val LOG = LoggerFactory.getLogger(javaClass<OAuthRequestHandler>())
 
 fun getRequiredEnv(name: String) = System.getenv(name) ?: throw RuntimeException("Environment variable $name must be specified")
 
@@ -59,11 +56,15 @@ class OAuthRequestHandler(hubHttpClient: HttpClient, router: Router) {
               val redirectUrlBuilder = StringBuilder("http://127.0.0.1:").append(port).append("/67822818-87E4-4FF9-81C5-75433D57E7B3")
               redirectUrlBuilder.append("?r=").append(requestId)
 
+              var accessToken: String? = null
               val data = readChars(it.getByteBuf(), it.length())
               if (statusCode == HttpResponseStatus.OK.code()) {
                 JsonReaderEx(data).map {
                   when (nextName()) {
-                    "access_token" -> redirectUrlBuilder.append("&at=").append(encodeFormComponent(nextString()))
+                    "access_token" -> {
+                      accessToken = nextString()
+                      redirectUrlBuilder.append("&at=").append(encodeFormComponent(accessToken!!))
+                    }
                     "refresh_token" -> redirectUrlBuilder.append("&rt=").append(encodeFormComponent(nextString()))
                     else -> skipValue()
                   }
@@ -74,10 +75,27 @@ class OAuthRequestHandler(hubHttpClient: HttpClient, router: Router) {
                 redirectUrlBuilder.append("&e=").append(encodeFormComponent(data.toString()))
               }
 
-              response
-                .setStatusCode(HttpResponseStatus.FOUND.code())
-                .putHeader(HttpHeaders.LOCATION, redirectUrlBuilder.toString())
-                .end()
+              fun answer() {
+                response
+                  .setStatusCode(HttpResponseStatus.FOUND.code())
+                  .putHeader(HttpHeaders.LOCATION, redirectUrlBuilder.toString())
+                  .end()
+              }
+
+              if (accessToken == null) {
+                answer()
+              }
+              else {
+                getUserId(accessToken!!, response, hubHttpClient) {
+                  if (it == null) {
+                    redirectUrlBuilder.append("&e=").append(encodeFormComponent("User banned or guest"))
+                  }
+                  else {
+                    redirectUrlBuilder.append("&u=").append(encodeFormComponent(it))
+                  }
+                  answer()
+                }
+              }
             }
           }
           .exceptionHandler {

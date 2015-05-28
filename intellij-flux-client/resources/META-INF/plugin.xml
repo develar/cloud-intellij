@@ -19,8 +19,11 @@
   </extensions>
 
   <actions>
-    <action id="ConnectToFlux" class="org.intellij.flux.ConnectToFluxAction">
+    <group id="FluxMenu">
+      <separator/>
+      <action id="ConnectToFlux" class="org.intellij.flux.ConnectToFluxAction"/>
+      <action id="LogOutFromFlux" class="org.intellij.flux.LogOutFromFluxAction"/>
       <add-to-group group-id="ToolsMenu"/>
-    </action>
+    </group>
   </actions>
 </idea-plugin>

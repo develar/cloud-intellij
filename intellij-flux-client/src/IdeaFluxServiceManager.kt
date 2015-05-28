@@ -15,8 +15,8 @@ import java.net.SocketException
 class IdeaFluxServiceManager() {
   var messageConnector: RabbitMqMessageConnector? = null
 
-  fun connect(username: String, token: String, promise: AsyncPromise<RabbitMqMessageConnector>) {
-    tryConnect(username, token, promise, true)
+  fun connect(user: String, token: String, promise: AsyncPromise<RabbitMqMessageConnector>) {
+    tryConnect(user, token, promise, true)
   }
 
   private fun tryConnect(username: String, token: String, promise: AsyncPromise<RabbitMqMessageConnector>, checkCertificateException: Boolean) {

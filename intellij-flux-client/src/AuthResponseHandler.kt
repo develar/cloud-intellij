@@ -13,20 +13,20 @@ import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.keychain.Credentials
+import org.jetbrains.io.Responses
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import java.util.UUID
 
-fun login(host: String, project: Project?): Promise<Credentials> {
+fun login(host: String, project: Project?): Promise<Session> {
   return HttpRequestHandler.EP_NAME.findExtension(javaClass<AuthResponseHandler>()).requestAuth(host, project)
 }
 
 class AuthResponseHandler : HttpRequestHandler() {
-  private val idToPromise = ContainerUtil.newConcurrentMap<String, AsyncPromise<Credentials>>()
+  private val idToPromise = ContainerUtil.newConcurrentMap<String, AsyncPromise<Session>>()
 
-  fun requestAuth(host: String, project: Project?): Promise<Credentials> {
-    val promise = AsyncPromise<Credentials>()
+  fun requestAuth(host: String, project: Project?): Promise<Session> {
+    val promise = AsyncPromise<Session>()
     val requestId = UUID.randomUUID().toString()
     idToPromise.put(requestId, promise)
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Waiting authentication response from browser", true, PerformInBackgroundOption.DEAF) {
@@ -71,17 +71,35 @@ class AuthResponseHandler : HttpRequestHandler() {
   }
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
-    val requestId = urlDecoder.parameters().get("r")!!.get(0)
-    val accessToken = urlDecoder.parameters().get("at")!!.get(0)
-    val refreshToken = urlDecoder.parameters().get("rt")!!.get(0)
-
+    val requestId = urlDecoder.getParameter("r")!!
     val promise = idToPromise.remove(requestId)
     if (promise == null) {
       LOG.warn("No request for id $requestId")
+      failedAuth(context, request)
+      return true
     }
-    else {
-      promise.setResult(Credentials("", refreshToken))
+
+    val error = urlDecoder.getParameter("e")
+    if (error != null) {
+      LOG.error(error)
+      failedAuth(context, request)
+      promise.setError(Promise.createError(error))
+      return true;
     }
+
+    val accessToken = urlDecoder.getParameter("at")!!
+    val refreshToken = urlDecoder.getParameter("rt")!!
+    val user = urlDecoder.getParameter("u")!!
+    promise.setResult(Session(accessToken, refreshToken, user))
+    Responses.send("<!doctype html><p>You have been successfully authenticated. <a href='javascript:window.close()'>Close window</a></p>", context.channel(), request)
     return true
   }
+
+  private fun failedAuth(context: ChannelHandlerContext, request: FullHttpRequest) {
+    Responses.send("<!doctype html><p>Failed to be authenticated. Internal server error, please see logs. <a href='javascript:window.close()'>Close window</a></p>", context.channel(), request)
+  }
 }
+
+data class Session(val accessToken: String, val refreshToken: String, val userId: String)
+
+fun QueryStringDecoder.getParameter(name: String) = ContainerUtil.getLastItem<String, List<String>>(parameters().get(name))

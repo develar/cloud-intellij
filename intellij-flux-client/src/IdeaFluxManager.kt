@@ -20,6 +20,7 @@ val fluxManager: IdeaFluxManager
 
 class IdeaFluxManager : ApplicationComponent {
   private val fluxService = IdeaFluxServiceManager()
+  private var session: Session? = null
 
   private val keychain: CredentialsStore by Delegates.lazy {
     if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("use.osx.keychain", true)) {
@@ -46,17 +47,15 @@ class IdeaFluxManager : ApplicationComponent {
   private val fluxHost = System.getProperty("flux.host", "intellij.io")
 
   public override fun initComponent() {
-    val userId = System.getProperty("flux.user.name")
-    if (userId != null) {
-      val token = System.getProperty("flux.user.token")
-      if (token != null) {
-          keychain.save(fluxHost, Credentials(userId, token))
-      }
-    }
-
     if (PropertiesComponent.getInstance().getBoolean("flux.auto.connect", false)) {
       connect()
     }
+  }
+
+  fun isLoggedIn() = session != null
+
+  fun logOut() {
+    session = null
   }
 
   fun connect(project: Project? = null): Promise<RabbitMqMessageConnector> {
@@ -64,23 +63,28 @@ class IdeaFluxManager : ApplicationComponent {
     connectPromise = promise
 
     val host = fluxHost
-    val credentials = keychain.get(host)
-    if (credentials != null) {
-      doConnect(credentials, promise)
-    }
-    else {
+//    val refreshTokenAndUserId = keychain.get(host)
+    if (session == null) {
       login(host, project)
         .done {
-          keychain.save(host, it)
-          doConnect(it, promise)
+          session = it
+          keychain.save(host, Credentials(it.userId, it.refreshToken))
+          doConnect(it.userId, it.accessToken, promise)
         }
+        .rejected {
+          connectPromise = null
+          promise.setError(it)
+        }
+    }
+    else {
+      doConnect(session!!.userId, session!!.accessToken, promise)
     }
     return promise
   }
 
-  private fun doConnect(credentials: Credentials, promise: AsyncPromise<RabbitMqMessageConnector>) {
+  private fun doConnect(user: String, token: String, promise: AsyncPromise<RabbitMqMessageConnector>) {
     ApplicationManager.getApplication().executeOnPooledThread {
-      fluxService.connect(credentials.id!!, credentials.token!!, promise)
+      fluxService.connect(user, token, promise)
     }
   }
 
