@@ -42,16 +42,16 @@ hub:
   image: develar/jetpass
   volumes:
     - jetpass-data:/data
-#web:
-#  image: develar/orion-client
-#  ports:
-#    - 80:80
-#    - 443:443
-#  links:
-#    - hub
-#    - mqAuth:oauth-proxy
-#  volumes:
-#    - certs:/certs
-#    - web-client/nginx-config:/sites
-#    - web-client/modules/resources:/data-resources
-#    - web-client/build:/data-out
+web:
+  image: develar/nginx
+  ports:
+    - 80:80
+    - 443:443
+  links:
+    - hub
+    - mqAuth:oauth-proxy
+  volumes:
+    - certs:/certs
+    - web-client/nginx-dev.conf:/sites/site.conf
+    - web-client/modules/resources:/data-resources
+    - web-client/build:/data

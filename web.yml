@@ -8,6 +8,6 @@ web:
     - cloudintellij_mqAuth_1:oauth-proxy
   volumes:
     - certs:/certs
-    - web-client/nginx-config:/sites
+    - web-client/nginx-dev.conf:/sites/site.conf
     - web-client/modules/resources:/data-resources
     - web-client/build:/data

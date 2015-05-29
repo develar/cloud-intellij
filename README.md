@@ -11,6 +11,7 @@
 After project update, you should execute `docker-compose pull && docker-compose -f web.yml pull` (because `up` doesn't check updates).
 
 # Setting up development environment
+1. Clone https://github.com/develar/orion.client.git to web-client: `git clone https://github.com/develar/orion.client.git web-client/orion.client`
 1. Install [Docker and Docker Compose](https://docs.docker.com/compose/install/). Docker 1.6+ and Docker Compose 1.2+ required. 
 (If you have Parallels Desktop, consider to use [Vagrant](https://github.com/Parallels/boot2docker-vagrant-box) ([sample Vagrantfile](https://dl.dropboxusercontent.com/u/43511007/Vagrantfile))).
 1. Trust the self signed development certificate `certs/cert.pem`.
