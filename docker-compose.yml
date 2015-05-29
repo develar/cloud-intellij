@@ -11,8 +11,8 @@ mqAuth:
     MANAGEMENT_USER: admin
     HUB_PORT: 80
     CORS_ORIGIN: flux\.dev
-    CLIENT_ID: 5e190e8e-31c4-462d-b74a-be8025988c8f
-    CLIENT_SECRET: BtcwqolwABtK
+    CLIENT_ID: d5d27f53-31b3-493f-ac9e-2c48da5661ea
+    CLIENT_SECRET: S4DqC5Pzv9PV
   volumes:
     - out/production/mq-auth:/app/classes:ro
     - lib:/app/lib:ro

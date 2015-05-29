@@ -91,13 +91,15 @@ class AuthResponseHandler : HttpRequestHandler() {
     val refreshToken = urlDecoder.getParameter("rt")!!
     val user = urlDecoder.getParameter("u")!!
     promise.setResult(Session(accessToken, refreshToken, user))
-    Responses.send("<!doctype html><p>You have been successfully authenticated. <a href='javascript:window.close()'>Close window</a></p>", context.channel(), request)
+    Responses.send(html("You have been successfully authenticated"), context.channel(), request)
     return true
   }
 
   private fun failedAuth(context: ChannelHandlerContext, request: FullHttpRequest) {
-    Responses.send("<!doctype html><p>Failed to be authenticated. Internal server error, please see logs. <a href='javascript:window.close()'>Close window</a></p>", context.channel(), request)
+    Responses.send(html("Failed to be authenticated. Internal server error, please see IDE logs"), context.channel(), request)
   }
+
+  private fun html(message: String) = "<!doctype html><p>$message. <a href=\"javascript:window.open('','_self').close();\">Close window</a></p>"
 }
 
 data class Session(val accessToken: String, val refreshToken: String, val userId: String)

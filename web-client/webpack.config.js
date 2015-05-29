@@ -52,7 +52,7 @@ module.exports = {
     html("", "imageViewerPlugin.html", ["orion-plugin.js", "imageViewerPlugin"], true),
 
     new webpack.DefinePlugin({
-      OAUTH_CLIENT_ID_DEV: '"5e190e8e-31c4-462d-b74a-be8025988c8f"',
+      OAUTH_CLIENT_ID_DEV: '"d5d27f53-31b3-493f-ac9e-2c48da5661ea"',
       OAUTH_CLIENT_ID_PROD: '"0799e9c5-849d-40e8-bbc6-5d5d6c9e711f"',
     }),
   ],
@@ -81,6 +81,9 @@ module.exports = {
     noParse: [
       path.join(__dirname, "lib", "bluebird"),
     ],
+  },
+  devServer: {
+    contentBase: "./build",
   },
 }
 
