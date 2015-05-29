@@ -4,17 +4,22 @@
   "private": true,
   "devDependencies": {
     "awesome-typescript-loader": "^0.4.0-rc.2",
+    "css-loader": "^0.14.4",
     "expose-loader": "^0.7.0",
-    "gulp": "^3.8.11",
-    "gulp-sourcemaps": "^1.5.2",
-    "gulp-typescript": "^2.7.5",
+    "extract-text-webpack-plugin": "^0.8.1",
+    "file-loader": "^0.8.4",
     "html-webpack-plugin": "^1.4.0",
+    "style-loader": "^0.12.3",
     "typescript": "1.5.0-beta",
+    "url-loader": "^0.5.6",
     "webpack": "^1.9.10"
   },
   "scripts": {
     "prebuild": "npm install",
+    "prepush": "npm run image",
     "build": "webpack --colors --progress",
-    "dist": "MODE=production webpack -p --colors --progress"
+    "dist": "MODE=production webpack -p --colors --progress",
+    "image": "docker build -t cloudintellij/flux-web .",
+    "push": "docker push cloudintellij/flux-web"
   }
 }

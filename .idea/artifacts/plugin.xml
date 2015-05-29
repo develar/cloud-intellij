@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="plugin">
+    <output-path>$PROJECT_DIR$/out/artifacts</output-path>
+    <root id="archive" name="cloud-intellioj.jar">
+      <element id="module-output" name="intellij-flux-client" />
+      <element id="module-output" name="jvm-flux-client" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/jvm-flux-client/lib/amqp-client-3.5.3.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

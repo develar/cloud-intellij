@@ -1,5 +1,5 @@
 <idea-plugin version="2">
-  <id>org.intellij.flux</id>
+  <id>org.intellij.cloudIde</id>
   <name>IntelliJ in the Cloud</name>
   <version>0.1</version>
   <description>IntelliJ in the Cloud</description>

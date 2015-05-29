@@ -1,32 +1,14 @@
 <!doctype html>
-<html>
+<html{% if(o.htmlWebpackPlugin.files.manifest) { %} manifest="{%= o.htmlWebpackPlugin.files.manifest %}"{% } %}>
 <head>
-  <meta name="copyright" content="Copyright (c) IBM Corporation and others 2010, 2014." >
   <meta charset="UTF-8">
-  <link rel="icon" href="../images/edit.png" type="image/png">
-  <title>Editor</title>
-  <link rel="stylesheet" type="text/css" href="edit.css" />
-  <script src="../requirejs/require.min.js"></script>
-  <script src="/auth.js"></script>
-  <script src="/webAuth.js"></script>
-  <script type="text/javascript">
-    require({
-      baseUrl: "..",
-      paths: {
-        text: "requirejs/text",
-        i18n: "requirejs/i18n",
-        domReady: "requirejs/domReady",
-      }
-    })
-    Auth.check()
-      .then(function () {
-        require(["edit/edit"])
-      }, function (e) {
-        if (e != null) {
-          console.error(e)
-        }
-      })
-  </script>
+  <title>{%=o.htmlWebpackPlugin.options.title || 'Webpack App'%}</title>
+  {% if (o.htmlWebpackPlugin.files.favicon) { %}
+  <link rel="shortcut icon" href="{%=o.htmlWebpackPlugin.files.favicon%}">{% } %}
+  {% for (var css in o.htmlWebpackPlugin.files.css) { %}
+  <link href="{%=o.htmlWebpackPlugin.files.css[css] %}" rel="stylesheet">{% } %}
+  {% for (var chunk in o.htmlWebpackPlugin.files.chunks) { %}
+  <script src="{%=o.htmlWebpackPlugin.files.chunks[chunk].entry %}"></script>{% } %}
 </head>
 
 <body id="orion-editor" spellcheck="false" class="orionPage">

@@ -2,12 +2,19 @@ mqAuth:
   image: cloudintellij/mq-auth
   target_num_containers: 2
   deployment_strategy: high_availability
-  autorestart: on_failure
+  restart: on-failure
   tags:
     - flux
   environment:
-    _JAVA_OPTIONS: "-Xms48m -Xmx64M"
+    _JAVA_OPTIONS: >
+      -Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.impl.SLF4JLogDelegateFactory
+      -Dorg.slf4j.simpleLogger.defaultLogLevel=trace
+      -Dorg.slf4j.simpleLogger.showThreadName=false
+      -Xms48m -Xmx64M
     MANAGEMENT_USER: admin
+    HUB_HOST: sso.jetbrains.com
+    CLIENT_ID: 0799e9c5-849d-40e8-bbc6-5d5d6c9e711f
+    CLIENT_SECRET: changeMe
 # https://support.tutum.co/support/tickets/1287 we cannot use one certs service for mq and web (see Implementation.md)
 certs-mq:
   image: tutum.co/develar/intellij-io-certs
@@ -22,10 +29,8 @@ certs-web:
     - flux
     - web
 mq:
-  image: develar/rabbitmq-auth
-  autorestart: on_failure
-  environment:
-    HUB_HOST: sso.jetbrains.com
+  image: cloudintellij/rabbitmq-auth
+  restart: on-failure
   tags:
     - flux
     - mq
@@ -41,7 +46,9 @@ mq:
     - "15672:15672"
 web:
   image: cloudintellij/flux-web
-  autorestart: on_failure
+  restart: on-failure
+  links:
+    - mqAuth
   tags:
     - flux
     - web
@@ -50,11 +57,3 @@ web:
   ports:
     - 80:80
     - 443:443
-oauth-shim:
-  image: develar/hub-oauth-shim
-  autorestart: on_failure
-  tags:
-    - flux
-    - web
-  ports:
-    - 3000:80

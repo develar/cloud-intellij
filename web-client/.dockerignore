@@ -1,5 +1,5 @@
-src
+*.ts
 node_modules
 lib.d
-lib/empty.js
+lib
 build

@@ -144,7 +144,7 @@ export class Auth {
     var url: string
     if (options.display === "none" && session != null) {
       throw new Error("unsupported")
-      url = toQueryString(options.oauth_proxy, queryString)
+      //url = toQueryString(options.oauth_proxy, queryString)
     }
     else {
       url = toQueryString(this.provider.oauth.auth, queryString)
@@ -217,7 +217,7 @@ export class Auth {
     }
 
     return new Promise((resolve, reject) => {
-      xhr(method, this.provider.base + url, function (r: any, headers: any) {
+      xhr(method, this.provider.base + url, function (r: any) {
         if (r === true) {
           r = {success: true}
         }
@@ -236,7 +236,6 @@ export class Auth {
   }
 
   private responseHandler(): void {
-    var location = window.location
     var response: OAuthResponse = readAuthResponseFromUrl()
     if (response == null) {
       return

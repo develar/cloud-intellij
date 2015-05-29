@@ -1,0 +1,13 @@
+web:
+  image: develar/nginx
+  ports:
+    - 80:80
+    - 443:443
+  external_links:
+    - cloudintellij_hub_1:hub
+    - cloudintellij_mqAuth_1:oauth-proxy
+  volumes:
+    - certs:/certs
+    - web-client/nginx-config:/sites
+    - web-client/modules/resources:/data-resources
+    - web-client/build:/data

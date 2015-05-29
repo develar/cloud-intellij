@@ -23,9 +23,3558 @@
  * 
  */
 /**
- * bluebird build version 2.9.24
- * Features enabled: core, race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, cancel, using, filter, any, each, timers
+ * bluebird build version 2.9.26
+ * Features enabled: core, cancel
+ * Features disabled: race, call_get, generators, map, nodeify, promisify, props, reduce, settle, some, using, filter, any, each, timers
 */
-!function(t){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=t();else if("function"==typeof define&&define.amd)define([],t);else{var e;"undefined"!=typeof window?e=window:"undefined"!=typeof global?e=global:"undefined"!=typeof self&&(e=self),e.Promise=t()}}(function(){var t,e,r;return function n(t,e,r){function i(s,a){if(!e[s]){if(!t[s]){var u="function"==typeof _dereq_&&_dereq_;if(!a&&u)return u(s,!0);if(o)return o(s,!0);var c=new Error("Cannot find module '"+s+"'");throw c.code="MODULE_NOT_FOUND",c}var l=e[s]={exports:{}};t[s][0].call(l.exports,function(e){var r=t[s][1][e];return i(r?r:e)},l,l.exports,n,t,e,r)}return e[s].exports}for(var o="function"==typeof _dereq_&&_dereq_,s=0;s<r.length;s++)i(r[s]);return i}({1:[function(t,e){"use strict";e.exports=function(t){function e(t){var e=new r(t),n=e.promise();return e.setHowMany(1),e.setUnwrap(),e.init(),n}var r=t._SomePromiseArray;t.any=function(t){return e(t)},t.prototype.any=function(){return e(this)}}},{}],2:[function(t,e){"use strict";function r(){this._isTickUsed=!1,this._lateQueue=new c(16),this._normalQueue=new c(16),this._trampolineEnabled=!0;var t=this;this.drainQueues=function(){t._drainQueues()},this._schedule=u.isStatic?u(this.drainQueues):u}function n(t,e,r){var n=this._getDomain();void 0!==n&&(t=n.bind(t)),this._lateQueue.push(t,e,r),this._queueTick()}function i(t,e,r){var n=this._getDomain();void 0!==n&&(t=n.bind(t)),this._normalQueue.push(t,e,r),this._queueTick()}function o(t){var e=this._getDomain();if(void 0!==e){var r=e.bind(t._settlePromises);this._normalQueue.push(r,t,void 0)}else this._normalQueue._pushOne(t);this._queueTick()}var s;try{throw new Error}catch(a){s=a}var u=t("./schedule.js"),c=t("./queue.js"),l=t("./util.js");if(r.prototype.disableTrampolineIfNecessary=function(){l.hasDevTools&&(this._trampolineEnabled=!1)},r.prototype.enableTrampoline=function(){this._trampolineEnabled||(this._trampolineEnabled=!0,this._schedule=function(t){setTimeout(t,0)})},r.prototype.haveItemsQueued=function(){return this._normalQueue.length()>0},r.prototype.throwLater=function(t,e){1===arguments.length&&(e=t,t=function(){throw e});var r=this._getDomain();if(void 0!==r&&(t=r.bind(t)),"undefined"!=typeof setTimeout)setTimeout(function(){t(e)},0);else try{this._schedule(function(){t(e)})}catch(n){throw new Error("No async scheduler available\n\n    See http://goo.gl/m3OTXk\n")}},r.prototype._getDomain=function(){},l.isNode){var h=t("events"),p=function(){var t=process.domain;return null===t?void 0:t};if(h.usingDomains)r.prototype._getDomain=p;else{var f=Object.getOwnPropertyDescriptor(h,"usingDomains");if(f.configurable){var _=!1;Object.defineProperty(h,"usingDomains",{configurable:!1,enumerable:!0,get:function(){return _},set:function(t){!_&&t&&(_=!0,r.prototype._getDomain=p,l.toFastProperties(process),process.emit("domainsActivated"))}})}else process.on("domainsActivated",function(){r.prototype._getDomain=p})}}l.hasDevTools?(r.prototype.invokeLater=function(t,e,r){this._trampolineEnabled?n.call(this,t,e,r):setTimeout(function(){t.call(e,r)},100)},r.prototype.invoke=function(t,e,r){this._trampolineEnabled?i.call(this,t,e,r):setTimeout(function(){t.call(e,r)},0)},r.prototype.settlePromises=function(t){this._trampolineEnabled?o.call(this,t):setTimeout(function(){t._settlePromises()},0)}):(r.prototype.invokeLater=n,r.prototype.invoke=i,r.prototype.settlePromises=o),r.prototype.invokeFirst=function(t,e,r){var n=this._getDomain();void 0!==n&&(t=n.bind(t)),this._normalQueue.unshift(t,e,r),this._queueTick()},r.prototype._drainQueue=function(t){for(;t.length()>0;){var e=t.shift();if("function"==typeof e){var r=t.shift(),n=t.shift();e.call(r,n)}else e._settlePromises()}},r.prototype._drainQueues=function(){this._drainQueue(this._normalQueue),this._reset(),this._drainQueue(this._lateQueue)},r.prototype._queueTick=function(){this._isTickUsed||(this._isTickUsed=!0,this._schedule(this.drainQueues))},r.prototype._reset=function(){this._isTickUsed=!1},e.exports=new r,e.exports.firstLineError=s},{"./queue.js":28,"./schedule.js":31,"./util.js":38,events:39}],3:[function(t,e){"use strict";e.exports=function(t,e,r){var n=function(t,e){this._reject(e)},i=function(t,e){e.promiseRejectionQueued=!0,e.bindingPromise._then(n,n,null,this,t)},o=function(t,e){this._setBoundTo(t),this._isPending()&&this._resolveCallback(e.target)},s=function(t,e){e.promiseRejectionQueued||this._reject(t)};t.prototype.bind=function(n){var a=r(n),u=new t(e);u._propagateFrom(this,1);var c=this._target();if(a instanceof t){var l={promiseRejectionQueued:!1,promise:u,target:c,bindingPromise:a};c._then(e,i,u._progress,u,l),a._then(o,s,u._progress,u,l)}else u._setBoundTo(n),u._resolveCallback(c);return u},t.prototype._setBoundTo=function(t){void 0!==t?(this._bitField=131072|this._bitField,this._boundTo=t):this._bitField=-131073&this._bitField},t.prototype._isBound=function(){return 131072===(131072&this._bitField)},t.bind=function(n,i){var o=r(n),s=new t(e);return o instanceof t?o._then(function(t){s._setBoundTo(t),s._resolveCallback(i)},s._reject,s._progress,s,null):(s._setBoundTo(n),s._resolveCallback(i)),s}}},{}],4:[function(t,e){"use strict";function r(){try{Promise===i&&(Promise=n)}catch(t){}return i}var n;"undefined"!=typeof Promise&&(n=Promise);var i=t("./promise.js")();i.noConflict=r,e.exports=i},{"./promise.js":23}],5:[function(t,e){"use strict";var r=Object.create;if(r){var n=r(null),i=r(null);n[" size"]=i[" size"]=0}e.exports=function(e){function r(t,r){var n;if(null!=t&&(n=t[r]),"function"!=typeof n){var i="Object "+a.classString(t)+" has no method '"+a.toString(r)+"'";throw new e.TypeError(i)}return n}function n(t){var e=this.pop(),n=r(t,e);return n.apply(t,this)}function i(t){return t[this]}function o(t){var e=+this;return 0>e&&(e=Math.max(0,e+t.length)),t[e]}{var s,a=t("./util.js"),u=a.canEvaluate;a.isIdentifier}e.prototype.call=function(t){for(var e=arguments.length,r=new Array(e-1),i=1;e>i;++i)r[i-1]=arguments[i];return r.push(t),this._then(n,void 0,void 0,r,void 0)},e.prototype.get=function(t){var e,r="number"==typeof t;if(r)e=o;else if(u){var n=s(t);e=null!==n?n:i}else e=i;return this._then(e,void 0,void 0,t,void 0)}}},{"./util.js":38}],6:[function(t,e){"use strict";e.exports=function(e){var r=t("./errors.js"),n=t("./async.js"),i=r.CancellationError;e.prototype._cancel=function(t){if(!this.isCancellable())return this;for(var e,r=this;void 0!==(e=r._cancellationParent)&&e.isCancellable();)r=e;this._unsetCancellable(),r._target()._rejectCallback(t,!1,!0)},e.prototype.cancel=function(t){return this.isCancellable()?(void 0===t&&(t=new i),n.invokeLater(this._cancel,this,t),this):this},e.prototype.cancellable=function(){return this._cancellable()?this:(n.enableTrampoline(),this._setCancellable(),this._cancellationParent=void 0,this)},e.prototype.uncancellable=function(){var t=this.then();return t._unsetCancellable(),t},e.prototype.fork=function(t,e,r){var n=this._then(t,e,r,void 0,void 0);return n._setCancellable(),n._cancellationParent=void 0,n}}},{"./async.js":2,"./errors.js":13}],7:[function(t,e){"use strict";e.exports=function(){function e(t){this._parent=t;var r=this._length=1+(void 0===t?0:t._length);j(this,e),r>32&&this.uncycle()}function r(t,e){for(var r=0;r<e.length-1;++r)e[r].push("From previous event:"),e[r]=e[r].join("\n");return r<e.length&&(e[r]=e[r].join("\n")),t+"\n"+e.join("\n")}function n(t){for(var e=0;e<t.length;++e)(0===t[e].length||e+1<t.length&&t[e][0]===t[e+1][0])&&(t.splice(e,1),e--)}function i(t){for(var e=t[0],r=1;r<t.length;++r){for(var n=t[r],i=e.length-1,o=e[i],s=-1,a=n.length-1;a>=0;--a)if(n[a]===o){s=a;break}for(var a=s;a>=0;--a){var u=n[a];if(e[i]!==u)break;e.pop(),i--}e=n}}function o(t){for(var e=[],r=0;r<t.length;++r){var n=t[r],i=_.test(n)||"    (No stack trace)"===n,o=i&&y(n);i&&!o&&(v&&" "!==n.charAt(0)&&(n="    "+n),e.push(n))}return e}function s(t){for(var e=t.stack.replace(/\s+$/g,"").split("\n"),r=0;r<e.length;++r){var n=e[r];if("    (No stack trace)"===n||_.test(n))break}return r>0&&(e=e.slice(r)),e}function a(t){var e;if("function"==typeof t)e="[function "+(t.name||"anonymous")+"]";else{e=t.toString();var r=/\[object [a-zA-Z0-9$_]+\]/;if(r.test(e))try{var n=JSON.stringify(t);e=n}catch(i){}0===e.length&&(e="(empty array)")}return"(<"+u(e)+">, no stack trace)"}function u(t){var e=41;return t.length<e?t:t.substr(0,e-3)+"..."}function c(t){var e=t.match(g);return e?{fileName:e[1],line:parseInt(e[2],10)}:void 0}var l,h=t("./async.js"),p=t("./util.js"),f=/[\\\/]bluebird[\\\/]js[\\\/](main|debug|zalgo|instrumented)/,_=null,d=null,v=!1;p.inherits(e,Error),e.prototype.uncycle=function(){var t=this._length;if(!(2>t)){for(var e=[],r={},n=0,i=this;void 0!==i;++n)e.push(i),i=i._parent;t=this._length=n;for(var n=t-1;n>=0;--n){var o=e[n].stack;void 0===r[o]&&(r[o]=n)}for(var n=0;t>n;++n){var s=e[n].stack,a=r[s];if(void 0!==a&&a!==n){a>0&&(e[a-1]._parent=void 0,e[a-1]._length=1),e[n]._parent=void 0,e[n]._length=1;var u=n>0?e[n-1]:this;t-1>a?(u._parent=e[a+1],u._parent.uncycle(),u._length=u._parent._length+1):(u._parent=void 0,u._length=1);for(var c=u._length+1,l=n-2;l>=0;--l)e[l]._length=c,c++;return}}}},e.prototype.parent=function(){return this._parent},e.prototype.hasParent=function(){return void 0!==this._parent},e.prototype.attachExtraTrace=function(t){if(!t.__stackCleaned__){this.uncycle();for(var s=e.parseStackAndMessage(t),a=s.message,u=[s.stack],c=this;void 0!==c;)u.push(o(c.stack.split("\n"))),c=c._parent;i(u),n(u),p.notEnumerableProp(t,"stack",r(a,u)),p.notEnumerableProp(t,"__stackCleaned__",!0)}},e.parseStackAndMessage=function(t){var e=t.stack,r=t.toString();return e="string"==typeof e&&e.length>0?s(t):["    (No stack trace)"],{message:r,stack:o(e)}},e.formatAndLogError=function(t,e){if("undefined"!=typeof console){var r;if("object"==typeof t||"function"==typeof t){var n=t.stack;r=e+d(n,t)}else r=e+String(t);"function"==typeof l?l(r):("function"==typeof console.log||"object"==typeof console.log)&&console.log(r)}},e.unhandledRejection=function(t){e.formatAndLogError(t,"^--- With additional stack trace: ")},e.isSupported=function(){return"function"==typeof j},e.fireRejectionEvent=function(t,r,n,i){var o=!1;try{"function"==typeof r&&(o=!0,"rejectionHandled"===t?r(i):r(n,i))}catch(s){h.throwLater(s)}var a=!1;try{a=b(t,n,i)}catch(s){a=!0,h.throwLater(s)}var u=!1;if(m)try{u=m(t.toLowerCase(),{reason:n,promise:i})}catch(s){u=!0,h.throwLater(s)}a||o||u||"unhandledRejection"!==t||e.formatAndLogError(n,"Unhandled rejection ")};var y=function(){return!1},g=/[\/<\(]([^:\/]+):(\d+):(?:\d+)\)?\s*$/;e.setBounds=function(t,r){if(e.isSupported()){for(var n,i,o=t.stack.split("\n"),s=r.stack.split("\n"),a=-1,u=-1,l=0;l<o.length;++l){var h=c(o[l]);if(h){n=h.fileName,a=h.line;break}}for(var l=0;l<s.length;++l){var h=c(s[l]);if(h){i=h.fileName,u=h.line;break}}0>a||0>u||!n||!i||n!==i||a>=u||(y=function(t){if(f.test(t))return!0;var e=c(t);return e&&e.fileName===n&&a<=e.line&&e.line<=u?!0:!1})}};var m,j=function(){var t=/^\s*at\s*/,e=function(t,e){return"string"==typeof t?t:void 0!==e.name&&void 0!==e.message?e.toString():a(e)};if("number"==typeof Error.stackTraceLimit&&"function"==typeof Error.captureStackTrace){Error.stackTraceLimit=Error.stackTraceLimit+6,_=t,d=e;var r=Error.captureStackTrace;return y=function(t){return f.test(t)},function(t,e){Error.stackTraceLimit=Error.stackTraceLimit+6,r(t,e),Error.stackTraceLimit=Error.stackTraceLimit-6}}var n=new Error;if("string"==typeof n.stack&&n.stack.split("\n")[0].indexOf("stackDetection@")>=0)return _=/@/,d=e,v=!0,function(t){t.stack=(new Error).stack};var i;try{throw new Error}catch(o){i="stack"in o}return"stack"in n||!i?(d=function(t,e){return"string"==typeof t?t:"object"!=typeof e&&"function"!=typeof e||void 0===e.name||void 0===e.message?a(e):e.toString()},null):(_=t,d=e,function(t){Error.stackTraceLimit=Error.stackTraceLimit+6;try{throw new Error}catch(e){t.stack=e.stack}Error.stackTraceLimit=Error.stackTraceLimit-6})}([]),b=function(){if(p.isNode)return function(t,e,r){return"rejectionHandled"===t?process.emit(t,r):process.emit(t,e,r)};var t=!1,e=!0;try{var r=new self.CustomEvent("test");t=r instanceof CustomEvent}catch(n){}if(!t)try{var i=document.createEvent("CustomEvent");i.initCustomEvent("testingtheevent",!1,!0,{}),self.dispatchEvent(i)}catch(n){e=!1}e&&(m=function(e,r){var n;return t?n=new self.CustomEvent(e,{detail:r,bubbles:!1,cancelable:!0}):self.dispatchEvent&&(n=document.createEvent("CustomEvent"),n.initCustomEvent(e,!1,!0,r)),n?!self.dispatchEvent(n):!1});var o={};return o.unhandledRejection="onunhandledRejection".toLowerCase(),o.rejectionHandled="onrejectionHandled".toLowerCase(),function(t,e,r){var n=o[t],i=self[n];return i?("rejectionHandled"===t?i.call(self,r):i.call(self,e,r),!0):!1}}();return"undefined"!=typeof console&&"undefined"!=typeof console.warn&&(l=function(t){console.warn(t)},p.isNode&&process.stderr.isTTY?l=function(t){process.stderr.write("[31m"+t+"[39m\n")}:p.isNode||"string"!=typeof(new Error).stack||(l=function(t){console.warn("%c"+t,"color: red")})),e}},{"./async.js":2,"./util.js":38}],8:[function(t,e){"use strict";e.exports=function(e){function r(t,e,r){this._instances=t,this._callback=e,this._promise=r}function n(t,e){var r={},n=s(t).call(r,e);if(n===a)return n;var i=u(r);return i.length?(a.e=new c("Catch filter must inherit from Error or be a simple predicate function\n\n    See http://goo.gl/o84o68\n"),a):n}var i=t("./util.js"),o=t("./errors.js"),s=i.tryCatch,a=i.errorObj,u=t("./es5.js").keys,c=o.TypeError;return r.prototype.doFilter=function(t){for(var r=this._callback,i=this._promise,o=i._boundTo,u=0,c=this._instances.length;c>u;++u){var l=this._instances[u],h=l===Error||null!=l&&l.prototype instanceof Error;if(h&&t instanceof l){var p=s(r).call(o,t);return p===a?(e.e=p.e,e):p}if("function"==typeof l&&!h){var f=n(l,t);if(f===a){t=a.e;break}if(f){var p=s(r).call(o,t);return p===a?(e.e=p.e,e):p}}}return e.e=t,e},r}},{"./errors.js":13,"./es5.js":14,"./util.js":38}],9:[function(t,e){"use strict";e.exports=function(t,e,r){function n(){this._trace=new e(o())}function i(){return r()?new n:void 0}function o(){var t=s.length-1;return t>=0?s[t]:void 0}var s=[];return n.prototype._pushContext=function(){r()&&void 0!==this._trace&&s.push(this._trace)},n.prototype._popContext=function(){r()&&void 0!==this._trace&&s.pop()},t.prototype._peekContext=o,t.prototype._pushContext=n.prototype._pushContext,t.prototype._popContext=n.prototype._popContext,i}},{}],10:[function(t,e){"use strict";e.exports=function(e,r){var n,i,o=t("./async.js"),s=t("./errors.js").Warning,a=t("./util.js"),u=a.canAttachTrace,c=!1||a.isNode&&(!!process.env.BLUEBIRD_DEBUG||"development"===process.env.NODE_ENV);return c&&o.disableTrampolineIfNecessary(),e.prototype._ensurePossibleRejectionHandled=function(){this._setRejectionIsUnhandled(),o.invokeLater(this._notifyUnhandledRejection,this,void 0)},e.prototype._notifyUnhandledRejectionIsHandled=function(){r.fireRejectionEvent("rejectionHandled",n,void 0,this)},e.prototype._notifyUnhandledRejection=function(){if(this._isRejectionUnhandled()){var t=this._getCarriedStackTrace()||this._settledValue;this._setUnhandledRejectionIsNotified(),r.fireRejectionEvent("unhandledRejection",i,t,this)}},e.prototype._setUnhandledRejectionIsNotified=function(){this._bitField=524288|this._bitField},e.prototype._unsetUnhandledRejectionIsNotified=function(){this._bitField=-524289&this._bitField},e.prototype._isUnhandledRejectionNotified=function(){return(524288&this._bitField)>0},e.prototype._setRejectionIsUnhandled=function(){this._bitField=2097152|this._bitField},e.prototype._unsetRejectionIsUnhandled=function(){this._bitField=-2097153&this._bitField,this._isUnhandledRejectionNotified()&&(this._unsetUnhandledRejectionIsNotified(),this._notifyUnhandledRejectionIsHandled())},e.prototype._isRejectionUnhandled=function(){return(2097152&this._bitField)>0},e.prototype._setCarriedStackTrace=function(t){this._bitField=1048576|this._bitField,this._fulfillmentHandler0=t},e.prototype._isCarryingStackTrace=function(){return(1048576&this._bitField)>0},e.prototype._getCarriedStackTrace=function(){return this._isCarryingStackTrace()?this._fulfillmentHandler0:void 0},e.prototype._captureStackTrace=function(){return c&&(this._trace=new r(this._peekContext())),this},e.prototype._attachExtraTrace=function(t,e){if(c&&u(t)){var n=this._trace;if(void 0!==n&&e&&(n=n._parent),void 0!==n)n.attachExtraTrace(t);else if(!t.__stackCleaned__){var i=r.parseStackAndMessage(t);a.notEnumerableProp(t,"stack",i.message+"\n"+i.stack.join("\n")),a.notEnumerableProp(t,"__stackCleaned__",!0)}}},e.prototype._warn=function(t){var e=new s(t),n=this._peekContext();if(n)n.attachExtraTrace(e);else{var i=r.parseStackAndMessage(e);e.stack=i.message+"\n"+i.stack.join("\n")}r.formatAndLogError(e,"")},e.onPossiblyUnhandledRejection=function(t){i="function"==typeof t?t:void 0},e.onUnhandledRejectionHandled=function(t){n="function"==typeof t?t:void 0},e.longStackTraces=function(){if(o.haveItemsQueued()&&c===!1)throw new Error("cannot enable long stack traces after promises have been created\n\n    See http://goo.gl/DT1qyG\n");c=r.isSupported(),c&&o.disableTrampolineIfNecessary()},e.hasLongStackTraces=function(){return c&&r.isSupported()},r.isSupported()||(e.longStackTraces=function(){},c=!1),function(){return c}}},{"./async.js":2,"./errors.js":13,"./util.js":38}],11:[function(t,e){"use strict";var r=t("./util.js"),n=r.isPrimitive,i=r.wrapsPrimitiveReceiver;e.exports=function(t){var e=function(){return this},r=function(){throw this},o=function(t,e){return 1===e?function(){throw t}:2===e?function(){return t}:void 0};t.prototype["return"]=t.prototype.thenReturn=function(t){return i&&n(t)?this._then(o(t,2),void 0,void 0,void 0,void 0):this._then(e,void 0,void 0,t,void 0)},t.prototype["throw"]=t.prototype.thenThrow=function(t){return i&&n(t)?this._then(o(t,1),void 0,void 0,void 0,void 0):this._then(r,void 0,void 0,t,void 0)}}},{"./util.js":38}],12:[function(t,e){"use strict";e.exports=function(t,e){var r=t.reduce;t.prototype.each=function(t){return r(this,t,null,e)},t.each=function(t,n){return r(t,n,null,e)}}},{}],13:[function(t,e){"use strict";function r(t,e){function r(n){return this instanceof r?(l(this,"message","string"==typeof n?n:e),l(this,"name",t),void(Error.captureStackTrace?Error.captureStackTrace(this,this.constructor):Error.call(this))):new r(n)}return c(r,Error),r}function n(t){return this instanceof n?(l(this,"name","OperationalError"),l(this,"message",t),this.cause=t,this.isOperational=!0,void(t instanceof Error?(l(this,"message",t.message),l(this,"stack",t.stack)):Error.captureStackTrace&&Error.captureStackTrace(this,this.constructor))):new n(t)}var i,o,s=t("./es5.js"),a=s.freeze,u=t("./util.js"),c=u.inherits,l=u.notEnumerableProp,h=r("Warning","warning"),p=r("CancellationError","cancellation error"),f=r("TimeoutError","timeout error"),_=r("AggregateError","aggregate error");try{i=TypeError,o=RangeError}catch(d){i=r("TypeError","type error"),o=r("RangeError","range error")}for(var v="join pop push shift unshift slice filter forEach some every map indexOf lastIndexOf reduce reduceRight sort reverse".split(" "),y=0;y<v.length;++y)"function"==typeof Array.prototype[v[y]]&&(_.prototype[v[y]]=Array.prototype[v[y]]);s.defineProperty(_.prototype,"length",{value:0,configurable:!1,writable:!0,enumerable:!0}),_.prototype.isOperational=!0;var g=0;_.prototype.toString=function(){var t=Array(4*g+1).join(" "),e="\n"+t+"AggregateError of:\n";g++,t=Array(4*g+1).join(" ");for(var r=0;r<this.length;++r){for(var n=this[r]===this?"[Circular AggregateError]":this[r]+"",i=n.split("\n"),o=0;o<i.length;++o)i[o]=t+i[o];n=i.join("\n"),e+=n+"\n"}return g--,e},c(n,Error);var m=Error.__BluebirdErrorTypes__;m||(m=a({CancellationError:p,TimeoutError:f,OperationalError:n,RejectionError:n,AggregateError:_}),l(Error,"__BluebirdErrorTypes__",m)),e.exports={Error:Error,TypeError:i,RangeError:o,CancellationError:m.CancellationError,OperationalError:m.OperationalError,TimeoutError:m.TimeoutError,AggregateError:m.AggregateError,Warning:h}},{"./es5.js":14,"./util.js":38}],14:[function(t,e){var r=function(){"use strict";return void 0===this}();if(r)e.exports={freeze:Object.freeze,defineProperty:Object.defineProperty,getDescriptor:Object.getOwnPropertyDescriptor,keys:Object.keys,names:Object.getOwnPropertyNames,getPrototypeOf:Object.getPrototypeOf,isArray:Array.isArray,isES5:r,propertyIsWritable:function(t,e){var r=Object.getOwnPropertyDescriptor(t,e);return!(r&&!r.writable&&!r.set)}};else{var n={}.hasOwnProperty,i={}.toString,o={}.constructor.prototype,s=function(t){var e=[];for(var r in t)n.call(t,r)&&e.push(r);return e},a=function(t,e){return{value:t[e]}},u=function(t,e,r){return t[e]=r.value,t},c=function(t){return t},l=function(t){try{return Object(t).constructor.prototype}catch(e){return o}},h=function(t){try{return"[object Array]"===i.call(t)}catch(e){return!1}};e.exports={isArray:h,keys:s,names:s,defineProperty:u,getDescriptor:a,freeze:c,getPrototypeOf:l,isES5:r,propertyIsWritable:function(){return!0}}}},{}],15:[function(t,e){"use strict";e.exports=function(t,e){var r=t.map;t.prototype.filter=function(t,n){return r(this,t,n,e)},t.filter=function(t,n,i){return r(t,n,i,e)}}},{}],16:[function(t,e){"use strict";e.exports=function(e,r,n){function i(){return this}function o(){throw this}function s(t){return function(){return t}}function a(t){return function(){throw t}}function u(t,e,r){var n;return n=p&&f(e)?r?s(e):a(e):r?i:o,t._then(n,_,void 0,e,void 0)}function c(t){var i=this.promise,o=this.handler,s=i._isBound()?o.call(i._boundTo):o();if(void 0!==s){var a=n(s,i);if(a instanceof e)return a=a._target(),u(a,t,i.isFulfilled())}return i.isRejected()?(r.e=t,r):t}function l(t){var r=this.promise,i=this.handler,o=r._isBound()?i.call(r._boundTo,t):i(t);if(void 0!==o){var s=n(o,r);if(s instanceof e)return s=s._target(),u(s,t,!0)}return t}var h=t("./util.js"),p=h.wrapsPrimitiveReceiver,f=h.isPrimitive,_=h.thrower;e.prototype._passThroughHandler=function(t,e){if("function"!=typeof t)return this.then();var r={promise:this,handler:t};return this._then(e?c:l,e?c:void 0,void 0,r,void 0)},e.prototype.lastly=e.prototype["finally"]=function(t){return this._passThroughHandler(t,!0)},e.prototype.tap=function(t){return this._passThroughHandler(t,!1)}}},{"./util.js":38}],17:[function(t,e){"use strict";e.exports=function(e,r,n,i){function o(t,r,n){for(var o=0;o<r.length;++o){n._pushContext();var s=h(r[o])(t);if(n._popContext(),s===l){n._pushContext();var a=e.reject(l.e);return n._popContext(),a}var u=i(s,n);if(u instanceof e)return u}return null}function s(t,r,i,o){var s=this._promise=new e(n);s._captureStackTrace(),this._stack=o,this._generatorFunction=t,this._receiver=r,this._generator=void 0,this._yieldHandlers="function"==typeof i?[i].concat(p):p}var a=t("./errors.js"),u=a.TypeError,c=t("./util.js"),l=c.errorObj,h=c.tryCatch,p=[];s.prototype.promise=function(){return this._promise},s.prototype._run=function(){this._generator=this._generatorFunction.call(this._receiver),this._receiver=this._generatorFunction=void 0,this._next(void 0)},s.prototype._continue=function(t){if(t===l)return this._promise._rejectCallback(t.e,!1,!0);var r=t.value;if(t.done===!0)this._promise._resolveCallback(r);else{var n=i(r,this._promise);if(!(n instanceof e)&&(n=o(n,this._yieldHandlers,this._promise),null===n))return void this._throw(new u("A value %s was yielded that could not be treated as a promise\n\n    See http://goo.gl/4Y4pDk\n\n".replace("%s",r)+"From coroutine:\n"+this._stack.split("\n").slice(1,-7).join("\n")));n._then(this._next,this._throw,void 0,this,null)}},s.prototype._throw=function(t){this._promise._attachExtraTrace(t),this._promise._pushContext();var e=h(this._generator["throw"]).call(this._generator,t);this._promise._popContext(),this._continue(e)},s.prototype._next=function(t){this._promise._pushContext();var e=h(this._generator.next).call(this._generator,t);this._promise._popContext(),this._continue(e)},e.coroutine=function(t,e){if("function"!=typeof t)throw new u("generatorFunction must be a function\n\n    See http://goo.gl/6Vqhm0\n");var r=Object(e).yieldHandler,n=s,i=(new Error).stack;return function(){var e=t.apply(this,arguments),o=new n(void 0,void 0,r,i);return o._generator=e,o._next(void 0),o.promise()}},e.coroutine.addYieldHandler=function(t){if("function"!=typeof t)throw new u("fn must be a function\n\n    See http://goo.gl/916lJJ\n");p.push(t)},e.spawn=function(t){if("function"!=typeof t)return r("generatorFunction must be a function\n\n    See http://goo.gl/6Vqhm0\n");var n=new s(t,this),i=n.promise();return n._run(e.spawn),i}}},{"./errors.js":13,"./util.js":38}],18:[function(t,e){"use strict";e.exports=function(e,r,n,i){{var o=t("./util.js");o.canEvaluate,o.tryCatch,o.errorObj}e.join=function(){var t,e=arguments.length-1;if(e>0&&"function"==typeof arguments[e]){t=arguments[e];var n}for(var i=arguments.length,o=new Array(i),s=0;i>s;++s)o[s]=arguments[s];t&&o.pop();var n=new r(o).promise();return void 0!==t?n.spread(t):n}}},{"./util.js":38}],19:[function(t,e){"use strict";e.exports=function(e,r,n,i,o){function s(t,e,r,n){this.constructor$(t),this._promise._captureStackTrace(),this._callback=e,this._preservedValues=n===o?new Array(this.length()):null,this._limit=r,this._inFlight=0,this._queue=r>=1?[]:_,c.invoke(a,this,void 0)}function a(){this._init$(void 0,-2)}function u(t,e,r,n){var i="object"==typeof r&&null!==r?r.concurrency:0;return i="number"==typeof i&&isFinite(i)&&i>=1?i:0,new s(t,e,i,n)}var c=t("./async.js"),l=t("./util.js"),h=l.tryCatch,p=l.errorObj,f={},_=[];l.inherits(s,r),s.prototype._init=function(){},s.prototype._promiseFulfilled=function(t,r){var n=this._values,o=this.length(),s=this._preservedValues,a=this._limit;if(n[r]===f){if(n[r]=t,a>=1&&(this._inFlight--,this._drainQueue(),this._isResolved()))return}else{if(a>=1&&this._inFlight>=a)return n[r]=t,void this._queue.push(r);null!==s&&(s[r]=t);var u=this._callback,c=this._promise._boundTo;this._promise._pushContext();var l=h(u).call(c,t,r,o);if(this._promise._popContext(),l===p)return this._reject(l.e);var _=i(l,this._promise);if(_ instanceof e){if(_=_._target(),_._isPending())return a>=1&&this._inFlight++,n[r]=f,_._proxyPromiseArray(this,r);if(!_._isFulfilled())return this._reject(_._reason());l=_._value()}n[r]=l}var d=++this._totalResolved;d>=o&&(null!==s?this._filter(n,s):this._resolve(n))},s.prototype._drainQueue=function(){for(var t=this._queue,e=this._limit,r=this._values;t.length>0&&this._inFlight<e;){if(this._isResolved())return;var n=t.pop();this._promiseFulfilled(r[n],n)}},s.prototype._filter=function(t,e){for(var r=e.length,n=new Array(r),i=0,o=0;r>o;++o)t[o]&&(n[i++]=e[o]);n.length=i,this._resolve(n)},s.prototype.preservedValues=function(){return this._preservedValues},e.prototype.map=function(t,e){return"function"!=typeof t?n("fn must be a function\n\n    See http://goo.gl/916lJJ\n"):u(this,t,e,null).promise()},e.map=function(t,e,r,i){return"function"!=typeof e?n("fn must be a function\n\n    See http://goo.gl/916lJJ\n"):u(t,e,r,i).promise()}}},{"./async.js":2,"./util.js":38}],20:[function(t,e){"use strict";e.exports=function(e,r,n,i){var o=t("./util.js"),s=o.tryCatch;e.method=function(t){if("function"!=typeof t)throw new e.TypeError("fn must be a function\n\n    See http://goo.gl/916lJJ\n");return function(){var n=new e(r);n._captureStackTrace(),n._pushContext();var i=s(t).apply(this,arguments);return n._popContext(),n._resolveFromSyncValue(i),n}},e.attempt=e["try"]=function(t,n,a){if("function"!=typeof t)return i("fn must be a function\n\n    See http://goo.gl/916lJJ\n");var u=new e(r);u._captureStackTrace(),u._pushContext();var c=o.isArray(n)?s(t).apply(a,n):s(t).call(a,n);return u._popContext(),u._resolveFromSyncValue(c),u},e.prototype._resolveFromSyncValue=function(t){t===o.errorObj?this._rejectCallback(t.e,!1,!0):this._resolveCallback(t,!0)}}},{"./util.js":38}],21:[function(t,e){"use strict";e.exports=function(e){function r(t,e){var r=this;if(!o.isArray(t))return n.call(r,t,e);var i=a(e).apply(r._boundTo,[null].concat(t));i===u&&s.throwLater(i.e)}function n(t,e){var r=this,n=r._boundTo,i=void 0===t?a(e).call(n,null):a(e).call(n,null,t);i===u&&s.throwLater(i.e)}function i(t,e){var r=this;if(!t){var n=r._target(),i=n._getCarriedStackTrace();i.cause=t,t=i}var o=a(e).call(r._boundTo,t);o===u&&s.throwLater(o.e)}var o=t("./util.js"),s=t("./async.js"),a=o.tryCatch,u=o.errorObj;e.prototype.asCallback=e.prototype.nodeify=function(t,e){if("function"==typeof t){var o=n;void 0!==e&&Object(e).spread&&(o=r),this._then(o,i,void 0,this,t)}return this}}},{"./async.js":2,"./util.js":38}],22:[function(t,e){"use strict";e.exports=function(e,r){var n=t("./util.js"),i=t("./async.js"),o=n.tryCatch,s=n.errorObj;e.prototype.progressed=function(t){return this._then(void 0,void 0,t,void 0,void 0)},e.prototype._progress=function(t){this._isFollowingOrFulfilledOrRejected()||this._target()._progressUnchecked(t)},e.prototype._progressHandlerAt=function(t){return 0===t?this._progressHandler0:this[(t<<2)+t-5+2]},e.prototype._doProgressWith=function(t){var r=t.value,i=t.handler,a=t.promise,u=t.receiver,c=o(i).call(u,r);if(c===s){if(null!=c.e&&"StopProgressPropagation"!==c.e.name){var l=n.canAttachTrace(c.e)?c.e:new Error(n.toString(c.e));a._attachExtraTrace(l),a._progress(c.e)}}else c instanceof e?c._then(a._progress,null,null,a,void 0):a._progress(c)},e.prototype._progressUnchecked=function(t){for(var n=this._length(),o=this._progress,s=0;n>s;s++){var a=this._progressHandlerAt(s),u=this._promiseAt(s);if(u instanceof e)"function"==typeof a?i.invoke(this._doProgressWith,this,{handler:a,promise:u,receiver:this._receiverAt(s),value:t}):i.invoke(o,u,t);else{var c=this._receiverAt(s);"function"==typeof a?a.call(c,t,u):c instanceof r&&!c._isResolved()&&c._promiseProgressed(t,u)}}}}},{"./async.js":2,"./util.js":38}],23:[function(t,e){"use strict";e.exports=function(){function e(t){if("function"!=typeof t)throw new c("the promise constructor requires a resolver function\n\n    See http://goo.gl/EC22Yn\n");if(this.constructor!==e)throw new c("the promise constructor cannot be invoked directly\n\n    See http://goo.gl/KsIlge\n");this._bitField=0,this._fulfillmentHandler0=void 0,this._rejectionHandler0=void 0,this._progressHandler0=void 0,this._promise0=void 0,this._receiver0=void 0,this._settledValue=void 0,t!==l&&this._resolveFromResolver(t)}function r(t){var r=new e(l);r._fulfillmentHandler0=t,r._rejectionHandler0=t,r._progressHandler0=t,r._promise0=t,r._receiver0=t,r._settledValue=t}var n=function(){return new c("circular promise resolution chain\n\n    See http://goo.gl/LhFpo0\n")},i=function(){return new e.PromiseInspection(this._target())},o=function(t){return e.reject(new c(t))},s=t("./util.js"),a=t("./async.js"),u=t("./errors.js"),c=e.TypeError=u.TypeError;e.RangeError=u.RangeError,e.CancellationError=u.CancellationError,e.TimeoutError=u.TimeoutError,e.OperationalError=u.OperationalError,e.RejectionError=u.OperationalError,e.AggregateError=u.AggregateError;var l=function(){},h={},p={e:null},f=t("./thenables.js")(e,l),_=t("./promise_array.js")(e,l,f,o),d=t("./captured_trace.js")(),v=t("./debuggability.js")(e,d),y=t("./context.js")(e,d,v),g=t("./catch_filter.js")(p),m=t("./promise_resolver.js"),j=m._nodebackForPromise,b=s.errorObj,w=s.tryCatch;return e.prototype.toString=function(){return"[object Promise]"},e.prototype.caught=e.prototype["catch"]=function(t){var r=arguments.length;if(r>1){var n,i=new Array(r-1),o=0;for(n=0;r-1>n;++n){var s=arguments[n];if("function"!=typeof s)return e.reject(new c("Catch filter must inherit from Error or be a simple predicate function\n\n    See http://goo.gl/o84o68\n"));i[o++]=s}i.length=o,t=arguments[n];var a=new g(i,t,this);return this._then(void 0,a.doFilter,void 0,a,void 0)}return this._then(void 0,t,void 0,void 0,void 0)},e.prototype.reflect=function(){return this._then(i,i,void 0,this,void 0)},e.prototype.then=function(t,e,r){if(v()&&arguments.length>0&&"function"!=typeof t&&"function"!=typeof e){var n=".then() only accepts functions but was passed: "+s.classString(t);
-arguments.length>1&&(n+=", "+s.classString(e)),this._warn(n)}return this._then(t,e,r,void 0,void 0)},e.prototype.done=function(t,e,r){var n=this._then(t,e,r,void 0,void 0);n._setIsFinal()},e.prototype.spread=function(t,e){return this.all()._then(t,e,void 0,h,void 0)},e.prototype.isCancellable=function(){return!this.isResolved()&&this._cancellable()},e.prototype.toJSON=function(){var t={isFulfilled:!1,isRejected:!1,fulfillmentValue:void 0,rejectionReason:void 0};return this.isFulfilled()?(t.fulfillmentValue=this.value(),t.isFulfilled=!0):this.isRejected()&&(t.rejectionReason=this.reason(),t.isRejected=!0),t},e.prototype.all=function(){return new _(this).promise()},e.prototype.error=function(t){return this.caught(s.originatesFromRejection,t)},e.is=function(t){return t instanceof e},e.fromNode=function(t){var r=new e(l),n=w(t)(j(r));return n===b&&r._rejectCallback(n.e,!0,!0),r},e.all=function(t){return new _(t).promise()},e.defer=e.pending=function(){var t=new e(l);return new m(t)},e.cast=function(t){var r=f(t);if(!(r instanceof e)){var n=r;r=new e(l),r._fulfillUnchecked(n)}return r},e.resolve=e.fulfilled=e.cast,e.reject=e.rejected=function(t){var r=new e(l);return r._captureStackTrace(),r._rejectCallback(t,!0),r},e.setScheduler=function(t){if("function"!=typeof t)throw new c("fn must be a function\n\n    See http://goo.gl/916lJJ\n");var e=a._schedule;return a._schedule=t,e},e.prototype._then=function(t,r,n,i,o){var s=void 0!==o,u=s?o:new e(l);s||(u._propagateFrom(this,5),u._captureStackTrace());var c=this._target();c!==this&&(void 0===i&&(i=this._boundTo),s||u._setIsMigrated());var h=c._addCallbacks(t,r,n,u,i);return c._isResolved()&&!c._isSettlePromisesQueued()&&a.invoke(c._settlePromiseAtPostResolution,c,h),u},e.prototype._settlePromiseAtPostResolution=function(t){this._isRejectionUnhandled()&&this._unsetRejectionIsUnhandled(),this._settlePromiseAt(t)},e.prototype._length=function(){return 131071&this._bitField},e.prototype._isFollowingOrFulfilledOrRejected=function(){return(939524096&this._bitField)>0},e.prototype._isFollowing=function(){return 536870912===(536870912&this._bitField)},e.prototype._setLength=function(t){this._bitField=-131072&this._bitField|131071&t},e.prototype._setFulfilled=function(){this._bitField=268435456|this._bitField},e.prototype._setRejected=function(){this._bitField=134217728|this._bitField},e.prototype._setFollowing=function(){this._bitField=536870912|this._bitField},e.prototype._setIsFinal=function(){this._bitField=33554432|this._bitField},e.prototype._isFinal=function(){return(33554432&this._bitField)>0},e.prototype._cancellable=function(){return(67108864&this._bitField)>0},e.prototype._setCancellable=function(){this._bitField=67108864|this._bitField},e.prototype._unsetCancellable=function(){this._bitField=-67108865&this._bitField},e.prototype._setIsMigrated=function(){this._bitField=4194304|this._bitField},e.prototype._unsetIsMigrated=function(){this._bitField=-4194305&this._bitField},e.prototype._isMigrated=function(){return(4194304&this._bitField)>0},e.prototype._receiverAt=function(t){var e=0===t?this._receiver0:this[5*t-5+4];return void 0===e&&this._isBound()?this._boundTo:e},e.prototype._promiseAt=function(t){return 0===t?this._promise0:this[5*t-5+3]},e.prototype._fulfillmentHandlerAt=function(t){return 0===t?this._fulfillmentHandler0:this[5*t-5+0]},e.prototype._rejectionHandlerAt=function(t){return 0===t?this._rejectionHandler0:this[5*t-5+1]},e.prototype._migrateCallbacks=function(t,r){var n=t._fulfillmentHandlerAt(r),i=t._rejectionHandlerAt(r),o=t._progressHandlerAt(r),s=t._promiseAt(r),a=t._receiverAt(r);s instanceof e&&s._setIsMigrated(),this._addCallbacks(n,i,o,s,a)},e.prototype._addCallbacks=function(t,e,r,n,i){var o=this._length();if(o>=131066&&(o=0,this._setLength(0)),0===o)this._promise0=n,void 0!==i&&(this._receiver0=i),"function"!=typeof t||this._isCarryingStackTrace()||(this._fulfillmentHandler0=t),"function"==typeof e&&(this._rejectionHandler0=e),"function"==typeof r&&(this._progressHandler0=r);else{var s=5*o-5;this[s+3]=n,this[s+4]=i,"function"==typeof t&&(this[s+0]=t),"function"==typeof e&&(this[s+1]=e),"function"==typeof r&&(this[s+2]=r)}return this._setLength(o+1),o},e.prototype._setProxyHandlers=function(t,e){var r=this._length();if(r>=131066&&(r=0,this._setLength(0)),0===r)this._promise0=e,this._receiver0=t;else{var n=5*r-5;this[n+3]=e,this[n+4]=t}this._setLength(r+1)},e.prototype._proxyPromiseArray=function(t,e){this._setProxyHandlers(t,e)},e.prototype._resolveCallback=function(t,r){if(!this._isFollowingOrFulfilledOrRejected()){if(t===this)return this._rejectCallback(n(),!1,!0);var i=f(t,this);if(!(i instanceof e))return this._fulfill(t);var o=1|(r?4:0);this._propagateFrom(i,o);var s=i._target();if(s._isPending()){for(var a=this._length(),u=0;a>u;++u)s._migrateCallbacks(this,u);this._setFollowing(),this._setLength(0),this._setFollowee(s)}else s._isFulfilled()?this._fulfillUnchecked(s._value()):this._rejectUnchecked(s._reason(),s._getCarriedStackTrace())}},e.prototype._rejectCallback=function(t,e,r){r||s.markAsOriginatingFromRejection(t);var n=s.ensureErrorObject(t),i=n===t;this._attachExtraTrace(n,e?i:!1),this._reject(t,i?void 0:n)},e.prototype._resolveFromResolver=function(t){var e=this;this._captureStackTrace(),this._pushContext();var r=!0,n=w(t)(function(t){null!==e&&(e._resolveCallback(t),e=null)},function(t){null!==e&&(e._rejectCallback(t,r),e=null)});r=!1,this._popContext(),void 0!==n&&n===b&&null!==e&&(e._rejectCallback(n.e,!0,!0),e=null)},e.prototype._settlePromiseFromHandler=function(t,e,r,i){if(!i._isRejected()){i._pushContext();var o;if(o=e!==h||this._isRejected()?w(t).call(e,r):w(t).apply(this._boundTo,r),i._popContext(),o===b||o===i||o===p){var s=o===i?n():o.e;i._rejectCallback(s,!1,!0)}else i._resolveCallback(o)}},e.prototype._target=function(){for(var t=this;t._isFollowing();)t=t._followee();return t},e.prototype._followee=function(){return this._rejectionHandler0},e.prototype._setFollowee=function(t){this._rejectionHandler0=t},e.prototype._cleanValues=function(){this._cancellable()&&(this._cancellationParent=void 0)},e.prototype._propagateFrom=function(t,e){(1&e)>0&&t._cancellable()&&(this._setCancellable(),this._cancellationParent=t),(4&e)>0&&t._isBound()&&this._setBoundTo(t._boundTo)},e.prototype._fulfill=function(t){this._isFollowingOrFulfilledOrRejected()||this._fulfillUnchecked(t)},e.prototype._reject=function(t,e){this._isFollowingOrFulfilledOrRejected()||this._rejectUnchecked(t,e)},e.prototype._settlePromiseAt=function(t){var r=this._promiseAt(t),n=r instanceof e;if(n&&r._isMigrated())return r._unsetIsMigrated(),a.invoke(this._settlePromiseAt,this,t);var i=this._isFulfilled()?this._fulfillmentHandlerAt(t):this._rejectionHandlerAt(t),o=this._isCarryingStackTrace()?this._getCarriedStackTrace():void 0,s=this._settledValue,u=this._receiverAt(t);this._clearCallbackDataAtIndex(t),"function"==typeof i?n?this._settlePromiseFromHandler(i,u,s,r):i.call(u,s,r):u instanceof _?u._isResolved()||(this._isFulfilled()?u._promiseFulfilled(s,r):u._promiseRejected(s,r)):n&&(this._isFulfilled()?r._fulfill(s):r._reject(s,o)),t>=4&&4===(31&t)&&a.invokeLater(this._setLength,this,0)},e.prototype._clearCallbackDataAtIndex=function(t){if(0===t)this._isCarryingStackTrace()||(this._fulfillmentHandler0=void 0),this._rejectionHandler0=this._progressHandler0=this._receiver0=this._promise0=void 0;else{var e=5*t-5;this[e+3]=this[e+4]=this[e+0]=this[e+1]=this[e+2]=void 0}},e.prototype._isSettlePromisesQueued=function(){return-1073741824===(-1073741824&this._bitField)},e.prototype._setSettlePromisesQueued=function(){this._bitField=-1073741824|this._bitField},e.prototype._unsetSettlePromisesQueued=function(){this._bitField=1073741823&this._bitField},e.prototype._queueSettlePromises=function(){a.settlePromises(this),this._setSettlePromisesQueued()},e.prototype._fulfillUnchecked=function(t){if(t===this){var e=n();return this._attachExtraTrace(e),this._rejectUnchecked(e,void 0)}this._setFulfilled(),this._settledValue=t,this._cleanValues(),this._length()>0&&this._queueSettlePromises()},e.prototype._rejectUncheckedCheckError=function(t){var e=s.ensureErrorObject(t);this._rejectUnchecked(t,e===t?void 0:e)},e.prototype._rejectUnchecked=function(t,e){if(t===this){var r=n();return this._attachExtraTrace(r),this._rejectUnchecked(r)}return this._setRejected(),this._settledValue=t,this._cleanValues(),this._isFinal()?void a.throwLater(function(t){throw"stack"in t&&a.invokeFirst(d.unhandledRejection,void 0,t),t},void 0===e?t:e):(void 0!==e&&e!==t&&this._setCarriedStackTrace(e),void(this._length()>0?this._queueSettlePromises():this._ensurePossibleRejectionHandled()))},e.prototype._settlePromises=function(){this._unsetSettlePromisesQueued();for(var t=this._length(),e=0;t>e;e++)this._settlePromiseAt(e)},e._makeSelfResolutionError=n,t("./progress.js")(e,_),t("./method.js")(e,l,f,o),t("./bind.js")(e,l,f),t("./finally.js")(e,p,f),t("./direct_resolve.js")(e),t("./synchronous_inspection.js")(e),t("./join.js")(e,_,f,l),e.Promise=e,t("./map.js")(e,_,o,f,l),t("./cancel.js")(e),t("./using.js")(e,o,f,y),t("./generators.js")(e,o,l,f),t("./nodeify.js")(e),t("./call_get.js")(e),t("./props.js")(e,_,f,o),t("./race.js")(e,l,f,o),t("./reduce.js")(e,_,o,f,l),t("./settle.js")(e,_),t("./some.js")(e,_,o),t("./promisify.js")(e,l),t("./any.js")(e),t("./each.js")(e,l),t("./timers.js")(e,l),t("./filter.js")(e,l),s.toFastProperties(e),s.toFastProperties(e.prototype),r({a:1}),r({b:2}),r({c:3}),r(1),r(function(){}),r(void 0),r(!1),r(new e(l)),d.setBounds(a.firstLineError,s.lastLineError),e}},{"./any.js":1,"./async.js":2,"./bind.js":3,"./call_get.js":5,"./cancel.js":6,"./captured_trace.js":7,"./catch_filter.js":8,"./context.js":9,"./debuggability.js":10,"./direct_resolve.js":11,"./each.js":12,"./errors.js":13,"./filter.js":15,"./finally.js":16,"./generators.js":17,"./join.js":18,"./map.js":19,"./method.js":20,"./nodeify.js":21,"./progress.js":22,"./promise_array.js":24,"./promise_resolver.js":25,"./promisify.js":26,"./props.js":27,"./race.js":29,"./reduce.js":30,"./settle.js":32,"./some.js":33,"./synchronous_inspection.js":34,"./thenables.js":35,"./timers.js":36,"./using.js":37,"./util.js":38}],24:[function(t,e){"use strict";e.exports=function(e,r,n,i){function o(t){switch(t){case-2:return[];case-3:return{}}}function s(t){var n,i=this._promise=new e(r);t instanceof e&&(n=t,i._propagateFrom(n,5)),this._values=t,this._length=0,this._totalResolved=0,this._init(void 0,-2)}var a=t("./util.js"),u=a.isArray;return s.prototype.length=function(){return this._length},s.prototype.promise=function(){return this._promise},s.prototype._init=function c(t,r){var s=n(this._values,this._promise);if(s instanceof e){if(s=s._target(),this._values=s,!s._isFulfilled())return s._isPending()?void s._then(c,this._reject,void 0,this,r):void this._reject(s._reason());if(s=s._value(),!u(s)){var a=new e.TypeError("expecting an array, a promise or a thenable\n\n    See http://goo.gl/s8MMhc\n");return void this.__hardReject__(a)}}else if(!u(s))return void this._promise._reject(i("expecting an array, a promise or a thenable\n\n    See http://goo.gl/s8MMhc\n")._reason());if(0===s.length)return void(-5===r?this._resolveEmptyArray():this._resolve(o(r)));var l=this.getActualLength(s.length);this._length=l,this._values=this.shouldCopyValues()?new Array(l):this._values;for(var h=this._promise,p=0;l>p;++p){var f=this._isResolved(),_=n(s[p],h);_ instanceof e?(_=_._target(),f?_._unsetRejectionIsUnhandled():_._isPending()?_._proxyPromiseArray(this,p):_._isFulfilled()?this._promiseFulfilled(_._value(),p):this._promiseRejected(_._reason(),p)):f||this._promiseFulfilled(_,p)}},s.prototype._isResolved=function(){return null===this._values},s.prototype._resolve=function(t){this._values=null,this._promise._fulfill(t)},s.prototype.__hardReject__=s.prototype._reject=function(t){this._values=null,this._promise._rejectCallback(t,!1,!0)},s.prototype._promiseProgressed=function(t,e){this._promise._progress({index:e,value:t})},s.prototype._promiseFulfilled=function(t,e){this._values[e]=t;var r=++this._totalResolved;r>=this._length&&this._resolve(this._values)},s.prototype._promiseRejected=function(t){this._totalResolved++,this._reject(t)},s.prototype.shouldCopyValues=function(){return!0},s.prototype.getActualLength=function(t){return t},s}},{"./util.js":38}],25:[function(t,e){"use strict";function r(t){return t instanceof Error&&p.getPrototypeOf(t)===Error.prototype}function n(t){var e;if(r(t)){e=new l(t),e.name=t.name,e.message=t.message,e.stack=t.stack;for(var n=p.keys(t),i=0;i<n.length;++i){var o=n[i];f.test(o)||(e[o]=t[o])}return e}return s.markAsOriginatingFromRejection(t),t}function i(t){return function(e,r){if(null!==t){if(e){var i=n(a(e));t._attachExtraTrace(i),t._reject(i)}else if(arguments.length>2){for(var o=arguments.length,s=new Array(o-1),u=1;o>u;++u)s[u-1]=arguments[u];t._fulfill(s)}else t._fulfill(r);t=null}}}var o,s=t("./util.js"),a=s.maybeWrapAsError,u=t("./errors.js"),c=u.TimeoutError,l=u.OperationalError,h=s.haveGetters,p=t("./es5.js"),f=/^(?:name|message|stack|cause)$/;if(o=h?function(t){this.promise=t}:function(t){this.promise=t,this.asCallback=i(t),this.callback=this.asCallback},h){var _={get:function(){return i(this.promise)}};p.defineProperty(o.prototype,"asCallback",_),p.defineProperty(o.prototype,"callback",_)}o._nodebackForPromise=i,o.prototype.toString=function(){return"[object PromiseResolver]"},o.prototype.resolve=o.prototype.fulfill=function(t){if(!(this instanceof o))throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.\n\n    See http://goo.gl/sdkXL9\n");this.promise._resolveCallback(t)},o.prototype.reject=function(t){if(!(this instanceof o))throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.\n\n    See http://goo.gl/sdkXL9\n");this.promise._rejectCallback(t)},o.prototype.progress=function(t){if(!(this instanceof o))throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.\n\n    See http://goo.gl/sdkXL9\n");this.promise._progress(t)},o.prototype.cancel=function(t){this.promise.cancel(t)},o.prototype.timeout=function(){this.reject(new c("timeout"))},o.prototype.isResolved=function(){return this.promise.isResolved()},o.prototype.toJSON=function(){return this.promise.toJSON()},e.exports=o},{"./errors.js":13,"./es5.js":14,"./util.js":38}],26:[function(t,e){"use strict";e.exports=function(e,r){function n(t){return!b.test(t)}function i(t){try{return t.__isPromisified__===!0}catch(e){return!1}}function o(t,e,r){var n=f.getDataPropertyOrDefault(t,e+r,j);return n?i(n):!1}function s(t,e,r){for(var n=0;n<t.length;n+=2){var i=t[n];if(r.test(i))for(var o=i.replace(r,""),s=0;s<t.length;s+=2)if(t[s]===o)throw new g("Cannot promisify an API that has normal methods with '%s'-suffix\n\n    See http://goo.gl/iWrZbw\n".replace("%s",e))}}function a(t,e,r,n){for(var a=f.inheritedDataKeys(t),u=[],c=0;c<a.length;++c){var l=a[c],h=t[l],p=n===w?!0:w(l,h,t);"function"!=typeof h||i(h)||o(t,l,e)||!n(l,h,t,p)||u.push(l,h)}return s(u,e,r),u}function u(t,n,i,o){function s(){var i=n;n===p&&(i=this);var o=new e(r);o._captureStackTrace();var s="string"==typeof u&&this!==a?this[u]:t,c=_(o);try{s.apply(i,d(arguments,c))}catch(l){o._rejectCallback(v(l),!0,!0)}return o}var a=function(){return this}(),u=t;return"string"==typeof u&&(t=o),s.__isPromisified__=!0,s}function c(t,e,r,n){for(var i=new RegExp(k(e)+"$"),o=a(t,e,i,r),s=0,u=o.length;u>s;s+=2){var c=o[s],l=o[s+1],h=c+e;t[h]=n===E?E(c,p,c,l,e):n(l,function(){return E(c,p,c,l,e)})}return f.toFastProperties(t),t}function l(t,e){return E(t,e,void 0,t)}var h,p={},f=t("./util.js"),_=t("./promise_resolver.js")._nodebackForPromise,d=f.withAppended,v=f.maybeWrapAsError,y=f.canEvaluate,g=t("./errors").TypeError,m="Async",j={__isPromisified__:!0},b=/^(?:length|name|arguments|caller|callee|prototype|__isPromisified__)$/,w=function(t,e){return f.isIdentifier(t)&&"_"!==t.charAt(0)&&!f.isClass(e)},k=function(t){return t.replace(/([$])/,"\\$")},E=y?h:u;e.promisify=function(t,e){if("function"!=typeof t)throw new g("fn must be a function\n\n    See http://goo.gl/916lJJ\n");if(i(t))return t;var r=l(t,arguments.length<2?p:e);return f.copyDescriptors(t,r,n),r},e.promisifyAll=function(t,e){if("function"!=typeof t&&"object"!=typeof t)throw new g("the target of promisifyAll must be an object or a function\n\n    See http://goo.gl/9ITlV0\n");e=Object(e);var r=e.suffix;"string"!=typeof r&&(r=m);var n=e.filter;"function"!=typeof n&&(n=w);var i=e.promisifier;if("function"!=typeof i&&(i=E),!f.isIdentifier(r))throw new RangeError("suffix must be a valid identifier\n\n    See http://goo.gl/8FZo5V\n");for(var o=f.inheritedDataKeys(t),s=0;s<o.length;++s){var a=t[o[s]];"constructor"!==o[s]&&f.isClass(a)&&(c(a.prototype,r,n,i),c(a,r,n,i))}return c(t,r,n,i)}}},{"./errors":13,"./promise_resolver.js":25,"./util.js":38}],27:[function(t,e){"use strict";e.exports=function(e,r,n,i){function o(t){for(var e=c.keys(t),r=e.length,n=new Array(2*r),i=0;r>i;++i){var o=e[i];n[i]=t[o],n[i+r]=o}this.constructor$(n)}function s(t){var r,s=n(t);return u(s)?(r=s instanceof e?s._then(e.props,void 0,void 0,void 0,void 0):new o(s).promise(),s instanceof e&&r._propagateFrom(s,4),r):i("cannot await properties of a non-object\n\n    See http://goo.gl/OsFKC8\n")}var a=t("./util.js"),u=a.isObject,c=t("./es5.js");a.inherits(o,r),o.prototype._init=function(){this._init$(void 0,-3)},o.prototype._promiseFulfilled=function(t,e){this._values[e]=t;var r=++this._totalResolved;if(r>=this._length){for(var n={},i=this.length(),o=0,s=this.length();s>o;++o)n[this._values[o+i]]=this._values[o];this._resolve(n)}},o.prototype._promiseProgressed=function(t,e){this._promise._progress({key:this._values[e+this.length()],value:t})},o.prototype.shouldCopyValues=function(){return!1},o.prototype.getActualLength=function(t){return t>>1},e.prototype.props=function(){return s(this)},e.props=function(t){return s(t)}}},{"./es5.js":14,"./util.js":38}],28:[function(t,e){"use strict";function r(t,e,r,n,i){for(var o=0;i>o;++o)r[o+n]=t[o+e],t[o+e]=void 0}function n(t){this._capacity=t,this._length=0,this._front=0}n.prototype._willBeOverCapacity=function(t){return this._capacity<t},n.prototype._pushOne=function(t){var e=this.length();this._checkCapacity(e+1);var r=this._front+e&this._capacity-1;this[r]=t,this._length=e+1},n.prototype._unshiftOne=function(t){var e=this._capacity;this._checkCapacity(this.length()+1);var r=this._front,n=(r-1&e-1^e)-e;this[n]=t,this._front=n,this._length=this.length()+1},n.prototype.unshift=function(t,e,r){this._unshiftOne(r),this._unshiftOne(e),this._unshiftOne(t)},n.prototype.push=function(t,e,r){var n=this.length()+3;if(this._willBeOverCapacity(n))return this._pushOne(t),this._pushOne(e),void this._pushOne(r);var i=this._front+n-3;this._checkCapacity(n);var o=this._capacity-1;this[i+0&o]=t,this[i+1&o]=e,this[i+2&o]=r,this._length=n},n.prototype.shift=function(){var t=this._front,e=this[t];return this[t]=void 0,this._front=t+1&this._capacity-1,this._length--,e},n.prototype.length=function(){return this._length},n.prototype._checkCapacity=function(t){this._capacity<t&&this._resizeTo(this._capacity<<1)},n.prototype._resizeTo=function(t){var e=this._capacity;this._capacity=t;var n=this._front,i=this._length,o=n+i&e-1;r(this,0,this,e,o)},e.exports=n},{}],29:[function(t,e){"use strict";e.exports=function(e,r,n,i){function o(t,o){var u=n(t);if(u instanceof e)return a(u);if(!s(t))return i("expecting an array, a promise or a thenable\n\n    See http://goo.gl/s8MMhc\n");var c=new e(r);void 0!==o&&c._propagateFrom(o,5);for(var l=c._fulfill,h=c._reject,p=0,f=t.length;f>p;++p){var _=t[p];(void 0!==_||p in t)&&e.cast(_)._then(l,h,void 0,c,null)}return c}var s=t("./util.js").isArray,a=function(t){return t.then(function(e){return o(e,t)})};e.race=function(t){return o(t,void 0)},e.prototype.race=function(){return o(this,void 0)}}},{"./util.js":38}],30:[function(t,e){"use strict";e.exports=function(e,r,n,i,o){function s(t,r,n,s){this.constructor$(t),this._promise._captureStackTrace(),this._preservedValues=s===o?[]:null,this._zerothIsAccum=void 0===n,this._gotAccum=!1,this._reducingIndex=this._zerothIsAccum?1:0,this._valuesPhase=void 0;var u=i(n,this._promise),l=!1,h=u instanceof e;h&&(u=u._target(),u._isPending()?u._proxyPromiseArray(this,-1):u._isFulfilled()?(n=u._value(),this._gotAccum=!0):(this._reject(u._reason()),l=!0)),h||this._zerothIsAccum||(this._gotAccum=!0),this._callback=r,this._accum=n,l||c.invoke(a,this,void 0)}function a(){this._init$(void 0,-5)}function u(t,e,r,i){if("function"!=typeof e)return n("fn must be a function\n\n    See http://goo.gl/916lJJ\n");var o=new s(t,e,r,i);return o.promise()}var c=t("./async.js"),l=t("./util.js"),h=l.tryCatch,p=l.errorObj;l.inherits(s,r),s.prototype._init=function(){},s.prototype._resolveEmptyArray=function(){(this._gotAccum||this._zerothIsAccum)&&this._resolve(null!==this._preservedValues?[]:this._accum)},s.prototype._promiseFulfilled=function(t,r){var n=this._values;n[r]=t;var o,s=this.length(),a=this._preservedValues,u=null!==a,c=this._gotAccum,l=this._valuesPhase;if(!l)for(l=this._valuesPhase=new Array(s),o=0;s>o;++o)l[o]=0;if(o=l[r],0===r&&this._zerothIsAccum?(this._accum=t,this._gotAccum=c=!0,l[r]=0===o?1:2):-1===r?(this._accum=t,this._gotAccum=c=!0):0===o?l[r]=1:(l[r]=2,this._accum=t),c){for(var f,_=this._callback,d=this._promise._boundTo,v=this._reducingIndex;s>v;++v)if(o=l[v],2!==o){if(1!==o)return;if(t=n[v],this._promise._pushContext(),u?(a.push(t),f=h(_).call(d,t,v,s)):f=h(_).call(d,this._accum,t,v,s),this._promise._popContext(),f===p)return this._reject(f.e);var y=i(f,this._promise);if(y instanceof e){if(y=y._target(),y._isPending())return l[v]=4,y._proxyPromiseArray(this,v);if(!y._isFulfilled())return this._reject(y._reason());f=y._value()}this._reducingIndex=v+1,this._accum=f}else this._reducingIndex=v+1;this._resolve(u?a:this._accum)}},e.prototype.reduce=function(t,e){return u(this,t,e,null)},e.reduce=function(t,e,r,n){return u(t,e,r,n)}}},{"./async.js":2,"./util.js":38}],31:[function(t,e){"use strict";var r,n=function(){throw new Error("No async scheduler available\n\n    See http://goo.gl/m3OTXk\n")};if(t("./util.js").isNode){var i=process.versions.node.split(".").map(Number);r=0===i[0]&&i[1]>10||i[0]>0?global.setImmediate:process.nextTick,r||(r="undefined"!=typeof setImmediate?setImmediate:"undefined"!=typeof setTimeout?setTimeout:n)}else"undefined"!=typeof MutationObserver?(r=function(t){var e=document.createElement("div"),r=new MutationObserver(t);return r.observe(e,{attributes:!0}),function(){e.classList.toggle("foo")}},r.isStatic=!0):r="undefined"!=typeof setImmediate?function(t){setImmediate(t)}:"undefined"!=typeof setTimeout?function(t){setTimeout(t,0)}:n;e.exports=r},{"./util.js":38}],32:[function(t,e){"use strict";e.exports=function(e,r){function n(t){this.constructor$(t)}var i=e.PromiseInspection,o=t("./util.js");o.inherits(n,r),n.prototype._promiseResolved=function(t,e){this._values[t]=e;var r=++this._totalResolved;r>=this._length&&this._resolve(this._values)},n.prototype._promiseFulfilled=function(t,e){var r=new i;r._bitField=268435456,r._settledValue=t,this._promiseResolved(e,r)},n.prototype._promiseRejected=function(t,e){var r=new i;r._bitField=134217728,r._settledValue=t,this._promiseResolved(e,r)},e.settle=function(t){return new n(t).promise()},e.prototype.settle=function(){return new n(this).promise()}}},{"./util.js":38}],33:[function(t,e){"use strict";e.exports=function(e,r,n){function i(t){this.constructor$(t),this._howMany=0,this._unwrap=!1,this._initialized=!1}function o(t,e){if((0|e)!==e||0>e)return n("expecting a positive integer\n\n    See http://goo.gl/1wAmHx\n");var r=new i(t),o=r.promise();return r.setHowMany(e),r.init(),o}var s=t("./util.js"),a=t("./errors.js").RangeError,u=t("./errors.js").AggregateError,c=s.isArray;s.inherits(i,r),i.prototype._init=function(){if(this._initialized){if(0===this._howMany)return void this._resolve([]);this._init$(void 0,-5);var t=c(this._values);!this._isResolved()&&t&&this._howMany>this._canPossiblyFulfill()&&this._reject(this._getRangeError(this.length()))}},i.prototype.init=function(){this._initialized=!0,this._init()},i.prototype.setUnwrap=function(){this._unwrap=!0},i.prototype.howMany=function(){return this._howMany},i.prototype.setHowMany=function(t){this._howMany=t},i.prototype._promiseFulfilled=function(t){this._addFulfilled(t),this._fulfilled()===this.howMany()&&(this._values.length=this.howMany(),this._resolve(1===this.howMany()&&this._unwrap?this._values[0]:this._values))},i.prototype._promiseRejected=function(t){if(this._addRejected(t),this.howMany()>this._canPossiblyFulfill()){for(var e=new u,r=this.length();r<this._values.length;++r)e.push(this._values[r]);this._reject(e)}},i.prototype._fulfilled=function(){return this._totalResolved},i.prototype._rejected=function(){return this._values.length-this.length()},i.prototype._addRejected=function(t){this._values.push(t)},i.prototype._addFulfilled=function(t){this._values[this._totalResolved++]=t},i.prototype._canPossiblyFulfill=function(){return this.length()-this._rejected()},i.prototype._getRangeError=function(t){var e="Input array must contain at least "+this._howMany+" items but contains only "+t+" items";return new a(e)},i.prototype._resolveEmptyArray=function(){this._reject(this._getRangeError(0))},e.some=function(t,e){return o(t,e)},e.prototype.some=function(t){return o(this,t)},e._SomePromiseArray=i}},{"./errors.js":13,"./util.js":38}],34:[function(t,e){"use strict";e.exports=function(t){function e(t){void 0!==t?(t=t._target(),this._bitField=t._bitField,this._settledValue=t._settledValue):(this._bitField=0,this._settledValue=void 0)}e.prototype.value=function(){if(!this.isFulfilled())throw new TypeError("cannot get fulfillment value of a non-fulfilled promise\n\n    See http://goo.gl/hc1DLj\n");return this._settledValue},e.prototype.error=e.prototype.reason=function(){if(!this.isRejected())throw new TypeError("cannot get rejection reason of a non-rejected promise\n\n    See http://goo.gl/hPuiwB\n");return this._settledValue},e.prototype.isFulfilled=t.prototype._isFulfilled=function(){return(268435456&this._bitField)>0},e.prototype.isRejected=t.prototype._isRejected=function(){return(134217728&this._bitField)>0},e.prototype.isPending=t.prototype._isPending=function(){return 0===(402653184&this._bitField)},e.prototype.isResolved=t.prototype._isResolved=function(){return(402653184&this._bitField)>0},t.prototype.isPending=function(){return this._target()._isPending()},t.prototype.isRejected=function(){return this._target()._isRejected()},t.prototype.isFulfilled=function(){return this._target()._isFulfilled()},t.prototype.isResolved=function(){return this._target()._isResolved()},t.prototype._value=function(){return this._settledValue},t.prototype._reason=function(){return this._unsetRejectionIsUnhandled(),this._settledValue},t.prototype.value=function(){var t=this._target();if(!t.isFulfilled())throw new TypeError("cannot get fulfillment value of a non-fulfilled promise\n\n    See http://goo.gl/hc1DLj\n");return t._settledValue},t.prototype.reason=function(){var t=this._target();if(!t.isRejected())throw new TypeError("cannot get rejection reason of a non-rejected promise\n\n    See http://goo.gl/hPuiwB\n");return t._unsetRejectionIsUnhandled(),t._settledValue},t.PromiseInspection=e}},{}],35:[function(t,e){"use strict";e.exports=function(e,r){function n(t,n){if(c(t)){if(t instanceof e)return t;if(o(t)){var l=new e(r);return t._then(l._fulfillUnchecked,l._rejectUncheckedCheckError,l._progressUnchecked,l,null),l}var h=a.tryCatch(i)(t);if(h===u){n&&n._pushContext();var l=e.reject(h.e);return n&&n._popContext(),l}if("function"==typeof h)return s(t,h,n)}return t}function i(t){return t.then}function o(t){return l.call(t,"_promise0")}function s(t,n,i){function o(r){l&&(t===r?l._rejectCallback(e._makeSelfResolutionError(),!1,!0):l._resolveCallback(r),l=null)}function s(t){l&&(l._rejectCallback(t,p,!0),l=null)}function c(t){l&&"function"==typeof l._progress&&l._progress(t)}var l=new e(r),h=l;i&&i._pushContext(),l._captureStackTrace(),i&&i._popContext();var p=!0,f=a.tryCatch(n).call(t,o,s,c);return p=!1,l&&f===u&&(l._rejectCallback(f.e,!0,!0),l=null),h}var a=t("./util.js"),u=a.errorObj,c=a.isObject,l={}.hasOwnProperty;return n}},{"./util.js":38}],36:[function(t,e){"use strict";e.exports=function(e,r){function n(t){var e=this;return e instanceof Number&&(e=+e),clearTimeout(e),t}function i(t){var e=this;throw e instanceof Number&&(e=+e),clearTimeout(e),t}var o=t("./util.js"),s=e.TimeoutError,a=function(t,e){if(t.isPending()){"string"!=typeof e&&(e="operation timed out");var r=new s(e);o.markAsOriginatingFromRejection(r),t._attachExtraTrace(r),t._cancel(r)}},u=function(t){return c(+this).thenReturn(t)},c=e.delay=function(t,n){if(void 0===n){n=t,t=void 0;var i=new e(r);return setTimeout(function(){i._fulfill()},n),i}return n=+n,e.resolve(t)._then(u,null,null,n,void 0)};e.prototype.delay=function(t){return c(this,t)},e.prototype.timeout=function(t,e){t=+t;var r=this.then().cancellable();r._cancellationParent=this;var o=setTimeout(function(){a(r,e)},t);return r._then(n,i,void 0,o,void 0)}}},{"./util.js":38}],37:[function(t,e){"use strict";e.exports=function(e,r,n,i){function o(t){for(var r=t.length,n=0;r>n;++n){var i=t[n];if(i.isRejected())return e.reject(i.error());t[n]=i._settledValue}return t}function s(t){setTimeout(function(){throw t},0)}function a(t){var e=n(t);return e!==t&&"function"==typeof t._isDisposable&&"function"==typeof t._getDisposer&&t._isDisposable()&&e._setDisposable(t._getDisposer()),e}function u(t,r){function i(){if(o>=u)return c.resolve();var l=a(t[o++]);if(l instanceof e&&l._isDisposable()){try{l=n(l._getDisposer().tryDispose(r),t.promise)}catch(h){return s(h)}if(l instanceof e)return l._then(i,s,null,null,null)}i()}var o=0,u=t.length,c=e.defer();return i(),c.promise}function c(t){var e=new v;return e._settledValue=t,e._bitField=268435456,u(this,e).thenReturn(t)}function l(t){var e=new v;return e._settledValue=t,e._bitField=134217728,u(this,e).thenThrow(t)}function h(t,e,r){this._data=t,this._promise=e,this._context=r}function p(t,e,r){this.constructor$(t,e,r)}function f(t){return h.isDisposer(t)?(this.resources[this.index]._setDisposable(t),t.promise()):t}var _=t("./errors.js").TypeError,d=t("./util.js").inherits,v=e.PromiseInspection;h.prototype.data=function(){return this._data},h.prototype.promise=function(){return this._promise},h.prototype.resource=function(){return this.promise().isFulfilled()?this.promise().value():null},h.prototype.tryDispose=function(t){var e=this.resource(),r=this._context;void 0!==r&&r._pushContext();var n=null!==e?this.doDispose(e,t):null;return void 0!==r&&r._popContext(),this._promise._unsetDisposable(),this._data=null,n},h.isDisposer=function(t){return null!=t&&"function"==typeof t.resource&&"function"==typeof t.tryDispose},d(p,h),p.prototype.doDispose=function(t,e){var r=this.data();return r.call(t,t,e)},e.using=function(){var t=arguments.length;if(2>t)return r("you must pass at least 2 arguments to Promise.using");var i=arguments[t-1];if("function"!=typeof i)return r("fn must be a function\n\n    See http://goo.gl/916lJJ\n");t--;for(var s=new Array(t),a=0;t>a;++a){var u=arguments[a];if(h.isDisposer(u)){var p=u;u=u.promise(),u._setDisposable(p)}else{var _=n(u);_ instanceof e&&(u=_._then(f,null,null,{resources:s,index:a},void 0))}s[a]=u}var d=e.settle(s).then(o).then(function(t){d._pushContext();var e;try{e=i.apply(void 0,t)}finally{d._popContext()}return e})._then(c,l,void 0,s,void 0);return s.promise=d,d},e.prototype._setDisposable=function(t){this._bitField=262144|this._bitField,this._disposer=t},e.prototype._isDisposable=function(){return(262144&this._bitField)>0
-},e.prototype._getDisposer=function(){return this._disposer},e.prototype._unsetDisposable=function(){this._bitField=-262145&this._bitField,this._disposer=void 0},e.prototype.disposer=function(t){if("function"==typeof t)return new p(t,this,i());throw new _}}},{"./errors.js":13,"./util.js":38}],38:[function(t,e,r){"use strict";function n(){try{return T.apply(this,arguments)}catch(t){return F.e=t,F}}function i(t){return T=t,n}function o(t){return null==t||t===!0||t===!1||"string"==typeof t||"number"==typeof t}function s(t){return!o(t)}function a(t){return o(t)?new Error(v(t)):t}function u(t,e){var r,n=t.length,i=new Array(n+1);for(r=0;n>r;++r)i[r]=t[r];return i[r]=e,i}function c(t,e,r){if(!w.isES5)return{}.hasOwnProperty.call(t,e)?t[e]:void 0;var n=Object.getOwnPropertyDescriptor(t,e);return null!=n?null==n.get&&null==n.set?n.value:r:void 0}function l(t,e,r){if(o(t))return t;var n={value:r,configurable:!0,enumerable:!1,writable:!0};return w.defineProperty(t,e,n),t}function h(t){throw t}function p(t){try{if("function"==typeof t){var e=w.names(t.prototype);return w.isES5?e.length>1:e.length>0&&!(1===e.length&&"constructor"===e[0])}return!1}catch(r){return!1}}function f(t){function e(){}e.prototype=t;for(var r=8;r--;)new e;return t}function _(t){return R.test(t)}function d(t,e,r){for(var n=new Array(t),i=0;t>i;++i)n[i]=e+i+r;return n}function v(t){try{return t+""}catch(e){return"[no string representation]"}}function y(t){try{l(t,"isOperational",!0)}catch(e){}}function g(t){return null==t?!1:t instanceof Error.__BluebirdErrorTypes__.OperationalError||t.isOperational===!0}function m(t){return t instanceof Error&&w.propertyIsWritable(t,"stack")}function j(t){return{}.toString.call(t)}function b(t,e,r){for(var n=w.names(t),i=0;i<n.length;++i){var o=n[i];r(o)&&w.defineProperty(e,o,w.getDescriptor(t,o))}}var w=t("./es5.js"),k="undefined"==typeof navigator,E=function(){try{var t={};return w.defineProperty(t,"f",{get:function(){return 3}}),3===t.f}catch(e){return!1}}(),F={e:{}},T,C=function(t,e){function r(){this.constructor=t,this.constructor$=e;for(var r in e.prototype)n.call(e.prototype,r)&&"$"!==r.charAt(r.length-1)&&(this[r+"$"]=e.prototype[r])}var n={}.hasOwnProperty;return r.prototype=e.prototype,t.prototype=new r,t.prototype},x=function(){return"string"!==this}.call("string"),P=function(){if(w.isES5){var t=Object.prototype,e=Object.getOwnPropertyNames;return function(r){for(var n=[],i=Object.create(null);null!=r&&r!==t;){var o;try{o=e(r)}catch(s){return n}for(var a=0;a<o.length;++a){var u=o[a];if(!i[u]){i[u]=!0;var c=Object.getOwnPropertyDescriptor(r,u);null!=c&&null==c.get&&null==c.set&&n.push(u)}}r=w.getPrototypeOf(r)}return n}}return function(t){var e=[];for(var r in t)e.push(r);return e}}(),R=/^[a-z$_][a-z$_0-9]*$/i,A=function(){return"stack"in new Error?function(t){return m(t)?t:new Error(v(t))}:function(t){if(m(t))return t;try{throw new Error(v(t))}catch(e){return e}}}(),S={isClass:p,isIdentifier:_,inheritedDataKeys:P,getDataPropertyOrDefault:c,thrower:h,isArray:w.isArray,haveGetters:E,notEnumerableProp:l,isPrimitive:o,isObject:s,canEvaluate:k,errorObj:F,tryCatch:i,inherits:C,withAppended:u,maybeWrapAsError:a,wrapsPrimitiveReceiver:x,toFastProperties:f,filledRange:d,toString:v,canAttachTrace:m,ensureErrorObject:A,originatesFromRejection:g,markAsOriginatingFromRejection:y,classString:j,copyDescriptors:b,hasDevTools:"undefined"!=typeof chrome&&chrome&&"function"==typeof chrome.loadTimes,isNode:"undefined"!=typeof process&&"[object process]"===j(process).toLowerCase()};try{throw new Error}catch(O){S.lastLineError=O}e.exports=S},{"./es5.js":14}],39:[function(t,e){function r(){this._events=this._events||{},this._maxListeners=this._maxListeners||void 0}function n(t){return"function"==typeof t}function i(t){return"number"==typeof t}function o(t){return"object"==typeof t&&null!==t}function s(t){return void 0===t}e.exports=r,r.EventEmitter=r,r.prototype._events=void 0,r.prototype._maxListeners=void 0,r.defaultMaxListeners=10,r.prototype.setMaxListeners=function(t){if(!i(t)||0>t||isNaN(t))throw TypeError("n must be a positive number");return this._maxListeners=t,this},r.prototype.emit=function(t){var e,r,i,a,u,c;if(this._events||(this._events={}),"error"===t&&(!this._events.error||o(this._events.error)&&!this._events.error.length)){if(e=arguments[1],e instanceof Error)throw e;throw TypeError('Uncaught, unspecified "error" event.')}if(r=this._events[t],s(r))return!1;if(n(r))switch(arguments.length){case 1:r.call(this);break;case 2:r.call(this,arguments[1]);break;case 3:r.call(this,arguments[1],arguments[2]);break;default:for(i=arguments.length,a=new Array(i-1),u=1;i>u;u++)a[u-1]=arguments[u];r.apply(this,a)}else if(o(r)){for(i=arguments.length,a=new Array(i-1),u=1;i>u;u++)a[u-1]=arguments[u];for(c=r.slice(),i=c.length,u=0;i>u;u++)c[u].apply(this,a)}return!0},r.prototype.addListener=function(t,e){var i;if(!n(e))throw TypeError("listener must be a function");if(this._events||(this._events={}),this._events.newListener&&this.emit("newListener",t,n(e.listener)?e.listener:e),this._events[t]?o(this._events[t])?this._events[t].push(e):this._events[t]=[this._events[t],e]:this._events[t]=e,o(this._events[t])&&!this._events[t].warned){var i;i=s(this._maxListeners)?r.defaultMaxListeners:this._maxListeners,i&&i>0&&this._events[t].length>i&&(this._events[t].warned=!0,console.error("(node) warning: possible EventEmitter memory leak detected. %d listeners added. Use emitter.setMaxListeners() to increase limit.",this._events[t].length),"function"==typeof console.trace&&console.trace())}return this},r.prototype.on=r.prototype.addListener,r.prototype.once=function(t,e){function r(){this.removeListener(t,r),i||(i=!0,e.apply(this,arguments))}if(!n(e))throw TypeError("listener must be a function");var i=!1;return r.listener=e,this.on(t,r),this},r.prototype.removeListener=function(t,e){var r,i,s,a;if(!n(e))throw TypeError("listener must be a function");if(!this._events||!this._events[t])return this;if(r=this._events[t],s=r.length,i=-1,r===e||n(r.listener)&&r.listener===e)delete this._events[t],this._events.removeListener&&this.emit("removeListener",t,e);else if(o(r)){for(a=s;a-->0;)if(r[a]===e||r[a].listener&&r[a].listener===e){i=a;break}if(0>i)return this;1===r.length?(r.length=0,delete this._events[t]):r.splice(i,1),this._events.removeListener&&this.emit("removeListener",t,e)}return this},r.prototype.removeAllListeners=function(t){var e,r;if(!this._events)return this;if(!this._events.removeListener)return 0===arguments.length?this._events={}:this._events[t]&&delete this._events[t],this;if(0===arguments.length){for(e in this._events)"removeListener"!==e&&this.removeAllListeners(e);return this.removeAllListeners("removeListener"),this._events={},this}if(r=this._events[t],n(r))this.removeListener(t,r);else for(;r.length;)this.removeListener(t,r[r.length-1]);return delete this._events[t],this},r.prototype.listeners=function(t){var e;return e=this._events&&this._events[t]?n(this._events[t])?[this._events[t]]:this._events[t].slice():[]},r.listenerCount=function(t,e){var r;return r=t._events&&t._events[e]?n(t._events[e])?1:t._events[e].length:0}},{}]},{},[4])(4)}),"undefined"!=typeof window&&null!==window?window.P=window.Promise:"undefined"!=typeof self&&null!==self&&(self.P=self.Promise);
+!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Promise=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof _dereq_=="function"&&_dereq_;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof _dereq_=="function"&&_dereq_;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
+"use strict";
+var firstLineError;
+try {throw new Error(); } catch (e) {firstLineError = e;}
+var schedule = _dereq_("./schedule.js");
+var Queue = _dereq_("./queue.js");
+var util = _dereq_("./util.js");
+
+function Async() {
+    this._isTickUsed = false;
+    this._lateQueue = new Queue(16);
+    this._normalQueue = new Queue(16);
+    this._trampolineEnabled = true;
+    var self = this;
+    this.drainQueues = function () {
+        self._drainQueues();
+    };
+    this._schedule =
+        schedule.isStatic ? schedule(this.drainQueues) : schedule;
+}
+
+Async.prototype.disableTrampolineIfNecessary = function() {
+    if (util.hasDevTools) {
+        this._trampolineEnabled = false;
+    }
+};
+
+Async.prototype.enableTrampoline = function() {
+    if (!this._trampolineEnabled) {
+        this._trampolineEnabled = true;
+        this._schedule = function(fn) {
+            setTimeout(fn, 0);
+        };
+    }
+};
+
+Async.prototype.haveItemsQueued = function () {
+    return this._normalQueue.length() > 0;
+};
+
+Async.prototype.throwLater = function(fn, arg) {
+    if (arguments.length === 1) {
+        arg = fn;
+        fn = function () { throw arg; };
+    }
+    var domain = this._getDomain();
+    if (domain !== undefined) fn = domain.bind(fn);
+    if (typeof setTimeout !== "undefined") {
+        setTimeout(function() {
+            fn(arg);
+        }, 0);
+    } else try {
+        this._schedule(function() {
+            fn(arg);
+        });
+    } catch (e) {
+        throw new Error("No async scheduler available\u000a\u000a    See http://goo.gl/m3OTXk\u000a");
+    }
+};
+
+Async.prototype._getDomain = function() {};
+
+if (!true) {
+if (util.isNode) {
+    var EventsModule = _dereq_("events");
+
+    var domainGetter = function() {
+        var domain = process.domain;
+        if (domain === null) return undefined;
+        return domain;
+    };
+
+    if (EventsModule.usingDomains) {
+        Async.prototype._getDomain = domainGetter;
+    } else {
+        var descriptor =
+            Object.getOwnPropertyDescriptor(EventsModule, "usingDomains");
+
+        if (descriptor) {
+            if (!descriptor.configurable) {
+                process.on("domainsActivated", function() {
+                    Async.prototype._getDomain = domainGetter;
+                });
+            } else {
+                var usingDomains = false;
+                Object.defineProperty(EventsModule, "usingDomains", {
+                    configurable: false,
+                    enumerable: true,
+                    get: function() {
+                        return usingDomains;
+                    },
+                    set: function(value) {
+                        if (usingDomains || !value) return;
+                        usingDomains = true;
+                        Async.prototype._getDomain = domainGetter;
+                        util.toFastProperties(process);
+                        process.emit("domainsActivated");
+                    }
+                });
+            }
+        }
+    }
+}
+}
+
+function AsyncInvokeLater(fn, receiver, arg) {
+    var domain = this._getDomain();
+    if (domain !== undefined) fn = domain.bind(fn);
+    this._lateQueue.push(fn, receiver, arg);
+    this._queueTick();
+}
+
+function AsyncInvoke(fn, receiver, arg) {
+    var domain = this._getDomain();
+    if (domain !== undefined) fn = domain.bind(fn);
+    this._normalQueue.push(fn, receiver, arg);
+    this._queueTick();
+}
+
+function AsyncSettlePromises(promise) {
+    var domain = this._getDomain();
+    if (domain !== undefined) {
+        var fn = domain.bind(promise._settlePromises);
+        this._normalQueue.push(fn, promise, undefined);
+    } else {
+        this._normalQueue._pushOne(promise);
+    }
+    this._queueTick();
+}
+
+if (!util.hasDevTools) {
+    Async.prototype.invokeLater = AsyncInvokeLater;
+    Async.prototype.invoke = AsyncInvoke;
+    Async.prototype.settlePromises = AsyncSettlePromises;
+} else {
+    Async.prototype.invokeLater = function (fn, receiver, arg) {
+        if (this._trampolineEnabled) {
+            AsyncInvokeLater.call(this, fn, receiver, arg);
+        } else {
+            setTimeout(function() {
+                fn.call(receiver, arg);
+            }, 100);
+        }
+    };
+
+    Async.prototype.invoke = function (fn, receiver, arg) {
+        if (this._trampolineEnabled) {
+            AsyncInvoke.call(this, fn, receiver, arg);
+        } else {
+            setTimeout(function() {
+                fn.call(receiver, arg);
+            }, 0);
+        }
+    };
+
+    Async.prototype.settlePromises = function(promise) {
+        if (this._trampolineEnabled) {
+            AsyncSettlePromises.call(this, promise);
+        } else {
+            setTimeout(function() {
+                promise._settlePromises();
+            }, 0);
+        }
+    };
+}
+
+Async.prototype.invokeFirst = function (fn, receiver, arg) {
+    var domain = this._getDomain();
+    if (domain !== undefined) fn = domain.bind(fn);
+    this._normalQueue.unshift(fn, receiver, arg);
+    this._queueTick();
+};
+
+Async.prototype._drainQueue = function(queue) {
+    while (queue.length() > 0) {
+        var fn = queue.shift();
+        if (typeof fn !== "function") {
+            fn._settlePromises();
+            continue;
+        }
+        var receiver = queue.shift();
+        var arg = queue.shift();
+        fn.call(receiver, arg);
+    }
+};
+
+Async.prototype._drainQueues = function () {
+    this._drainQueue(this._normalQueue);
+    this._reset();
+    this._drainQueue(this._lateQueue);
+};
+
+Async.prototype._queueTick = function () {
+    if (!this._isTickUsed) {
+        this._isTickUsed = true;
+        this._schedule(this.drainQueues);
+    }
+};
+
+Async.prototype._reset = function () {
+    this._isTickUsed = false;
+};
+
+module.exports = new Async();
+module.exports.firstLineError = firstLineError;
+
+},{"./queue.js":19,"./schedule.js":20,"./util.js":23,"events":24}],2:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(Promise, INTERNAL, tryConvertToPromise) {
+var rejectThis = function(_, e) {
+    this._reject(e);
+};
+
+var targetRejected = function(e, context) {
+    context.promiseRejectionQueued = true;
+    context.bindingPromise._then(rejectThis, rejectThis, null, this, e);
+};
+
+var bindingResolved = function(thisArg, context) {
+    this._setBoundTo(thisArg);
+    if (this._isPending()) {
+        this._resolveCallback(context.target);
+    }
+};
+
+var bindingRejected = function(e, context) {
+    if (!context.promiseRejectionQueued) this._reject(e);
+};
+
+Promise.prototype.bind = function (thisArg) {
+    var maybePromise = tryConvertToPromise(thisArg);
+    var ret = new Promise(INTERNAL);
+    ret._propagateFrom(this, 1);
+    var target = this._target();
+    if (maybePromise instanceof Promise) {
+        var context = {
+            promiseRejectionQueued: false,
+            promise: ret,
+            target: target,
+            bindingPromise: maybePromise
+        };
+        target._then(INTERNAL, targetRejected, ret._progress, ret, context);
+        maybePromise._then(
+            bindingResolved, bindingRejected, ret._progress, ret, context);
+    } else {
+        ret._setBoundTo(thisArg);
+        ret._resolveCallback(target);
+    }
+    return ret;
+};
+
+Promise.prototype._setBoundTo = function (obj) {
+    if (obj !== undefined) {
+        this._bitField = this._bitField | 131072;
+        this._boundTo = obj;
+    } else {
+        this._bitField = this._bitField & (~131072);
+    }
+};
+
+Promise.prototype._isBound = function () {
+    return (this._bitField & 131072) === 131072;
+};
+
+Promise.bind = function (thisArg, value) {
+    var maybePromise = tryConvertToPromise(thisArg);
+    var ret = new Promise(INTERNAL);
+
+    if (maybePromise instanceof Promise) {
+        maybePromise._then(function(thisArg) {
+            ret._setBoundTo(thisArg);
+            ret._resolveCallback(value);
+        }, ret._reject, ret._progress, ret, null);
+    } else {
+        ret._setBoundTo(thisArg);
+        ret._resolveCallback(value);
+    }
+    return ret;
+};
+};
+
+},{}],3:[function(_dereq_,module,exports){
+"use strict";
+var old;
+if (typeof Promise !== "undefined") old = Promise;
+function noConflict() {
+    try { if (Promise === bluebird) Promise = old; }
+    catch (e) {}
+    return bluebird;
+}
+var bluebird = _dereq_("./promise.js")();
+bluebird.noConflict = noConflict;
+module.exports = bluebird;
+
+},{"./promise.js":16}],4:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(Promise) {
+var errors = _dereq_("./errors.js");
+var async = _dereq_("./async.js");
+var CancellationError = errors.CancellationError;
+
+Promise.prototype._cancel = function (reason) {
+    if (!this.isCancellable()) return this;
+    var parent;
+    var promiseToReject = this;
+    while ((parent = promiseToReject._cancellationParent) !== undefined &&
+        parent.isCancellable()) {
+        promiseToReject = parent;
+    }
+    this._unsetCancellable();
+    promiseToReject._target()._rejectCallback(reason, false, true);
+};
+
+Promise.prototype.cancel = function (reason) {
+    if (!this.isCancellable()) return this;
+    if (reason === undefined) reason = new CancellationError();
+    async.invokeLater(this._cancel, this, reason);
+    return this;
+};
+
+Promise.prototype.cancellable = function () {
+    if (this._cancellable()) return this;
+    async.enableTrampoline();
+    this._setCancellable();
+    this._cancellationParent = undefined;
+    return this;
+};
+
+Promise.prototype.uncancellable = function () {
+    var ret = this.then();
+    ret._unsetCancellable();
+    return ret;
+};
+
+Promise.prototype.fork = function (didFulfill, didReject, didProgress) {
+    var ret = this._then(didFulfill, didReject, didProgress,
+                         undefined, undefined);
+
+    ret._setCancellable();
+    ret._cancellationParent = undefined;
+    return ret;
+};
+};
+
+},{"./async.js":1,"./errors.js":10}],5:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function() {
+var async = _dereq_("./async.js");
+var util = _dereq_("./util.js");
+var bluebirdFramePattern =
+    /[\\\/]bluebird[\\\/]js[\\\/](main|debug|zalgo|instrumented)/;
+var stackFramePattern = null;
+var formatStack = null;
+var indentStackFrames = false;
+var warn;
+
+function CapturedTrace(parent) {
+    this._parent = parent;
+    var length = this._length = 1 + (parent === undefined ? 0 : parent._length);
+    captureStackTrace(this, CapturedTrace);
+    if (length > 32) this.uncycle();
+}
+util.inherits(CapturedTrace, Error);
+
+CapturedTrace.prototype.uncycle = function() {
+    var length = this._length;
+    if (length < 2) return;
+    var nodes = [];
+    var stackToIndex = {};
+
+    for (var i = 0, node = this; node !== undefined; ++i) {
+        nodes.push(node);
+        node = node._parent;
+    }
+    length = this._length = i;
+    for (var i = length - 1; i >= 0; --i) {
+        var stack = nodes[i].stack;
+        if (stackToIndex[stack] === undefined) {
+            stackToIndex[stack] = i;
+        }
+    }
+    for (var i = 0; i < length; ++i) {
+        var currentStack = nodes[i].stack;
+        var index = stackToIndex[currentStack];
+        if (index !== undefined && index !== i) {
+            if (index > 0) {
+                nodes[index - 1]._parent = undefined;
+                nodes[index - 1]._length = 1;
+            }
+            nodes[i]._parent = undefined;
+            nodes[i]._length = 1;
+            var cycleEdgeNode = i > 0 ? nodes[i - 1] : this;
+
+            if (index < length - 1) {
+                cycleEdgeNode._parent = nodes[index + 1];
+                cycleEdgeNode._parent.uncycle();
+                cycleEdgeNode._length =
+                    cycleEdgeNode._parent._length + 1;
+            } else {
+                cycleEdgeNode._parent = undefined;
+                cycleEdgeNode._length = 1;
+            }
+            var currentChildLength = cycleEdgeNode._length + 1;
+            for (var j = i - 2; j >= 0; --j) {
+                nodes[j]._length = currentChildLength;
+                currentChildLength++;
+            }
+            return;
+        }
+    }
+};
+
+CapturedTrace.prototype.parent = function() {
+    return this._parent;
+};
+
+CapturedTrace.prototype.hasParent = function() {
+    return this._parent !== undefined;
+};
+
+CapturedTrace.prototype.attachExtraTrace = function(error) {
+    if (error.__stackCleaned__) return;
+    this.uncycle();
+    var parsed = CapturedTrace.parseStackAndMessage(error);
+    var message = parsed.message;
+    var stacks = [parsed.stack];
+
+    var trace = this;
+    while (trace !== undefined) {
+        stacks.push(cleanStack(trace.stack.split("\n")));
+        trace = trace._parent;
+    }
+    removeCommonRoots(stacks);
+    removeDuplicateOrEmptyJumps(stacks);
+    util.notEnumerableProp(error, "stack", reconstructStack(message, stacks));
+    util.notEnumerableProp(error, "__stackCleaned__", true);
+};
+
+function reconstructStack(message, stacks) {
+    for (var i = 0; i < stacks.length - 1; ++i) {
+        stacks[i].push("From previous event:");
+        stacks[i] = stacks[i].join("\n");
+    }
+    if (i < stacks.length) {
+        stacks[i] = stacks[i].join("\n");
+    }
+    return message + "\n" + stacks.join("\n");
+}
+
+function removeDuplicateOrEmptyJumps(stacks) {
+    for (var i = 0; i < stacks.length; ++i) {
+        if (stacks[i].length === 0 ||
+            ((i + 1 < stacks.length) && stacks[i][0] === stacks[i+1][0])) {
+            stacks.splice(i, 1);
+            i--;
+        }
+    }
+}
+
+function removeCommonRoots(stacks) {
+    var current = stacks[0];
+    for (var i = 1; i < stacks.length; ++i) {
+        var prev = stacks[i];
+        var currentLastIndex = current.length - 1;
+        var currentLastLine = current[currentLastIndex];
+        var commonRootMeetPoint = -1;
+
+        for (var j = prev.length - 1; j >= 0; --j) {
+            if (prev[j] === currentLastLine) {
+                commonRootMeetPoint = j;
+                break;
+            }
+        }
+
+        for (var j = commonRootMeetPoint; j >= 0; --j) {
+            var line = prev[j];
+            if (current[currentLastIndex] === line) {
+                current.pop();
+                currentLastIndex--;
+            } else {
+                break;
+            }
+        }
+        current = prev;
+    }
+}
+
+function cleanStack(stack) {
+    var ret = [];
+    for (var i = 0; i < stack.length; ++i) {
+        var line = stack[i];
+        var isTraceLine = stackFramePattern.test(line) ||
+            "    (No stack trace)" === line;
+        var isInternalFrame = isTraceLine && shouldIgnore(line);
+        if (isTraceLine && !isInternalFrame) {
+            if (indentStackFrames && line.charAt(0) !== " ") {
+                line = "    " + line;
+            }
+            ret.push(line);
+        }
+    }
+    return ret;
+}
+
+function stackFramesAsArray(error) {
+    var stack = error.stack.replace(/\s+$/g, "").split("\n");
+    for (var i = 0; i < stack.length; ++i) {
+        var line = stack[i];
+        if ("    (No stack trace)" === line || stackFramePattern.test(line)) {
+            break;
+        }
+    }
+    if (i > 0) {
+        stack = stack.slice(i);
+    }
+    return stack;
+}
+
+CapturedTrace.parseStackAndMessage = function(error) {
+    var stack = error.stack;
+    var message = error.toString();
+    stack = typeof stack === "string" && stack.length > 0
+                ? stackFramesAsArray(error) : ["    (No stack trace)"];
+    return {
+        message: message,
+        stack: cleanStack(stack)
+    };
+};
+
+CapturedTrace.formatAndLogError = function(error, title) {
+    if (typeof console !== "undefined") {
+        var message;
+        if (typeof error === "object" || typeof error === "function") {
+            var stack = error.stack;
+            message = title + formatStack(stack, error);
+        } else {
+            message = title + String(error);
+        }
+        if (typeof warn === "function") {
+            warn(message);
+        } else if (typeof console.log === "function" ||
+            typeof console.log === "object") {
+            console.log(message);
+        }
+    }
+};
+
+CapturedTrace.unhandledRejection = function (reason) {
+    CapturedTrace.formatAndLogError(reason, "^--- With additional stack trace: ");
+};
+
+CapturedTrace.isSupported = function () {
+    return typeof captureStackTrace === "function";
+};
+
+CapturedTrace.fireRejectionEvent =
+function(name, localHandler, reason, promise) {
+    var localEventFired = false;
+    try {
+        if (typeof localHandler === "function") {
+            localEventFired = true;
+            if (name === "rejectionHandled") {
+                localHandler(promise);
+            } else {
+                localHandler(reason, promise);
+            }
+        }
+    } catch (e) {
+        async.throwLater(e);
+    }
+
+    var globalEventFired = false;
+    try {
+        globalEventFired = fireGlobalEvent(name, reason, promise);
+    } catch (e) {
+        globalEventFired = true;
+        async.throwLater(e);
+    }
+
+    var domEventFired = false;
+    if (fireDomEvent) {
+        try {
+            domEventFired = fireDomEvent(name.toLowerCase(), {
+                reason: reason,
+                promise: promise
+            });
+        } catch (e) {
+            domEventFired = true;
+            async.throwLater(e);
+        }
+    }
+
+    if (!globalEventFired && !localEventFired && !domEventFired &&
+        name === "unhandledRejection") {
+        CapturedTrace.formatAndLogError(reason, "Unhandled rejection ");
+    }
+};
+
+function formatNonError(obj) {
+    var str;
+    if (typeof obj === "function") {
+        str = "[function " +
+            (obj.name || "anonymous") +
+            "]";
+    } else {
+        str = obj.toString();
+        var ruselessToString = /\[object [a-zA-Z0-9$_]+\]/;
+        if (ruselessToString.test(str)) {
+            try {
+                var newStr = JSON.stringify(obj);
+                str = newStr;
+            }
+            catch(e) {
+
+            }
+        }
+        if (str.length === 0) {
+            str = "(empty array)";
+        }
+    }
+    return ("(<" + snip(str) + ">, no stack trace)");
+}
+
+function snip(str) {
+    var maxChars = 41;
+    if (str.length < maxChars) {
+        return str;
+    }
+    return str.substr(0, maxChars - 3) + "...";
+}
+
+var shouldIgnore = function() { return false; };
+var parseLineInfoRegex = /[\/<\(]([^:\/]+):(\d+):(?:\d+)\)?\s*$/;
+function parseLineInfo(line) {
+    var matches = line.match(parseLineInfoRegex);
+    if (matches) {
+        return {
+            fileName: matches[1],
+            line: parseInt(matches[2], 10)
+        };
+    }
+}
+CapturedTrace.setBounds = function(firstLineError, lastLineError) {
+    if (!CapturedTrace.isSupported()) return;
+    var firstStackLines = firstLineError.stack.split("\n");
+    var lastStackLines = lastLineError.stack.split("\n");
+    var firstIndex = -1;
+    var lastIndex = -1;
+    var firstFileName;
+    var lastFileName;
+    for (var i = 0; i < firstStackLines.length; ++i) {
+        var result = parseLineInfo(firstStackLines[i]);
+        if (result) {
+            firstFileName = result.fileName;
+            firstIndex = result.line;
+            break;
+        }
+    }
+    for (var i = 0; i < lastStackLines.length; ++i) {
+        var result = parseLineInfo(lastStackLines[i]);
+        if (result) {
+            lastFileName = result.fileName;
+            lastIndex = result.line;
+            break;
+        }
+    }
+    if (firstIndex < 0 || lastIndex < 0 || !firstFileName || !lastFileName ||
+        firstFileName !== lastFileName || firstIndex >= lastIndex) {
+        return;
+    }
+
+    shouldIgnore = function(line) {
+        if (bluebirdFramePattern.test(line)) return true;
+        var info = parseLineInfo(line);
+        if (info) {
+            if (info.fileName === firstFileName &&
+                (firstIndex <= info.line && info.line <= lastIndex)) {
+                return true;
+            }
+        }
+        return false;
+    };
+};
+
+var captureStackTrace = (function stackDetection() {
+    var v8stackFramePattern = /^\s*at\s*/;
+    var v8stackFormatter = function(stack, error) {
+        if (typeof stack === "string") return stack;
+
+        if (error.name !== undefined &&
+            error.message !== undefined) {
+            return error.toString();
+        }
+        return formatNonError(error);
+    };
+
+    if (typeof Error.stackTraceLimit === "number" &&
+        typeof Error.captureStackTrace === "function") {
+        Error.stackTraceLimit = Error.stackTraceLimit + 6;
+        stackFramePattern = v8stackFramePattern;
+        formatStack = v8stackFormatter;
+        var captureStackTrace = Error.captureStackTrace;
+
+        shouldIgnore = function(line) {
+            return bluebirdFramePattern.test(line);
+        };
+        return function(receiver, ignoreUntil) {
+            Error.stackTraceLimit = Error.stackTraceLimit + 6;
+            captureStackTrace(receiver, ignoreUntil);
+            Error.stackTraceLimit = Error.stackTraceLimit - 6;
+        };
+    }
+    var err = new Error();
+
+    if (typeof err.stack === "string" &&
+        err.stack.split("\n")[0].indexOf("stackDetection@") >= 0) {
+        stackFramePattern = /@/;
+        formatStack = v8stackFormatter;
+        indentStackFrames = true;
+        return function captureStackTrace(o) {
+            o.stack = new Error().stack;
+        };
+    }
+
+    var hasStackAfterThrow;
+    try { throw new Error(); }
+    catch(e) {
+        hasStackAfterThrow = ("stack" in e);
+    }
+    if (!("stack" in err) && hasStackAfterThrow) {
+        stackFramePattern = v8stackFramePattern;
+        formatStack = v8stackFormatter;
+        return function captureStackTrace(o) {
+            Error.stackTraceLimit = Error.stackTraceLimit + 6;
+            try { throw new Error(); }
+            catch(e) { o.stack = e.stack; }
+            Error.stackTraceLimit = Error.stackTraceLimit - 6;
+        };
+    }
+
+    formatStack = function(stack, error) {
+        if (typeof stack === "string") return stack;
+
+        if ((typeof error === "object" ||
+            typeof error === "function") &&
+            error.name !== undefined &&
+            error.message !== undefined) {
+            return error.toString();
+        }
+        return formatNonError(error);
+    };
+
+    return null;
+
+})([]);
+
+var fireDomEvent;
+var fireGlobalEvent = (function() {
+    if (util.isNode) {
+        return function(name, reason, promise) {
+            if (name === "rejectionHandled") {
+                return process.emit(name, promise);
+            } else {
+                return process.emit(name, reason, promise);
+            }
+        };
+    } else {
+        var customEventWorks = false;
+        var anyEventWorks = true;
+        try {
+            var ev = new self.CustomEvent("test");
+            customEventWorks = ev instanceof CustomEvent;
+        } catch (e) {}
+        if (!customEventWorks) {
+            try {
+                var event = document.createEvent("CustomEvent");
+                event.initCustomEvent("testingtheevent", false, true, {});
+                self.dispatchEvent(event);
+            } catch (e) {
+                anyEventWorks = false;
+            }
+        }
+        if (anyEventWorks) {
+            fireDomEvent = function(type, detail) {
+                var event;
+                if (customEventWorks) {
+                    event = new self.CustomEvent(type, {
+                        detail: detail,
+                        bubbles: false,
+                        cancelable: true
+                    });
+                } else if (self.dispatchEvent) {
+                    event = document.createEvent("CustomEvent");
+                    event.initCustomEvent(type, false, true, detail);
+                }
+
+                return event ? !self.dispatchEvent(event) : false;
+            };
+        }
+
+        var toWindowMethodNameMap = {};
+        toWindowMethodNameMap["unhandledRejection"] = ("on" +
+            "unhandledRejection").toLowerCase();
+        toWindowMethodNameMap["rejectionHandled"] = ("on" +
+            "rejectionHandled").toLowerCase();
+
+        return function(name, reason, promise) {
+            var methodName = toWindowMethodNameMap[name];
+            var method = self[methodName];
+            if (!method) return false;
+            if (name === "rejectionHandled") {
+                method.call(self, promise);
+            } else {
+                method.call(self, reason, promise);
+            }
+            return true;
+        };
+    }
+})();
+
+if (typeof console !== "undefined" && typeof console.warn !== "undefined") {
+    warn = function (message) {
+        console.warn(message);
+    };
+    if (util.isNode && process.stderr.isTTY) {
+        warn = function(message) {
+            process.stderr.write("\u001b[31m" + message + "\u001b[39m\n");
+        };
+    } else if (!util.isNode && typeof (new Error().stack) === "string") {
+        warn = function(message) {
+            console.warn("%c" + message, "color: red");
+        };
+    }
+}
+
+return CapturedTrace;
+};
+
+},{"./async.js":1,"./util.js":23}],6:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(NEXT_FILTER) {
+var util = _dereq_("./util.js");
+var errors = _dereq_("./errors.js");
+var tryCatch = util.tryCatch;
+var errorObj = util.errorObj;
+var keys = _dereq_("./es5.js").keys;
+var TypeError = errors.TypeError;
+
+function CatchFilter(instances, callback, promise) {
+    this._instances = instances;
+    this._callback = callback;
+    this._promise = promise;
+}
+
+function safePredicate(predicate, e) {
+    var safeObject = {};
+    var retfilter = tryCatch(predicate).call(safeObject, e);
+
+    if (retfilter === errorObj) return retfilter;
+
+    var safeKeys = keys(safeObject);
+    if (safeKeys.length) {
+        errorObj.e = new TypeError("Catch filter must inherit from Error or be a simple predicate function\u000a\u000a    See http://goo.gl/o84o68\u000a");
+        return errorObj;
+    }
+    return retfilter;
+}
+
+CatchFilter.prototype.doFilter = function (e) {
+    var cb = this._callback;
+    var promise = this._promise;
+    var boundTo = promise._boundTo;
+    for (var i = 0, len = this._instances.length; i < len; ++i) {
+        var item = this._instances[i];
+        var itemIsErrorType = item === Error ||
+            (item != null && item.prototype instanceof Error);
+
+        if (itemIsErrorType && e instanceof item) {
+            var ret = tryCatch(cb).call(boundTo, e);
+            if (ret === errorObj) {
+                NEXT_FILTER.e = ret.e;
+                return NEXT_FILTER;
+            }
+            return ret;
+        } else if (typeof item === "function" && !itemIsErrorType) {
+            var shouldHandle = safePredicate(item, e);
+            if (shouldHandle === errorObj) {
+                e = errorObj.e;
+                break;
+            } else if (shouldHandle) {
+                var ret = tryCatch(cb).call(boundTo, e);
+                if (ret === errorObj) {
+                    NEXT_FILTER.e = ret.e;
+                    return NEXT_FILTER;
+                }
+                return ret;
+            }
+        }
+    }
+    NEXT_FILTER.e = e;
+    return NEXT_FILTER;
+};
+
+return CatchFilter;
+};
+
+},{"./errors.js":10,"./es5.js":11,"./util.js":23}],7:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(Promise, CapturedTrace, isDebugging) {
+var contextStack = [];
+function Context() {
+    this._trace = new CapturedTrace(peekContext());
+}
+Context.prototype._pushContext = function () {
+    if (!isDebugging()) return;
+    if (this._trace !== undefined) {
+        contextStack.push(this._trace);
+    }
+};
+
+Context.prototype._popContext = function () {
+    if (!isDebugging()) return;
+    if (this._trace !== undefined) {
+        contextStack.pop();
+    }
+};
+
+function createContext() {
+    if (isDebugging()) return new Context();
+}
+
+function peekContext() {
+    var lastIndex = contextStack.length - 1;
+    if (lastIndex >= 0) {
+        return contextStack[lastIndex];
+    }
+    return undefined;
+}
+
+Promise.prototype._peekContext = peekContext;
+Promise.prototype._pushContext = Context.prototype._pushContext;
+Promise.prototype._popContext = Context.prototype._popContext;
+
+return createContext;
+};
+
+},{}],8:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(Promise, CapturedTrace) {
+var async = _dereq_("./async.js");
+var Warning = _dereq_("./errors.js").Warning;
+var util = _dereq_("./util.js");
+var canAttachTrace = util.canAttachTrace;
+var unhandledRejectionHandled;
+var possiblyUnhandledRejection;
+var debugging = false || (util.isNode &&
+                    (!!process.env["BLUEBIRD_DEBUG"] ||
+                     process.env["NODE_ENV"] === "development"));
+
+if (debugging) {
+    async.disableTrampolineIfNecessary();
+}
+
+Promise.prototype._ensurePossibleRejectionHandled = function () {
+    this._setRejectionIsUnhandled();
+    async.invokeLater(this._notifyUnhandledRejection, this, undefined);
+};
+
+Promise.prototype._notifyUnhandledRejectionIsHandled = function () {
+    CapturedTrace.fireRejectionEvent("rejectionHandled",
+                                  unhandledRejectionHandled, undefined, this);
+};
+
+Promise.prototype._notifyUnhandledRejection = function () {
+    if (this._isRejectionUnhandled()) {
+        var reason = this._getCarriedStackTrace() || this._settledValue;
+        this._setUnhandledRejectionIsNotified();
+        CapturedTrace.fireRejectionEvent("unhandledRejection",
+                                      possiblyUnhandledRejection, reason, this);
+    }
+};
+
+Promise.prototype._setUnhandledRejectionIsNotified = function () {
+    this._bitField = this._bitField | 524288;
+};
+
+Promise.prototype._unsetUnhandledRejectionIsNotified = function () {
+    this._bitField = this._bitField & (~524288);
+};
+
+Promise.prototype._isUnhandledRejectionNotified = function () {
+    return (this._bitField & 524288) > 0;
+};
+
+Promise.prototype._setRejectionIsUnhandled = function () {
+    this._bitField = this._bitField | 2097152;
+};
+
+Promise.prototype._unsetRejectionIsUnhandled = function () {
+    this._bitField = this._bitField & (~2097152);
+    if (this._isUnhandledRejectionNotified()) {
+        this._unsetUnhandledRejectionIsNotified();
+        this._notifyUnhandledRejectionIsHandled();
+    }
+};
+
+Promise.prototype._isRejectionUnhandled = function () {
+    return (this._bitField & 2097152) > 0;
+};
+
+Promise.prototype._setCarriedStackTrace = function (capturedTrace) {
+    this._bitField = this._bitField | 1048576;
+    this._fulfillmentHandler0 = capturedTrace;
+};
+
+Promise.prototype._isCarryingStackTrace = function () {
+    return (this._bitField & 1048576) > 0;
+};
+
+Promise.prototype._getCarriedStackTrace = function () {
+    return this._isCarryingStackTrace()
+        ? this._fulfillmentHandler0
+        : undefined;
+};
+
+Promise.prototype._captureStackTrace = function () {
+    if (debugging) {
+        this._trace = new CapturedTrace(this._peekContext());
+    }
+    return this;
+};
+
+Promise.prototype._attachExtraTrace = function (error, ignoreSelf) {
+    if (debugging && canAttachTrace(error)) {
+        var trace = this._trace;
+        if (trace !== undefined) {
+            if (ignoreSelf) trace = trace._parent;
+        }
+        if (trace !== undefined) {
+            trace.attachExtraTrace(error);
+        } else if (!error.__stackCleaned__) {
+            var parsed = CapturedTrace.parseStackAndMessage(error);
+            util.notEnumerableProp(error, "stack",
+                parsed.message + "\n" + parsed.stack.join("\n"));
+            util.notEnumerableProp(error, "__stackCleaned__", true);
+        }
+    }
+};
+
+Promise.prototype._warn = function(message) {
+    var warning = new Warning(message);
+    var ctx = this._peekContext();
+    if (ctx) {
+        ctx.attachExtraTrace(warning);
+    } else {
+        var parsed = CapturedTrace.parseStackAndMessage(warning);
+        warning.stack = parsed.message + "\n" + parsed.stack.join("\n");
+    }
+    CapturedTrace.formatAndLogError(warning, "");
+};
+
+Promise.onPossiblyUnhandledRejection = function (fn) {
+    possiblyUnhandledRejection = typeof fn === "function" ? fn : undefined;
+};
+
+Promise.onUnhandledRejectionHandled = function (fn) {
+    unhandledRejectionHandled = typeof fn === "function" ? fn : undefined;
+};
+
+Promise.longStackTraces = function () {
+    if (async.haveItemsQueued() &&
+        debugging === false
+   ) {
+        throw new Error("cannot enable long stack traces after promises have been created\u000a\u000a    See http://goo.gl/DT1qyG\u000a");
+    }
+    debugging = CapturedTrace.isSupported();
+    if (debugging) {
+        async.disableTrampolineIfNecessary();
+    }
+};
+
+Promise.hasLongStackTraces = function () {
+    return debugging && CapturedTrace.isSupported();
+};
+
+if (!CapturedTrace.isSupported()) {
+    Promise.longStackTraces = function(){};
+    debugging = false;
+}
+
+return function() {
+    return debugging;
+};
+};
+
+},{"./async.js":1,"./errors.js":10,"./util.js":23}],9:[function(_dereq_,module,exports){
+"use strict";
+var util = _dereq_("./util.js");
+var isPrimitive = util.isPrimitive;
+var wrapsPrimitiveReceiver = util.wrapsPrimitiveReceiver;
+
+module.exports = function(Promise) {
+var returner = function () {
+    return this;
+};
+var thrower = function () {
+    throw this;
+};
+var returnUndefined = function() {};
+var throwUndefined = function() {
+    throw undefined;
+};
+
+var wrapper = function (value, action) {
+    if (action === 1) {
+        return function () {
+            throw value;
+        };
+    } else if (action === 2) {
+        return function () {
+            return value;
+        };
+    }
+};
+
+
+Promise.prototype["return"] =
+Promise.prototype.thenReturn = function (value) {
+    if (value === undefined) return this.then(returnUndefined);
+
+    if (wrapsPrimitiveReceiver && isPrimitive(value)) {
+        return this._then(
+            wrapper(value, 2),
+            undefined,
+            undefined,
+            undefined,
+            undefined
+       );
+    }
+    return this._then(returner, undefined, undefined, value, undefined);
+};
+
+Promise.prototype["throw"] =
+Promise.prototype.thenThrow = function (reason) {
+    if (reason === undefined) return this.then(throwUndefined);
+
+    if (wrapsPrimitiveReceiver && isPrimitive(reason)) {
+        return this._then(
+            wrapper(reason, 1),
+            undefined,
+            undefined,
+            undefined,
+            undefined
+       );
+    }
+    return this._then(thrower, undefined, undefined, reason, undefined);
+};
+};
+
+},{"./util.js":23}],10:[function(_dereq_,module,exports){
+"use strict";
+var es5 = _dereq_("./es5.js");
+var Objectfreeze = es5.freeze;
+var util = _dereq_("./util.js");
+var inherits = util.inherits;
+var notEnumerableProp = util.notEnumerableProp;
+
+function subError(nameProperty, defaultMessage) {
+    function SubError(message) {
+        if (!(this instanceof SubError)) return new SubError(message);
+        notEnumerableProp(this, "message",
+            typeof message === "string" ? message : defaultMessage);
+        notEnumerableProp(this, "name", nameProperty);
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        } else {
+            Error.call(this);
+        }
+    }
+    inherits(SubError, Error);
+    return SubError;
+}
+
+var _TypeError, _RangeError;
+var Warning = subError("Warning", "warning");
+var CancellationError = subError("CancellationError", "cancellation error");
+var TimeoutError = subError("TimeoutError", "timeout error");
+var AggregateError = subError("AggregateError", "aggregate error");
+try {
+    _TypeError = TypeError;
+    _RangeError = RangeError;
+} catch(e) {
+    _TypeError = subError("TypeError", "type error");
+    _RangeError = subError("RangeError", "range error");
+}
+
+var methods = ("join pop push shift unshift slice filter forEach some " +
+    "every map indexOf lastIndexOf reduce reduceRight sort reverse").split(" ");
+
+for (var i = 0; i < methods.length; ++i) {
+    if (typeof Array.prototype[methods[i]] === "function") {
+        AggregateError.prototype[methods[i]] = Array.prototype[methods[i]];
+    }
+}
+
+es5.defineProperty(AggregateError.prototype, "length", {
+    value: 0,
+    configurable: false,
+    writable: true,
+    enumerable: true
+});
+AggregateError.prototype["isOperational"] = true;
+var level = 0;
+AggregateError.prototype.toString = function() {
+    var indent = Array(level * 4 + 1).join(" ");
+    var ret = "\n" + indent + "AggregateError of:" + "\n";
+    level++;
+    indent = Array(level * 4 + 1).join(" ");
+    for (var i = 0; i < this.length; ++i) {
+        var str = this[i] === this ? "[Circular AggregateError]" : this[i] + "";
+        var lines = str.split("\n");
+        for (var j = 0; j < lines.length; ++j) {
+            lines[j] = indent + lines[j];
+        }
+        str = lines.join("\n");
+        ret += str + "\n";
+    }
+    level--;
+    return ret;
+};
+
+function OperationalError(message) {
+    if (!(this instanceof OperationalError))
+        return new OperationalError(message);
+    notEnumerableProp(this, "name", "OperationalError");
+    notEnumerableProp(this, "message", message);
+    this.cause = message;
+    this["isOperational"] = true;
+
+    if (message instanceof Error) {
+        notEnumerableProp(this, "message", message.message);
+        notEnumerableProp(this, "stack", message.stack);
+    } else if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, this.constructor);
+    }
+
+}
+inherits(OperationalError, Error);
+
+var errorTypes = Error["__BluebirdErrorTypes__"];
+if (!errorTypes) {
+    errorTypes = Objectfreeze({
+        CancellationError: CancellationError,
+        TimeoutError: TimeoutError,
+        OperationalError: OperationalError,
+        RejectionError: OperationalError,
+        AggregateError: AggregateError
+    });
+    notEnumerableProp(Error, "__BluebirdErrorTypes__", errorTypes);
+}
+
+module.exports = {
+    Error: Error,
+    TypeError: _TypeError,
+    RangeError: _RangeError,
+    CancellationError: errorTypes.CancellationError,
+    OperationalError: errorTypes.OperationalError,
+    TimeoutError: errorTypes.TimeoutError,
+    AggregateError: errorTypes.AggregateError,
+    Warning: Warning
+};
+
+},{"./es5.js":11,"./util.js":23}],11:[function(_dereq_,module,exports){
+var isES5 = (function(){
+    "use strict";
+    return this === undefined;
+})();
+
+if (isES5) {
+    module.exports = {
+        freeze: Object.freeze,
+        defineProperty: Object.defineProperty,
+        getDescriptor: Object.getOwnPropertyDescriptor,
+        keys: Object.keys,
+        names: Object.getOwnPropertyNames,
+        getPrototypeOf: Object.getPrototypeOf,
+        isArray: Array.isArray,
+        isES5: isES5,
+        propertyIsWritable: function(obj, prop) {
+            var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
+            return !!(!descriptor || descriptor.writable || descriptor.set);
+        }
+    };
+} else {
+    var has = {}.hasOwnProperty;
+    var str = {}.toString;
+    var proto = {}.constructor.prototype;
+
+    var ObjectKeys = function (o) {
+        var ret = [];
+        for (var key in o) {
+            if (has.call(o, key)) {
+                ret.push(key);
+            }
+        }
+        return ret;
+    };
+
+    var ObjectGetDescriptor = function(o, key) {
+        return {value: o[key]};
+    };
+
+    var ObjectDefineProperty = function (o, key, desc) {
+        o[key] = desc.value;
+        return o;
+    };
+
+    var ObjectFreeze = function (obj) {
+        return obj;
+    };
+
+    var ObjectGetPrototypeOf = function (obj) {
+        try {
+            return Object(obj).constructor.prototype;
+        }
+        catch (e) {
+            return proto;
+        }
+    };
+
+    var ArrayIsArray = function (obj) {
+        try {
+            return str.call(obj) === "[object Array]";
+        }
+        catch(e) {
+            return false;
+        }
+    };
+
+    module.exports = {
+        isArray: ArrayIsArray,
+        keys: ObjectKeys,
+        names: ObjectKeys,
+        defineProperty: ObjectDefineProperty,
+        getDescriptor: ObjectGetDescriptor,
+        freeze: ObjectFreeze,
+        getPrototypeOf: ObjectGetPrototypeOf,
+        isES5: isES5,
+        propertyIsWritable: function() {
+            return true;
+        }
+    };
+}
+
+},{}],12:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(Promise, NEXT_FILTER, tryConvertToPromise) {
+var util = _dereq_("./util.js");
+var wrapsPrimitiveReceiver = util.wrapsPrimitiveReceiver;
+var isPrimitive = util.isPrimitive;
+var thrower = util.thrower;
+
+function returnThis() {
+    return this;
+}
+function throwThis() {
+    throw this;
+}
+function return$(r) {
+    return function() {
+        return r;
+    };
+}
+function throw$(r) {
+    return function() {
+        throw r;
+    };
+}
+function promisedFinally(ret, reasonOrValue, isFulfilled) {
+    var then;
+    if (wrapsPrimitiveReceiver && isPrimitive(reasonOrValue)) {
+        then = isFulfilled ? return$(reasonOrValue) : throw$(reasonOrValue);
+    } else {
+        then = isFulfilled ? returnThis : throwThis;
+    }
+    return ret._then(then, thrower, undefined, reasonOrValue, undefined);
+}
+
+function finallyHandler(reasonOrValue) {
+    var promise = this.promise;
+    var handler = this.handler;
+
+    var ret = promise._isBound()
+                    ? handler.call(promise._boundTo)
+                    : handler();
+
+    if (ret !== undefined) {
+        var maybePromise = tryConvertToPromise(ret, promise);
+        if (maybePromise instanceof Promise) {
+            maybePromise = maybePromise._target();
+            return promisedFinally(maybePromise, reasonOrValue,
+                                    promise.isFulfilled());
+        }
+    }
+
+    if (promise.isRejected()) {
+        NEXT_FILTER.e = reasonOrValue;
+        return NEXT_FILTER;
+    } else {
+        return reasonOrValue;
+    }
+}
+
+function tapHandler(value) {
+    var promise = this.promise;
+    var handler = this.handler;
+
+    var ret = promise._isBound()
+                    ? handler.call(promise._boundTo, value)
+                    : handler(value);
+
+    if (ret !== undefined) {
+        var maybePromise = tryConvertToPromise(ret, promise);
+        if (maybePromise instanceof Promise) {
+            maybePromise = maybePromise._target();
+            return promisedFinally(maybePromise, value, true);
+        }
+    }
+    return value;
+}
+
+Promise.prototype._passThroughHandler = function (handler, isFinally) {
+    if (typeof handler !== "function") return this.then();
+
+    var promiseAndHandler = {
+        promise: this,
+        handler: handler
+    };
+
+    return this._then(
+            isFinally ? finallyHandler : tapHandler,
+            isFinally ? finallyHandler : undefined, undefined,
+            promiseAndHandler, undefined);
+};
+
+Promise.prototype.lastly =
+Promise.prototype["finally"] = function (handler) {
+    return this._passThroughHandler(handler, true);
+};
+
+Promise.prototype.tap = function (handler) {
+    return this._passThroughHandler(handler, false);
+};
+};
+
+},{"./util.js":23}],13:[function(_dereq_,module,exports){
+"use strict";
+module.exports =
+function(Promise, PromiseArray, tryConvertToPromise, INTERNAL) {
+var util = _dereq_("./util.js");
+var canEvaluate = util.canEvaluate;
+var tryCatch = util.tryCatch;
+var errorObj = util.errorObj;
+var reject;
+
+if (!true) {
+if (canEvaluate) {
+    var thenCallback = function(i) {
+        return new Function("value", "holder", "                             \n\
+            'use strict';                                                    \n\
+            holder.pIndex = value;                                           \n\
+            holder.checkFulfillment(this);                                   \n\
+            ".replace(/Index/g, i));
+    };
+
+    var caller = function(count) {
+        var values = [];
+        for (var i = 1; i <= count; ++i) values.push("holder.p" + i);
+        return new Function("holder", "                                      \n\
+            'use strict';                                                    \n\
+            var callback = holder.fn;                                        \n\
+            return callback(values);                                         \n\
+            ".replace(/values/g, values.join(", ")));
+    };
+    var thenCallbacks = [];
+    var callers = [undefined];
+    for (var i = 1; i <= 5; ++i) {
+        thenCallbacks.push(thenCallback(i));
+        callers.push(caller(i));
+    }
+
+    var Holder = function(total, fn) {
+        this.p1 = this.p2 = this.p3 = this.p4 = this.p5 = null;
+        this.fn = fn;
+        this.total = total;
+        this.now = 0;
+    };
+
+    Holder.prototype.callers = callers;
+    Holder.prototype.checkFulfillment = function(promise) {
+        var now = this.now;
+        now++;
+        var total = this.total;
+        if (now >= total) {
+            var handler = this.callers[total];
+            promise._pushContext();
+            var ret = tryCatch(handler)(this);
+            promise._popContext();
+            if (ret === errorObj) {
+                promise._rejectCallback(ret.e, false, true);
+            } else {
+                promise._resolveCallback(ret);
+            }
+        } else {
+            this.now = now;
+        }
+    };
+
+    var reject = function (reason) {
+        this._reject(reason);
+    };
+}
+}
+
+Promise.join = function () {
+    var last = arguments.length - 1;
+    var fn;
+    if (last > 0 && typeof arguments[last] === "function") {
+        fn = arguments[last];
+        if (!true) {
+            if (last < 6 && canEvaluate) {
+                var ret = new Promise(INTERNAL);
+                ret._captureStackTrace();
+                var holder = new Holder(last, fn);
+                var callbacks = thenCallbacks;
+                for (var i = 0; i < last; ++i) {
+                    var maybePromise = tryConvertToPromise(arguments[i], ret);
+                    if (maybePromise instanceof Promise) {
+                        maybePromise = maybePromise._target();
+                        if (maybePromise._isPending()) {
+                            maybePromise._then(callbacks[i], reject,
+                                               undefined, ret, holder);
+                        } else if (maybePromise._isFulfilled()) {
+                            callbacks[i].call(ret,
+                                              maybePromise._value(), holder);
+                        } else {
+                            ret._reject(maybePromise._reason());
+                        }
+                    } else {
+                        callbacks[i].call(ret, maybePromise, holder);
+                    }
+                }
+                return ret;
+            }
+        }
+    }
+    var $_len = arguments.length;var args = new Array($_len); for(var $_i = 0; $_i < $_len; ++$_i) {args[$_i] = arguments[$_i];}
+    if (fn) args.pop();
+    var ret = new PromiseArray(args).promise();
+    return fn !== undefined ? ret.spread(fn) : ret;
+};
+
+};
+
+},{"./util.js":23}],14:[function(_dereq_,module,exports){
+"use strict";
+module.exports =
+function(Promise, INTERNAL, tryConvertToPromise, apiRejection) {
+var util = _dereq_("./util.js");
+var tryCatch = util.tryCatch;
+
+Promise.method = function (fn) {
+    if (typeof fn !== "function") {
+        throw new Promise.TypeError("fn must be a function\u000a\u000a    See http://goo.gl/916lJJ\u000a");
+    }
+    return function () {
+        var ret = new Promise(INTERNAL);
+        ret._captureStackTrace();
+        ret._pushContext();
+        var value = tryCatch(fn).apply(this, arguments);
+        ret._popContext();
+        ret._resolveFromSyncValue(value);
+        return ret;
+    };
+};
+
+Promise.attempt = Promise["try"] = function (fn, args, ctx) {
+    if (typeof fn !== "function") {
+        return apiRejection("fn must be a function\u000a\u000a    See http://goo.gl/916lJJ\u000a");
+    }
+    var ret = new Promise(INTERNAL);
+    ret._captureStackTrace();
+    ret._pushContext();
+    var value = util.isArray(args)
+        ? tryCatch(fn).apply(ctx, args)
+        : tryCatch(fn).call(ctx, args);
+    ret._popContext();
+    ret._resolveFromSyncValue(value);
+    return ret;
+};
+
+Promise.prototype._resolveFromSyncValue = function (value) {
+    if (value === util.errorObj) {
+        this._rejectCallback(value.e, false, true);
+    } else {
+        this._resolveCallback(value, true);
+    }
+};
+};
+
+},{"./util.js":23}],15:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(Promise, PromiseArray) {
+var util = _dereq_("./util.js");
+var async = _dereq_("./async.js");
+var tryCatch = util.tryCatch;
+var errorObj = util.errorObj;
+
+Promise.prototype.progressed = function (handler) {
+    return this._then(undefined, undefined, handler, undefined, undefined);
+};
+
+Promise.prototype._progress = function (progressValue) {
+    if (this._isFollowingOrFulfilledOrRejected()) return;
+    this._target()._progressUnchecked(progressValue);
+
+};
+
+Promise.prototype._progressHandlerAt = function (index) {
+    return index === 0
+        ? this._progressHandler0
+        : this[(index << 2) + index - 5 + 2];
+};
+
+Promise.prototype._doProgressWith = function (progression) {
+    var progressValue = progression.value;
+    var handler = progression.handler;
+    var promise = progression.promise;
+    var receiver = progression.receiver;
+
+    var ret = tryCatch(handler).call(receiver, progressValue);
+    if (ret === errorObj) {
+        if (ret.e != null &&
+            ret.e.name !== "StopProgressPropagation") {
+            var trace = util.canAttachTrace(ret.e)
+                ? ret.e : new Error(util.toString(ret.e));
+            promise._attachExtraTrace(trace);
+            promise._progress(ret.e);
+        }
+    } else if (ret instanceof Promise) {
+        ret._then(promise._progress, null, null, promise, undefined);
+    } else {
+        promise._progress(ret);
+    }
+};
+
+
+Promise.prototype._progressUnchecked = function (progressValue) {
+    var len = this._length();
+    var progress = this._progress;
+    for (var i = 0; i < len; i++) {
+        var handler = this._progressHandlerAt(i);
+        var promise = this._promiseAt(i);
+        if (!(promise instanceof Promise)) {
+            var receiver = this._receiverAt(i);
+            if (typeof handler === "function") {
+                handler.call(receiver, progressValue, promise);
+            } else if (receiver instanceof PromiseArray &&
+                       !receiver._isResolved()) {
+                receiver._promiseProgressed(progressValue, promise);
+            }
+            continue;
+        }
+
+        if (typeof handler === "function") {
+            async.invoke(this._doProgressWith, this, {
+                handler: handler,
+                promise: promise,
+                receiver: this._receiverAt(i),
+                value: progressValue
+            });
+        } else {
+            async.invoke(progress, promise, progressValue);
+        }
+    }
+};
+};
+
+},{"./async.js":1,"./util.js":23}],16:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function() {
+var makeSelfResolutionError = function () {
+    return new TypeError("circular promise resolution chain\u000a\u000a    See http://goo.gl/LhFpo0\u000a");
+};
+var reflect = function() {
+    return new Promise.PromiseInspection(this._target());
+};
+var apiRejection = function(msg) {
+    return Promise.reject(new TypeError(msg));
+};
+var util = _dereq_("./util.js");
+var async = _dereq_("./async.js");
+var errors = _dereq_("./errors.js");
+var TypeError = Promise.TypeError = errors.TypeError;
+Promise.RangeError = errors.RangeError;
+Promise.CancellationError = errors.CancellationError;
+Promise.TimeoutError = errors.TimeoutError;
+Promise.OperationalError = errors.OperationalError;
+Promise.RejectionError = errors.OperationalError;
+Promise.AggregateError = errors.AggregateError;
+var INTERNAL = function(){};
+var APPLY = {};
+var NEXT_FILTER = {e: null};
+var tryConvertToPromise = _dereq_("./thenables.js")(Promise, INTERNAL);
+var PromiseArray =
+    _dereq_("./promise_array.js")(Promise, INTERNAL,
+                                    tryConvertToPromise, apiRejection);
+var CapturedTrace = _dereq_("./captured_trace.js")();
+var isDebugging = _dereq_("./debuggability.js")(Promise, CapturedTrace);
+ /*jshint unused:false*/
+var createContext =
+    _dereq_("./context.js")(Promise, CapturedTrace, isDebugging);
+var CatchFilter = _dereq_("./catch_filter.js")(NEXT_FILTER);
+var PromiseResolver = _dereq_("./promise_resolver.js");
+var nodebackForPromise = PromiseResolver._nodebackForPromise;
+var errorObj = util.errorObj;
+var tryCatch = util.tryCatch;
+function Promise(resolver) {
+    if (typeof resolver !== "function") {
+        throw new TypeError("the promise constructor requires a resolver function\u000a\u000a    See http://goo.gl/EC22Yn\u000a");
+    }
+    if (this.constructor !== Promise) {
+        throw new TypeError("the promise constructor cannot be invoked directly\u000a\u000a    See http://goo.gl/KsIlge\u000a");
+    }
+    this._bitField = 0;
+    this._fulfillmentHandler0 = undefined;
+    this._rejectionHandler0 = undefined;
+    this._progressHandler0 = undefined;
+    this._promise0 = undefined;
+    this._receiver0 = undefined;
+    this._settledValue = undefined;
+    if (resolver !== INTERNAL) this._resolveFromResolver(resolver);
+}
+
+Promise.prototype.toString = function () {
+    return "[object Promise]";
+};
+
+Promise.prototype.caught = Promise.prototype["catch"] = function (fn) {
+    var len = arguments.length;
+    if (len > 1) {
+        var catchInstances = new Array(len - 1),
+            j = 0, i;
+        for (i = 0; i < len - 1; ++i) {
+            var item = arguments[i];
+            if (typeof item === "function") {
+                catchInstances[j++] = item;
+            } else {
+                return Promise.reject(
+                    new TypeError("Catch filter must inherit from Error or be a simple predicate function\u000a\u000a    See http://goo.gl/o84o68\u000a"));
+            }
+        }
+        catchInstances.length = j;
+        fn = arguments[i];
+        var catchFilter = new CatchFilter(catchInstances, fn, this);
+        return this._then(undefined, catchFilter.doFilter, undefined,
+            catchFilter, undefined);
+    }
+    return this._then(undefined, fn, undefined, undefined, undefined);
+};
+
+Promise.prototype.reflect = function () {
+    return this._then(reflect, reflect, undefined, this, undefined);
+};
+
+Promise.prototype.then = function (didFulfill, didReject, didProgress) {
+    if (isDebugging() && arguments.length > 0 &&
+        typeof didFulfill !== "function" &&
+        typeof didReject !== "function") {
+        var msg = ".then() only accepts functions but was passed: " +
+                util.classString(didFulfill);
+        if (arguments.length > 1) {
+            msg += ", " + util.classString(didReject);
+        }
+        this._warn(msg);
+    }
+    return this._then(didFulfill, didReject, didProgress,
+        undefined, undefined);
+};
+
+Promise.prototype.done = function (didFulfill, didReject, didProgress) {
+    var promise = this._then(didFulfill, didReject, didProgress,
+        undefined, undefined);
+    promise._setIsFinal();
+};
+
+Promise.prototype.spread = function (didFulfill, didReject) {
+    return this.all()._then(didFulfill, didReject, undefined, APPLY, undefined);
+};
+
+Promise.prototype.isCancellable = function () {
+    return !this.isResolved() &&
+        this._cancellable();
+};
+
+Promise.prototype.toJSON = function () {
+    var ret = {
+        isFulfilled: false,
+        isRejected: false,
+        fulfillmentValue: undefined,
+        rejectionReason: undefined
+    };
+    if (this.isFulfilled()) {
+        ret.fulfillmentValue = this.value();
+        ret.isFulfilled = true;
+    } else if (this.isRejected()) {
+        ret.rejectionReason = this.reason();
+        ret.isRejected = true;
+    }
+    return ret;
+};
+
+Promise.prototype.all = function () {
+    return new PromiseArray(this).promise();
+};
+
+Promise.prototype.error = function (fn) {
+    return this.caught(util.originatesFromRejection, fn);
+};
+
+Promise.is = function (val) {
+    return val instanceof Promise;
+};
+
+Promise.fromNode = function(fn) {
+    var ret = new Promise(INTERNAL);
+    var result = tryCatch(fn)(nodebackForPromise(ret));
+    if (result === errorObj) {
+        ret._rejectCallback(result.e, true, true);
+    }
+    return ret;
+};
+
+Promise.all = function (promises) {
+    return new PromiseArray(promises).promise();
+};
+
+Promise.defer = Promise.pending = function () {
+    var promise = new Promise(INTERNAL);
+    return new PromiseResolver(promise);
+};
+
+Promise.cast = function (obj) {
+    var ret = tryConvertToPromise(obj);
+    if (!(ret instanceof Promise)) {
+        var val = ret;
+        ret = new Promise(INTERNAL);
+        ret._fulfillUnchecked(val);
+    }
+    return ret;
+};
+
+Promise.resolve = Promise.fulfilled = Promise.cast;
+
+Promise.reject = Promise.rejected = function (reason) {
+    var ret = new Promise(INTERNAL);
+    ret._captureStackTrace();
+    ret._rejectCallback(reason, true);
+    return ret;
+};
+
+Promise.setScheduler = function(fn) {
+    if (typeof fn !== "function") throw new TypeError("fn must be a function\u000a\u000a    See http://goo.gl/916lJJ\u000a");
+    var prev = async._schedule;
+    async._schedule = fn;
+    return prev;
+};
+
+Promise.prototype._then = function (
+    didFulfill,
+    didReject,
+    didProgress,
+    receiver,
+    internalData
+) {
+    var haveInternalData = internalData !== undefined;
+    var ret = haveInternalData ? internalData : new Promise(INTERNAL);
+
+    if (!haveInternalData) {
+        ret._propagateFrom(this, 4 | 1);
+        ret._captureStackTrace();
+    }
+
+    var target = this._target();
+    if (target !== this) {
+        if (receiver === undefined) receiver = this._boundTo;
+        if (!haveInternalData) ret._setIsMigrated();
+    }
+
+    var callbackIndex =
+        target._addCallbacks(didFulfill, didReject, didProgress, ret, receiver);
+
+    if (target._isResolved() && !target._isSettlePromisesQueued()) {
+        async.invoke(
+            target._settlePromiseAtPostResolution, target, callbackIndex);
+    }
+
+    return ret;
+};
+
+Promise.prototype._settlePromiseAtPostResolution = function (index) {
+    if (this._isRejectionUnhandled()) this._unsetRejectionIsUnhandled();
+    this._settlePromiseAt(index);
+};
+
+Promise.prototype._length = function () {
+    return this._bitField & 131071;
+};
+
+Promise.prototype._isFollowingOrFulfilledOrRejected = function () {
+    return (this._bitField & 939524096) > 0;
+};
+
+Promise.prototype._isFollowing = function () {
+    return (this._bitField & 536870912) === 536870912;
+};
+
+Promise.prototype._setLength = function (len) {
+    this._bitField = (this._bitField & -131072) |
+        (len & 131071);
+};
+
+Promise.prototype._setFulfilled = function () {
+    this._bitField = this._bitField | 268435456;
+};
+
+Promise.prototype._setRejected = function () {
+    this._bitField = this._bitField | 134217728;
+};
+
+Promise.prototype._setFollowing = function () {
+    this._bitField = this._bitField | 536870912;
+};
+
+Promise.prototype._setIsFinal = function () {
+    this._bitField = this._bitField | 33554432;
+};
+
+Promise.prototype._isFinal = function () {
+    return (this._bitField & 33554432) > 0;
+};
+
+Promise.prototype._cancellable = function () {
+    return (this._bitField & 67108864) > 0;
+};
+
+Promise.prototype._setCancellable = function () {
+    this._bitField = this._bitField | 67108864;
+};
+
+Promise.prototype._unsetCancellable = function () {
+    this._bitField = this._bitField & (~67108864);
+};
+
+Promise.prototype._setIsMigrated = function () {
+    this._bitField = this._bitField | 4194304;
+};
+
+Promise.prototype._unsetIsMigrated = function () {
+    this._bitField = this._bitField & (~4194304);
+};
+
+Promise.prototype._isMigrated = function () {
+    return (this._bitField & 4194304) > 0;
+};
+
+Promise.prototype._receiverAt = function (index) {
+    var ret = index === 0
+        ? this._receiver0
+        : this[
+            index * 5 - 5 + 4];
+    if (ret === undefined && this._isBound()) {
+        return this._boundTo;
+    }
+    return ret;
+};
+
+Promise.prototype._promiseAt = function (index) {
+    return index === 0
+        ? this._promise0
+        : this[index * 5 - 5 + 3];
+};
+
+Promise.prototype._fulfillmentHandlerAt = function (index) {
+    return index === 0
+        ? this._fulfillmentHandler0
+        : this[index * 5 - 5 + 0];
+};
+
+Promise.prototype._rejectionHandlerAt = function (index) {
+    return index === 0
+        ? this._rejectionHandler0
+        : this[index * 5 - 5 + 1];
+};
+
+Promise.prototype._migrateCallbacks = function (follower, index) {
+    var fulfill = follower._fulfillmentHandlerAt(index);
+    var reject = follower._rejectionHandlerAt(index);
+    var progress = follower._progressHandlerAt(index);
+    var promise = follower._promiseAt(index);
+    var receiver = follower._receiverAt(index);
+    if (promise instanceof Promise) promise._setIsMigrated();
+    this._addCallbacks(fulfill, reject, progress, promise, receiver);
+};
+
+Promise.prototype._addCallbacks = function (
+    fulfill,
+    reject,
+    progress,
+    promise,
+    receiver
+) {
+    var index = this._length();
+
+    if (index >= 131071 - 5) {
+        index = 0;
+        this._setLength(0);
+    }
+
+    if (index === 0) {
+        this._promise0 = promise;
+        if (receiver !== undefined) this._receiver0 = receiver;
+        if (typeof fulfill === "function" && !this._isCarryingStackTrace())
+            this._fulfillmentHandler0 = fulfill;
+        if (typeof reject === "function") this._rejectionHandler0 = reject;
+        if (typeof progress === "function") this._progressHandler0 = progress;
+    } else {
+        var base = index * 5 - 5;
+        this[base + 3] = promise;
+        this[base + 4] = receiver;
+        if (typeof fulfill === "function")
+            this[base + 0] = fulfill;
+        if (typeof reject === "function")
+            this[base + 1] = reject;
+        if (typeof progress === "function")
+            this[base + 2] = progress;
+    }
+    this._setLength(index + 1);
+    return index;
+};
+
+Promise.prototype._setProxyHandlers = function (receiver, promiseSlotValue) {
+    var index = this._length();
+
+    if (index >= 131071 - 5) {
+        index = 0;
+        this._setLength(0);
+    }
+    if (index === 0) {
+        this._promise0 = promiseSlotValue;
+        this._receiver0 = receiver;
+    } else {
+        var base = index * 5 - 5;
+        this[base + 3] = promiseSlotValue;
+        this[base + 4] = receiver;
+    }
+    this._setLength(index + 1);
+};
+
+Promise.prototype._proxyPromiseArray = function (promiseArray, index) {
+    this._setProxyHandlers(promiseArray, index);
+};
+
+Promise.prototype._resolveCallback = function(value, shouldBind) {
+    if (this._isFollowingOrFulfilledOrRejected()) return;
+    if (value === this)
+        return this._rejectCallback(makeSelfResolutionError(), false, true);
+    var maybePromise = tryConvertToPromise(value, this);
+    if (!(maybePromise instanceof Promise)) return this._fulfill(value);
+
+    var propagationFlags = 1 | (shouldBind ? 4 : 0);
+    this._propagateFrom(maybePromise, propagationFlags);
+    var promise = maybePromise._target();
+    if (promise._isPending()) {
+        var len = this._length();
+        for (var i = 0; i < len; ++i) {
+            promise._migrateCallbacks(this, i);
+        }
+        this._setFollowing();
+        this._setLength(0);
+        this._setFollowee(promise);
+    } else if (promise._isFulfilled()) {
+        this._fulfillUnchecked(promise._value());
+    } else {
+        this._rejectUnchecked(promise._reason(),
+            promise._getCarriedStackTrace());
+    }
+};
+
+Promise.prototype._rejectCallback =
+function(reason, synchronous, shouldNotMarkOriginatingFromRejection) {
+    if (!shouldNotMarkOriginatingFromRejection) {
+        util.markAsOriginatingFromRejection(reason);
+    }
+    var trace = util.ensureErrorObject(reason);
+    var hasStack = trace === reason;
+    this._attachExtraTrace(trace, synchronous ? hasStack : false);
+    this._reject(reason, hasStack ? undefined : trace);
+};
+
+Promise.prototype._resolveFromResolver = function (resolver) {
+    var promise = this;
+    this._captureStackTrace();
+    this._pushContext();
+    var synchronous = true;
+    var r = tryCatch(resolver)(function(value) {
+        if (promise === null) return;
+        promise._resolveCallback(value);
+        promise = null;
+    }, function (reason) {
+        if (promise === null) return;
+        promise._rejectCallback(reason, synchronous);
+        promise = null;
+    });
+    synchronous = false;
+    this._popContext();
+
+    if (r !== undefined && r === errorObj && promise !== null) {
+        promise._rejectCallback(r.e, true, true);
+        promise = null;
+    }
+};
+
+Promise.prototype._settlePromiseFromHandler = function (
+    handler, receiver, value, promise
+) {
+    if (promise._isRejected()) return;
+    promise._pushContext();
+    var x;
+    if (receiver === APPLY && !this._isRejected()) {
+        x = tryCatch(handler).apply(this._boundTo, value);
+    } else {
+        x = tryCatch(handler).call(receiver, value);
+    }
+    promise._popContext();
+
+    if (x === errorObj || x === promise || x === NEXT_FILTER) {
+        var err = x === promise ? makeSelfResolutionError() : x.e;
+        promise._rejectCallback(err, false, true);
+    } else {
+        promise._resolveCallback(x);
+    }
+};
+
+Promise.prototype._target = function() {
+    var ret = this;
+    while (ret._isFollowing()) ret = ret._followee();
+    return ret;
+};
+
+Promise.prototype._followee = function() {
+    return this._rejectionHandler0;
+};
+
+Promise.prototype._setFollowee = function(promise) {
+    this._rejectionHandler0 = promise;
+};
+
+Promise.prototype._cleanValues = function () {
+    if (this._cancellable()) {
+        this._cancellationParent = undefined;
+    }
+};
+
+Promise.prototype._propagateFrom = function (parent, flags) {
+    if ((flags & 1) > 0 && parent._cancellable()) {
+        this._setCancellable();
+        this._cancellationParent = parent;
+    }
+    if ((flags & 4) > 0 && parent._isBound()) {
+        this._setBoundTo(parent._boundTo);
+    }
+};
+
+Promise.prototype._fulfill = function (value) {
+    if (this._isFollowingOrFulfilledOrRejected()) return;
+    this._fulfillUnchecked(value);
+};
+
+Promise.prototype._reject = function (reason, carriedStackTrace) {
+    if (this._isFollowingOrFulfilledOrRejected()) return;
+    this._rejectUnchecked(reason, carriedStackTrace);
+};
+
+Promise.prototype._settlePromiseAt = function (index) {
+    var promise = this._promiseAt(index);
+    var isPromise = promise instanceof Promise;
+
+    if (isPromise && promise._isMigrated()) {
+        promise._unsetIsMigrated();
+        return async.invoke(this._settlePromiseAt, this, index);
+    }
+    var handler = this._isFulfilled()
+        ? this._fulfillmentHandlerAt(index)
+        : this._rejectionHandlerAt(index);
+
+    var carriedStackTrace =
+        this._isCarryingStackTrace() ? this._getCarriedStackTrace() : undefined;
+    var value = this._settledValue;
+    var receiver = this._receiverAt(index);
+
+
+    this._clearCallbackDataAtIndex(index);
+
+    if (typeof handler === "function") {
+        if (!isPromise) {
+            handler.call(receiver, value, promise);
+        } else {
+            this._settlePromiseFromHandler(handler, receiver, value, promise);
+        }
+    } else if (receiver instanceof PromiseArray) {
+        if (!receiver._isResolved()) {
+            if (this._isFulfilled()) {
+                receiver._promiseFulfilled(value, promise);
+            }
+            else {
+                receiver._promiseRejected(value, promise);
+            }
+        }
+    } else if (isPromise) {
+        if (this._isFulfilled()) {
+            promise._fulfill(value);
+        } else {
+            promise._reject(value, carriedStackTrace);
+        }
+    }
+
+    if (index >= 4 && (index & 31) === 4)
+        async.invokeLater(this._setLength, this, 0);
+};
+
+Promise.prototype._clearCallbackDataAtIndex = function(index) {
+    if (index === 0) {
+        if (!this._isCarryingStackTrace()) {
+            this._fulfillmentHandler0 = undefined;
+        }
+        this._rejectionHandler0 =
+        this._progressHandler0 =
+        this._receiver0 =
+        this._promise0 = undefined;
+    } else {
+        var base = index * 5 - 5;
+        this[base + 3] =
+        this[base + 4] =
+        this[base + 0] =
+        this[base + 1] =
+        this[base + 2] = undefined;
+    }
+};
+
+Promise.prototype._isSettlePromisesQueued = function () {
+    return (this._bitField &
+            -1073741824) === -1073741824;
+};
+
+Promise.prototype._setSettlePromisesQueued = function () {
+    this._bitField = this._bitField | -1073741824;
+};
+
+Promise.prototype._unsetSettlePromisesQueued = function () {
+    this._bitField = this._bitField & (~-1073741824);
+};
+
+Promise.prototype._queueSettlePromises = function() {
+    async.settlePromises(this);
+    this._setSettlePromisesQueued();
+};
+
+Promise.prototype._fulfillUnchecked = function (value) {
+    if (value === this) {
+        var err = makeSelfResolutionError();
+        this._attachExtraTrace(err);
+        return this._rejectUnchecked(err, undefined);
+    }
+    this._setFulfilled();
+    this._settledValue = value;
+    this._cleanValues();
+
+    if (this._length() > 0) {
+        this._queueSettlePromises();
+    }
+};
+
+Promise.prototype._rejectUncheckedCheckError = function (reason) {
+    var trace = util.ensureErrorObject(reason);
+    this._rejectUnchecked(reason, trace === reason ? undefined : trace);
+};
+
+Promise.prototype._rejectUnchecked = function (reason, trace) {
+    if (reason === this) {
+        var err = makeSelfResolutionError();
+        this._attachExtraTrace(err);
+        return this._rejectUnchecked(err);
+    }
+    this._setRejected();
+    this._settledValue = reason;
+    this._cleanValues();
+
+    if (this._isFinal()) {
+        async.throwLater(function(e) {
+            if ("stack" in e) {
+                async.invokeFirst(
+                    CapturedTrace.unhandledRejection, undefined, e);
+            }
+            throw e;
+        }, trace === undefined ? reason : trace);
+        return;
+    }
+
+    if (trace !== undefined && trace !== reason) {
+        this._setCarriedStackTrace(trace);
+    }
+
+    if (this._length() > 0) {
+        this._queueSettlePromises();
+    } else {
+        this._ensurePossibleRejectionHandled();
+    }
+};
+
+Promise.prototype._settlePromises = function () {
+    this._unsetSettlePromisesQueued();
+    var len = this._length();
+    for (var i = 0; i < len; i++) {
+        this._settlePromiseAt(i);
+    }
+};
+
+Promise._makeSelfResolutionError = makeSelfResolutionError;
+_dereq_("./progress.js")(Promise, PromiseArray);
+_dereq_("./method.js")(Promise, INTERNAL, tryConvertToPromise, apiRejection);
+_dereq_("./bind.js")(Promise, INTERNAL, tryConvertToPromise);
+_dereq_("./finally.js")(Promise, NEXT_FILTER, tryConvertToPromise);
+_dereq_("./direct_resolve.js")(Promise);
+_dereq_("./synchronous_inspection.js")(Promise);
+_dereq_("./join.js")(Promise, PromiseArray, tryConvertToPromise, INTERNAL);
+Promise.Promise = Promise;
+_dereq_('./cancel.js')(Promise);
+                                                         
+    util.toFastProperties(Promise);                                          
+    util.toFastProperties(Promise.prototype);                                
+    function fillTypes(value) {                                              
+        var p = new Promise(INTERNAL);                                       
+        p._fulfillmentHandler0 = value;                                      
+        p._rejectionHandler0 = value;                                        
+        p._progressHandler0 = value;                                         
+        p._promise0 = value;                                                 
+        p._receiver0 = value;                                                
+        p._settledValue = value;                                             
+    }                                                                        
+    // Complete slack tracking, opt out of field-type tracking and           
+    // stabilize map                                                         
+    fillTypes({a: 1});                                                       
+    fillTypes({b: 2});                                                       
+    fillTypes({c: 3});                                                       
+    fillTypes(1);                                                            
+    fillTypes(function(){});                                                 
+    fillTypes(undefined);                                                    
+    fillTypes(false);                                                        
+    fillTypes(new Promise(INTERNAL));                                        
+    CapturedTrace.setBounds(async.firstLineError, util.lastLineError);       
+    return Promise;                                                          
+
+};
+
+},{"./async.js":1,"./bind.js":2,"./cancel.js":4,"./captured_trace.js":5,"./catch_filter.js":6,"./context.js":7,"./debuggability.js":8,"./direct_resolve.js":9,"./errors.js":10,"./finally.js":12,"./join.js":13,"./method.js":14,"./progress.js":15,"./promise_array.js":17,"./promise_resolver.js":18,"./synchronous_inspection.js":21,"./thenables.js":22,"./util.js":23}],17:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(Promise, INTERNAL, tryConvertToPromise,
+    apiRejection) {
+var util = _dereq_("./util.js");
+var isArray = util.isArray;
+
+function toResolutionValue(val) {
+    switch(val) {
+    case -2: return [];
+    case -3: return {};
+    }
+}
+
+function PromiseArray(values) {
+    var promise = this._promise = new Promise(INTERNAL);
+    var parent;
+    if (values instanceof Promise) {
+        parent = values;
+        promise._propagateFrom(parent, 1 | 4);
+    }
+    this._values = values;
+    this._length = 0;
+    this._totalResolved = 0;
+    this._init(undefined, -2);
+}
+PromiseArray.prototype.length = function () {
+    return this._length;
+};
+
+PromiseArray.prototype.promise = function () {
+    return this._promise;
+};
+
+PromiseArray.prototype._init = function init(_, resolveValueIfEmpty) {
+    var values = tryConvertToPromise(this._values, this._promise);
+    if (values instanceof Promise) {
+        values = values._target();
+        this._values = values;
+        if (values._isFulfilled()) {
+            values = values._value();
+            if (!isArray(values)) {
+                var err = new Promise.TypeError("expecting an array, a promise or a thenable\u000a\u000a    See http://goo.gl/s8MMhc\u000a");
+                this.__hardReject__(err);
+                return;
+            }
+        } else if (values._isPending()) {
+            values._then(
+                init,
+                this._reject,
+                undefined,
+                this,
+                resolveValueIfEmpty
+           );
+            return;
+        } else {
+            this._reject(values._reason());
+            return;
+        }
+    } else if (!isArray(values)) {
+        this._promise._reject(apiRejection("expecting an array, a promise or a thenable\u000a\u000a    See http://goo.gl/s8MMhc\u000a")._reason());
+        return;
+    }
+
+    if (values.length === 0) {
+        if (resolveValueIfEmpty === -5) {
+            this._resolveEmptyArray();
+        }
+        else {
+            this._resolve(toResolutionValue(resolveValueIfEmpty));
+        }
+        return;
+    }
+    var len = this.getActualLength(values.length);
+    this._length = len;
+    this._values = this.shouldCopyValues() ? new Array(len) : this._values;
+    var promise = this._promise;
+    for (var i = 0; i < len; ++i) {
+        var isResolved = this._isResolved();
+        var maybePromise = tryConvertToPromise(values[i], promise);
+        if (maybePromise instanceof Promise) {
+            maybePromise = maybePromise._target();
+            if (isResolved) {
+                maybePromise._unsetRejectionIsUnhandled();
+            } else if (maybePromise._isPending()) {
+                maybePromise._proxyPromiseArray(this, i);
+            } else if (maybePromise._isFulfilled()) {
+                this._promiseFulfilled(maybePromise._value(), i);
+            } else {
+                this._promiseRejected(maybePromise._reason(), i);
+            }
+        } else if (!isResolved) {
+            this._promiseFulfilled(maybePromise, i);
+        }
+    }
+};
+
+PromiseArray.prototype._isResolved = function () {
+    return this._values === null;
+};
+
+PromiseArray.prototype._resolve = function (value) {
+    this._values = null;
+    this._promise._fulfill(value);
+};
+
+PromiseArray.prototype.__hardReject__ =
+PromiseArray.prototype._reject = function (reason) {
+    this._values = null;
+    this._promise._rejectCallback(reason, false, true);
+};
+
+PromiseArray.prototype._promiseProgressed = function (progressValue, index) {
+    this._promise._progress({
+        index: index,
+        value: progressValue
+    });
+};
+
+
+PromiseArray.prototype._promiseFulfilled = function (value, index) {
+    this._values[index] = value;
+    var totalResolved = ++this._totalResolved;
+    if (totalResolved >= this._length) {
+        this._resolve(this._values);
+    }
+};
+
+PromiseArray.prototype._promiseRejected = function (reason, index) {
+    this._totalResolved++;
+    this._reject(reason);
+};
+
+PromiseArray.prototype.shouldCopyValues = function () {
+    return true;
+};
+
+PromiseArray.prototype.getActualLength = function (len) {
+    return len;
+};
+
+return PromiseArray;
+};
+
+},{"./util.js":23}],18:[function(_dereq_,module,exports){
+"use strict";
+var util = _dereq_("./util.js");
+var maybeWrapAsError = util.maybeWrapAsError;
+var errors = _dereq_("./errors.js");
+var TimeoutError = errors.TimeoutError;
+var OperationalError = errors.OperationalError;
+var haveGetters = util.haveGetters;
+var es5 = _dereq_("./es5.js");
+
+function isUntypedError(obj) {
+    return obj instanceof Error &&
+        es5.getPrototypeOf(obj) === Error.prototype;
+}
+
+var rErrorKey = /^(?:name|message|stack|cause)$/;
+function wrapAsOperationalError(obj) {
+    var ret;
+    if (isUntypedError(obj)) {
+        ret = new OperationalError(obj);
+        ret.name = obj.name;
+        ret.message = obj.message;
+        ret.stack = obj.stack;
+        var keys = es5.keys(obj);
+        for (var i = 0; i < keys.length; ++i) {
+            var key = keys[i];
+            if (!rErrorKey.test(key)) {
+                ret[key] = obj[key];
+            }
+        }
+        return ret;
+    }
+    util.markAsOriginatingFromRejection(obj);
+    return obj;
+}
+
+function nodebackForPromise(promise) {
+    return function(err, value) {
+        if (promise === null) return;
+
+        if (err) {
+            var wrapped = wrapAsOperationalError(maybeWrapAsError(err));
+            promise._attachExtraTrace(wrapped);
+            promise._reject(wrapped);
+        } else if (arguments.length > 2) {
+            var $_len = arguments.length;var args = new Array($_len - 1); for(var $_i = 1; $_i < $_len; ++$_i) {args[$_i - 1] = arguments[$_i];}
+            promise._fulfill(args);
+        } else {
+            promise._fulfill(value);
+        }
+
+        promise = null;
+    };
+}
+
+
+var PromiseResolver;
+if (!haveGetters) {
+    PromiseResolver = function (promise) {
+        this.promise = promise;
+        this.asCallback = nodebackForPromise(promise);
+        this.callback = this.asCallback;
+    };
+}
+else {
+    PromiseResolver = function (promise) {
+        this.promise = promise;
+    };
+}
+if (haveGetters) {
+    var prop = {
+        get: function() {
+            return nodebackForPromise(this.promise);
+        }
+    };
+    es5.defineProperty(PromiseResolver.prototype, "asCallback", prop);
+    es5.defineProperty(PromiseResolver.prototype, "callback", prop);
+}
+
+PromiseResolver._nodebackForPromise = nodebackForPromise;
+
+PromiseResolver.prototype.toString = function () {
+    return "[object PromiseResolver]";
+};
+
+PromiseResolver.prototype.resolve =
+PromiseResolver.prototype.fulfill = function (value) {
+    if (!(this instanceof PromiseResolver)) {
+        throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.\u000a\u000a    See http://goo.gl/sdkXL9\u000a");
+    }
+    this.promise._resolveCallback(value);
+};
+
+PromiseResolver.prototype.reject = function (reason) {
+    if (!(this instanceof PromiseResolver)) {
+        throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.\u000a\u000a    See http://goo.gl/sdkXL9\u000a");
+    }
+    this.promise._rejectCallback(reason);
+};
+
+PromiseResolver.prototype.progress = function (value) {
+    if (!(this instanceof PromiseResolver)) {
+        throw new TypeError("Illegal invocation, resolver resolve/reject must be called within a resolver context. Consider using the promise constructor instead.\u000a\u000a    See http://goo.gl/sdkXL9\u000a");
+    }
+    this.promise._progress(value);
+};
+
+PromiseResolver.prototype.cancel = function (err) {
+    this.promise.cancel(err);
+};
+
+PromiseResolver.prototype.timeout = function () {
+    this.reject(new TimeoutError("timeout"));
+};
+
+PromiseResolver.prototype.isResolved = function () {
+    return this.promise.isResolved();
+};
+
+PromiseResolver.prototype.toJSON = function () {
+    return this.promise.toJSON();
+};
+
+module.exports = PromiseResolver;
+
+},{"./errors.js":10,"./es5.js":11,"./util.js":23}],19:[function(_dereq_,module,exports){
+"use strict";
+function arrayMove(src, srcIndex, dst, dstIndex, len) {
+    for (var j = 0; j < len; ++j) {
+        dst[j + dstIndex] = src[j + srcIndex];
+        src[j + srcIndex] = void 0;
+    }
+}
+
+function Queue(capacity) {
+    this._capacity = capacity;
+    this._length = 0;
+    this._front = 0;
+}
+
+Queue.prototype._willBeOverCapacity = function (size) {
+    return this._capacity < size;
+};
+
+Queue.prototype._pushOne = function (arg) {
+    var length = this.length();
+    this._checkCapacity(length + 1);
+    var i = (this._front + length) & (this._capacity - 1);
+    this[i] = arg;
+    this._length = length + 1;
+};
+
+Queue.prototype._unshiftOne = function(value) {
+    var capacity = this._capacity;
+    this._checkCapacity(this.length() + 1);
+    var front = this._front;
+    var i = (((( front - 1 ) &
+                    ( capacity - 1) ) ^ capacity ) - capacity );
+    this[i] = value;
+    this._front = i;
+    this._length = this.length() + 1;
+};
+
+Queue.prototype.unshift = function(fn, receiver, arg) {
+    this._unshiftOne(arg);
+    this._unshiftOne(receiver);
+    this._unshiftOne(fn);
+};
+
+Queue.prototype.push = function (fn, receiver, arg) {
+    var length = this.length() + 3;
+    if (this._willBeOverCapacity(length)) {
+        this._pushOne(fn);
+        this._pushOne(receiver);
+        this._pushOne(arg);
+        return;
+    }
+    var j = this._front + length - 3;
+    this._checkCapacity(length);
+    var wrapMask = this._capacity - 1;
+    this[(j + 0) & wrapMask] = fn;
+    this[(j + 1) & wrapMask] = receiver;
+    this[(j + 2) & wrapMask] = arg;
+    this._length = length;
+};
+
+Queue.prototype.shift = function () {
+    var front = this._front,
+        ret = this[front];
+
+    this[front] = undefined;
+    this._front = (front + 1) & (this._capacity - 1);
+    this._length--;
+    return ret;
+};
+
+Queue.prototype.length = function () {
+    return this._length;
+};
+
+Queue.prototype._checkCapacity = function (size) {
+    if (this._capacity < size) {
+        this._resizeTo(this._capacity << 1);
+    }
+};
+
+Queue.prototype._resizeTo = function (capacity) {
+    var oldCapacity = this._capacity;
+    this._capacity = capacity;
+    var front = this._front;
+    var length = this._length;
+    var moveItemsCount = (front + length) & (oldCapacity - 1);
+    arrayMove(this, 0, this, oldCapacity, moveItemsCount);
+};
+
+module.exports = Queue;
+
+},{}],20:[function(_dereq_,module,exports){
+"use strict";
+var schedule;
+var noAsyncScheduler = function() {
+    throw new Error("No async scheduler available\u000a\u000a    See http://goo.gl/m3OTXk\u000a");
+};
+if (_dereq_("./util.js").isNode) {
+    var version = process.versions.node.split(".").map(Number);
+    schedule = (version[0] === 0 && version[1] > 10) || (version[0] > 0)
+        ? function(fn) { global.setImmediate(fn); } : process.nextTick;
+
+    if (!schedule) {
+        if (typeof setImmediate !== "undefined") {
+            schedule = setImmediate;
+        } else if (typeof setTimeout !== "undefined") {
+            schedule = setTimeout;
+        } else {
+            schedule = noAsyncScheduler;
+        }
+    }
+} else if (typeof MutationObserver !== "undefined") {
+    schedule = function(fn) {
+        var div = document.createElement("div");
+        var observer = new MutationObserver(fn);
+        observer.observe(div, {attributes: true});
+        return function() { div.classList.toggle("foo"); };
+    };
+    schedule.isStatic = true;
+} else if (typeof setImmediate !== "undefined") {
+    schedule = function (fn) {
+        setImmediate(fn);
+    };
+} else if (typeof setTimeout !== "undefined") {
+    schedule = function (fn) {
+        setTimeout(fn, 0);
+    };
+} else {
+    schedule = noAsyncScheduler;
+}
+module.exports = schedule;
+
+},{"./util.js":23}],21:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(Promise) {
+function PromiseInspection(promise) {
+    if (promise !== undefined) {
+        promise = promise._target();
+        this._bitField = promise._bitField;
+        this._settledValue = promise._settledValue;
+    }
+    else {
+        this._bitField = 0;
+        this._settledValue = undefined;
+    }
+}
+
+PromiseInspection.prototype.value = function () {
+    if (!this.isFulfilled()) {
+        throw new TypeError("cannot get fulfillment value of a non-fulfilled promise\u000a\u000a    See http://goo.gl/hc1DLj\u000a");
+    }
+    return this._settledValue;
+};
+
+PromiseInspection.prototype.error =
+PromiseInspection.prototype.reason = function () {
+    if (!this.isRejected()) {
+        throw new TypeError("cannot get rejection reason of a non-rejected promise\u000a\u000a    See http://goo.gl/hPuiwB\u000a");
+    }
+    return this._settledValue;
+};
+
+PromiseInspection.prototype.isFulfilled =
+Promise.prototype._isFulfilled = function () {
+    return (this._bitField & 268435456) > 0;
+};
+
+PromiseInspection.prototype.isRejected =
+Promise.prototype._isRejected = function () {
+    return (this._bitField & 134217728) > 0;
+};
+
+PromiseInspection.prototype.isPending =
+Promise.prototype._isPending = function () {
+    return (this._bitField & 402653184) === 0;
+};
+
+PromiseInspection.prototype.isResolved =
+Promise.prototype._isResolved = function () {
+    return (this._bitField & 402653184) > 0;
+};
+
+Promise.prototype.isPending = function() {
+    return this._target()._isPending();
+};
+
+Promise.prototype.isRejected = function() {
+    return this._target()._isRejected();
+};
+
+Promise.prototype.isFulfilled = function() {
+    return this._target()._isFulfilled();
+};
+
+Promise.prototype.isResolved = function() {
+    return this._target()._isResolved();
+};
+
+Promise.prototype._value = function() {
+    return this._settledValue;
+};
+
+Promise.prototype._reason = function() {
+    this._unsetRejectionIsUnhandled();
+    return this._settledValue;
+};
+
+Promise.prototype.value = function() {
+    var target = this._target();
+    if (!target.isFulfilled()) {
+        throw new TypeError("cannot get fulfillment value of a non-fulfilled promise\u000a\u000a    See http://goo.gl/hc1DLj\u000a");
+    }
+    return target._settledValue;
+};
+
+Promise.prototype.reason = function() {
+    var target = this._target();
+    if (!target.isRejected()) {
+        throw new TypeError("cannot get rejection reason of a non-rejected promise\u000a\u000a    See http://goo.gl/hPuiwB\u000a");
+    }
+    target._unsetRejectionIsUnhandled();
+    return target._settledValue;
+};
+
+
+Promise.PromiseInspection = PromiseInspection;
+};
+
+},{}],22:[function(_dereq_,module,exports){
+"use strict";
+module.exports = function(Promise, INTERNAL) {
+var util = _dereq_("./util.js");
+var errorObj = util.errorObj;
+var isObject = util.isObject;
+
+function tryConvertToPromise(obj, context) {
+    if (isObject(obj)) {
+        if (obj instanceof Promise) {
+            return obj;
+        }
+        else if (isAnyBluebirdPromise(obj)) {
+            var ret = new Promise(INTERNAL);
+            obj._then(
+                ret._fulfillUnchecked,
+                ret._rejectUncheckedCheckError,
+                ret._progressUnchecked,
+                ret,
+                null
+            );
+            return ret;
+        }
+        var then = util.tryCatch(getThen)(obj);
+        if (then === errorObj) {
+            if (context) context._pushContext();
+            var ret = Promise.reject(then.e);
+            if (context) context._popContext();
+            return ret;
+        } else if (typeof then === "function") {
+            return doThenable(obj, then, context);
+        }
+    }
+    return obj;
+}
+
+function getThen(obj) {
+    return obj.then;
+}
+
+var hasProp = {}.hasOwnProperty;
+function isAnyBluebirdPromise(obj) {
+    return hasProp.call(obj, "_promise0");
+}
+
+function doThenable(x, then, context) {
+    var promise = new Promise(INTERNAL);
+    var ret = promise;
+    if (context) context._pushContext();
+    promise._captureStackTrace();
+    if (context) context._popContext();
+    var synchronous = true;
+    var result = util.tryCatch(then).call(x,
+                                        resolveFromThenable,
+                                        rejectFromThenable,
+                                        progressFromThenable);
+    synchronous = false;
+    if (promise && result === errorObj) {
+        promise._rejectCallback(result.e, true, true);
+        promise = null;
+    }
+
+    function resolveFromThenable(value) {
+        if (!promise) return;
+        if (x === value) {
+            promise._rejectCallback(
+                Promise._makeSelfResolutionError(), false, true);
+        } else {
+            promise._resolveCallback(value);
+        }
+        promise = null;
+    }
+
+    function rejectFromThenable(reason) {
+        if (!promise) return;
+        promise._rejectCallback(reason, synchronous, true);
+        promise = null;
+    }
+
+    function progressFromThenable(value) {
+        if (!promise) return;
+        if (typeof promise._progress === "function") {
+            promise._progress(value);
+        }
+    }
+    return ret;
+}
+
+return tryConvertToPromise;
+};
+
+},{"./util.js":23}],23:[function(_dereq_,module,exports){
+"use strict";
+var es5 = _dereq_("./es5.js");
+var canEvaluate = typeof navigator == "undefined";
+var haveGetters = (function(){
+    try {
+        var o = {};
+        es5.defineProperty(o, "f", {
+            get: function () {
+                return 3;
+            }
+        });
+        return o.f === 3;
+    }
+    catch (e) {
+        return false;
+    }
+
+})();
+
+var errorObj = {e: {}};
+var tryCatchTarget;
+function tryCatcher() {
+    try {
+        return tryCatchTarget.apply(this, arguments);
+    } catch (e) {
+        errorObj.e = e;
+        return errorObj;
+    }
+}
+function tryCatch(fn) {
+    tryCatchTarget = fn;
+    return tryCatcher;
+}
+
+var inherits = function(Child, Parent) {
+    var hasProp = {}.hasOwnProperty;
+
+    function T() {
+        this.constructor = Child;
+        this.constructor$ = Parent;
+        for (var propertyName in Parent.prototype) {
+            if (hasProp.call(Parent.prototype, propertyName) &&
+                propertyName.charAt(propertyName.length-1) !== "$"
+           ) {
+                this[propertyName + "$"] = Parent.prototype[propertyName];
+            }
+        }
+    }
+    T.prototype = Parent.prototype;
+    Child.prototype = new T();
+    return Child.prototype;
+};
+
+
+function isPrimitive(val) {
+    return val == null || val === true || val === false ||
+        typeof val === "string" || typeof val === "number";
+
+}
+
+function isObject(value) {
+    return !isPrimitive(value);
+}
+
+function maybeWrapAsError(maybeError) {
+    if (!isPrimitive(maybeError)) return maybeError;
+
+    return new Error(safeToString(maybeError));
+}
+
+function withAppended(target, appendee) {
+    var len = target.length;
+    var ret = new Array(len + 1);
+    var i;
+    for (i = 0; i < len; ++i) {
+        ret[i] = target[i];
+    }
+    ret[i] = appendee;
+    return ret;
+}
+
+function getDataPropertyOrDefault(obj, key, defaultValue) {
+    if (es5.isES5) {
+        var desc = Object.getOwnPropertyDescriptor(obj, key);
+        if (desc != null) {
+            return desc.get == null && desc.set == null
+                    ? desc.value
+                    : defaultValue;
+        }
+    } else {
+        return {}.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
+    }
+}
+
+function notEnumerableProp(obj, name, value) {
+    if (isPrimitive(obj)) return obj;
+    var descriptor = {
+        value: value,
+        configurable: true,
+        enumerable: false,
+        writable: true
+    };
+    es5.defineProperty(obj, name, descriptor);
+    return obj;
+}
+
+
+var wrapsPrimitiveReceiver = (function() {
+    return this !== "string";
+}).call("string");
+
+function thrower(r) {
+    throw r;
+}
+
+var inheritedDataKeys = (function() {
+    if (es5.isES5) {
+        var oProto = Object.prototype;
+        var getKeys = Object.getOwnPropertyNames;
+        return function(obj) {
+            var ret = [];
+            var visitedKeys = Object.create(null);
+            while (obj != null && obj !== oProto) {
+                var keys;
+                try {
+                    keys = getKeys(obj);
+                } catch (e) {
+                    return ret;
+                }
+                for (var i = 0; i < keys.length; ++i) {
+                    var key = keys[i];
+                    if (visitedKeys[key]) continue;
+                    visitedKeys[key] = true;
+                    var desc = Object.getOwnPropertyDescriptor(obj, key);
+                    if (desc != null && desc.get == null && desc.set == null) {
+                        ret.push(key);
+                    }
+                }
+                obj = es5.getPrototypeOf(obj);
+            }
+            return ret;
+        };
+    } else {
+        return function(obj) {
+            var ret = [];
+            /*jshint forin:false */
+            for (var key in obj) {
+                ret.push(key);
+            }
+            return ret;
+        };
+    }
+
+})();
+
+function isClass(fn) {
+    try {
+        if (typeof fn === "function") {
+            var keys = es5.names(fn.prototype);
+            if (es5.isES5) return keys.length > 1;
+            return keys.length > 0 &&
+                   !(keys.length === 1 && keys[0] === "constructor");
+        }
+        return false;
+    } catch (e) {
+        return false;
+    }
+}
+
+function toFastProperties(obj) {
+    /*jshint -W027,-W055,-W031*/
+    function f() {}
+    f.prototype = obj;
+    var l = 8;
+    while (l--) new f();
+    return obj;
+    eval(obj);
+}
+
+var rident = /^[a-z$_][a-z$_0-9]*$/i;
+function isIdentifier(str) {
+    return rident.test(str);
+}
+
+function filledRange(count, prefix, suffix) {
+    var ret = new Array(count);
+    for(var i = 0; i < count; ++i) {
+        ret[i] = prefix + i + suffix;
+    }
+    return ret;
+}
+
+function safeToString(obj) {
+    try {
+        return obj + "";
+    } catch (e) {
+        return "[no string representation]";
+    }
+}
+
+function markAsOriginatingFromRejection(e) {
+    try {
+        notEnumerableProp(e, "isOperational", true);
+    }
+    catch(ignore) {}
+}
+
+function originatesFromRejection(e) {
+    if (e == null) return false;
+    return ((e instanceof Error["__BluebirdErrorTypes__"].OperationalError) ||
+        e["isOperational"] === true);
+}
+
+function canAttachTrace(obj) {
+    return obj instanceof Error && es5.propertyIsWritable(obj, "stack");
+}
+
+var ensureErrorObject = (function() {
+    if (!("stack" in new Error())) {
+        return function(value) {
+            if (canAttachTrace(value)) return value;
+            try {throw new Error(safeToString(value));}
+            catch(err) {return err;}
+        };
+    } else {
+        return function(value) {
+            if (canAttachTrace(value)) return value;
+            return new Error(safeToString(value));
+        };
+    }
+})();
+
+function classString(obj) {
+    return {}.toString.call(obj);
+}
+
+function copyDescriptors(from, to, filter) {
+    var keys = es5.names(from);
+    for (var i = 0; i < keys.length; ++i) {
+        var key = keys[i];
+        if (filter(key)) {
+            es5.defineProperty(to, key, es5.getDescriptor(from, key));
+        }
+    }
+}
+
+var ret = {
+    isClass: isClass,
+    isIdentifier: isIdentifier,
+    inheritedDataKeys: inheritedDataKeys,
+    getDataPropertyOrDefault: getDataPropertyOrDefault,
+    thrower: thrower,
+    isArray: es5.isArray,
+    haveGetters: haveGetters,
+    notEnumerableProp: notEnumerableProp,
+    isPrimitive: isPrimitive,
+    isObject: isObject,
+    canEvaluate: canEvaluate,
+    errorObj: errorObj,
+    tryCatch: tryCatch,
+    inherits: inherits,
+    withAppended: withAppended,
+    maybeWrapAsError: maybeWrapAsError,
+    wrapsPrimitiveReceiver: wrapsPrimitiveReceiver,
+    toFastProperties: toFastProperties,
+    filledRange: filledRange,
+    toString: safeToString,
+    canAttachTrace: canAttachTrace,
+    ensureErrorObject: ensureErrorObject,
+    originatesFromRejection: originatesFromRejection,
+    markAsOriginatingFromRejection: markAsOriginatingFromRejection,
+    classString: classString,
+    copyDescriptors: copyDescriptors,
+    hasDevTools: typeof chrome !== "undefined" && chrome &&
+                 typeof chrome.loadTimes === "function",
+    isNode: typeof process !== "undefined" &&
+        classString(process).toLowerCase() === "[object process]"
+};
+try {throw new Error(); } catch (e) {ret.lastLineError = e;}
+module.exports = ret;
+
+},{"./es5.js":11}],24:[function(_dereq_,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      }
+      throw TypeError('Uncaught, unspecified "error" event.');
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        len = arguments.length;
+        args = new Array(len - 1);
+        for (i = 1; i < len; i++)
+          args[i - 1] = arguments[i];
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    len = arguments.length;
+    args = new Array(len - 1);
+    for (i = 1; i < len; i++)
+      args[i - 1] = arguments[i];
+
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    var m;
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  var ret;
+  if (!emitter._events || !emitter._events[type])
+    ret = 0;
+  else if (isFunction(emitter._events[type]))
+    ret = 1;
+  else
+    ret = emitter._events[type].length;
+  return ret;
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+},{}]},{},[3])(3)
+});                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }

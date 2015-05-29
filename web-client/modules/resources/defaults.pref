@@ -1,8 +1,8 @@
 {
   "/plugins": {
-    "edit/content/imageViewerPlugin.html": true,
-    "plugins/pageLinksPlugin.html": true,
-    "plugins/webEditingPlugin.html": true,
+    "/imageViewerPlugin.html": true,
+    "/pageLinksPlugin.html": true,
+    "/webEditingPlugin.html": true,
     "/fluxPlugin.html": true
   },
   "/settingsContainer": {

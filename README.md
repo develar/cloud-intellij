@@ -38,8 +38,7 @@ Docker hub is used, see [cloudintellij](https://registry.hub.docker.com/repos/cl
 `docker push cloudintellij/mq-auth`
 
 ## flux-web
-`docker build -t cloudintellij/flux-web web-client`
-`docker push cloudintellij/flux-web`
+`(cd web-client && exec npm run push)`
 
 Service will be redeployed automatically after push (Tutum [web hook](https://support.tutum.co/support/solutions/articles/5000513815-webhook-handlers) configured). 
 
