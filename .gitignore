@@ -2,10 +2,6 @@
 .idea/inspectionProfiles/
 .idea/workspace.xml
 out/
-web-client/node_modules/
 dependencies/
 jetpass-data/logs/
 jetpass-data/work/
-dist/
-build/
-web-client/orion.client/
