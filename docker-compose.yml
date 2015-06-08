@@ -54,4 +54,4 @@ web:
     - certs:/certs
     - web-client/nginx-dev.conf:/sites/site.conf
     - web-client/modules/resources:/data-resources
-    - web-client/dist:/data
+    - web-client/build:/data

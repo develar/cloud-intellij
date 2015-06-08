@@ -6,6 +6,7 @@
   <idea-version since-build="141.0"/>
 
   <resource-bundle>FluxBundle</resource-bundle>
+  <vendor>cloud-intellij</vendor>
 
   <application-components>
     <component>

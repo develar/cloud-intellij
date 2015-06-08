@@ -1,9 +1,7 @@
-FROM develar/orion-client
+FROM develar/nginx
 MAINTAINER Vladimir Krivosheev <develar@gmail.com>
 
 WORKDIR data
 
-COPY modules/resources/ ./
-COPY dist/ ./
-
+COPY modules/resources/defaults.pref dist/ ./
 COPY nginx-production.conf /sites/site.conf
