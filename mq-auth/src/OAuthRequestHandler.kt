@@ -6,7 +6,7 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpClient
 import io.vertx.core.http.HttpHeaders
-import io.vertx.ext.apex.Router
+import io.vertx.ext.web.Router
 import org.jetbrains.flux.mqAuth.map
 import org.jetbrains.io.JsonReaderEx
 import java.net.URLEncoder

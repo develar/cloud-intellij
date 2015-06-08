@@ -4,14 +4,14 @@
       <root url="file://$PROJECT_DIR$/lib" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/vertx-apex-3.0.0-milestone5.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/vertx-core-3.0.0-milestone5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/vertx-web-3.0.0-milestone6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/vertx-core-3.0.0-milestone6.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/netty-all-4.0.28.Final.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/vertx-apex-3.0.0-milestone5-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/src/vertx-core-3.0.0-milestone5-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/vertx-web-3.0.0-milestone6-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/vertx-core-3.0.0-milestone6-sources.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/src/netty-all-4.0.28.Final-sources.jar!/" />
     </SOURCES>
   </library>

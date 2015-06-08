@@ -3,7 +3,7 @@ package org.jetbrains.flux.mqAuth
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpClient
-import io.vertx.ext.apex.Router
+import io.vertx.ext.web.Router
 import org.jetbrains.hub.oauth.getUserId
 import org.jetbrains.io.JsonReaderEx
 

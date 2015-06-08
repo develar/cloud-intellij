@@ -48,14 +48,14 @@
     </unzip>
 
     <get dest="lib" usetimestamp="true">
-      <url url="https://repo1.maven.org/maven2/io/vertx/vertx-core/3.0.0-milestone5/vertx-core-3.0.0-milestone5.jar"/>
-      <url url="https://repo1.maven.org/maven2/io/vertx/vertx-apex/3.0.0-milestone5/vertx-apex-3.0.0-milestone5.jar"/>
+      <url url="https://repo1.maven.org/maven2/io/vertx/vertx-core/3.0.0-milestone6/vertx-core-3.0.0-milestone6.jar"/>
+      <url url="https://repo1.maven.org/maven2/io/vertx/vertx-web/3.0.0-milestone6/vertx-web-3.0.0-milestone6.jar"/>
       <url url="https://repo1.maven.org/maven2/io/netty/netty-all/4.0.28.Final/netty-all-4.0.28.Final.jar"/>
       <url url="https://repo1.maven.org/maven2/com/google/code/gson/gson/2.3.1/gson-2.3.1.jar"/>
     </get>
     <get dest="lib/src" usetimestamp="true">
-      <url url="https://repo1.maven.org/maven2/io/vertx/vertx-core/3.0.0-milestone5/vertx-core-3.0.0-milestone5-sources.jar"/>
-      <url url="https://repo1.maven.org/maven2/io/vertx/vertx-apex/3.0.0-milestone5/vertx-apex-3.0.0-milestone5-sources.jar"/>
+      <url url="https://repo1.maven.org/maven2/io/vertx/vertx-core/3.0.0-milestone6/vertx-core-3.0.0-milestone6-sources.jar"/>
+      <url url="https://repo1.maven.org/maven2/io/vertx/vertx-web/3.0.0-milestone6/vertx-web-3.0.0-milestone6-sources.jar"/>
       <url url="https://repo1.maven.org/maven2/io/netty/netty-all/4.0.28.Final/netty-all-4.0.28.Final-sources.jar"/>
       <url url="https://repo1.maven.org/maven2/com/google/code/gson/gson/2.3.1/gson-2.3.1-sources.jar"/>
     </get>

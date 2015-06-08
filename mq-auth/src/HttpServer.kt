@@ -2,7 +2,7 @@ package org.jetbrains.httpServer
 
 import io.vertx.core.Vertx
 import io.vertx.core.http.HttpServerOptions
-import io.vertx.ext.apex.Router
+import io.vertx.ext.web.Router
 import org.jetbrains.flux.mqAuth.AuthRequestHandler
 import org.jetbrains.hub.oauth.OAuthRequestHandler
 import org.jetbrains.hub.oauth.createHubHttpClient

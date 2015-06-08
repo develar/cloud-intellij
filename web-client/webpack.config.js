@@ -4,10 +4,11 @@ var CommonsChunkPlugin = require("webpack/lib/optimize/CommonsChunkPlugin")
 var HtmlWebpackPlugin = require("html-webpack-plugin")
 var ExtractTextPlugin = require("extract-text-webpack-plugin")
 var webpack = require("webpack")
+var Clean = require("clean-webpack-plugin")
 
-var production = process.env.MODE === "production"
-
-var useHash = false
+const production = process.env.MODE === "production"
+const outDir = production ? "dist" : "build"
+const useHash = production
 
 module.exports = {
   entry: {
@@ -31,6 +32,8 @@ module.exports = {
     fallback: [path.join(__dirname, "loaders"), path.join(__dirname, "node_modules")],
   },
   plugins: [
+    new Clean(outDir),
+
     new ExtractTextPlugin("[name].css"),
 
     new CommonsChunkPlugin({name: "commons", minChunks: 2}),
@@ -49,7 +52,7 @@ module.exports = {
     }),
   ],
   output: {
-    path: production ? "./dist" : "./build",
+    path: "./" + outDir,
     filename: useHash ? "[name].[hash].js" : "[name].js",
     chunkFilename: useHash ? "[id].[hash].js" : "[id].js",
   },
