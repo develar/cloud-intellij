@@ -1,5 +1,6 @@
-module.exports = function (content) {
+module.exports = function () {
 }
-module.exports.pitch = function (remainingRequest, precedingRequest, data) {
-  return "module.exports = require(" + JSON.stringify("-!" + remainingRequest.replace("nls/", "nls/root/")) + ");";
+module.exports.pitch = function (remainingRequest) {
+  this.cacheable()
+  return "module.exports = require(" + JSON.stringify("-!" + remainingRequest.replace("nls/", "nls/root/")) + ");"
 }

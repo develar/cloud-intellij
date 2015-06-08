@@ -26,30 +26,22 @@ module.exports = {
       path.resolve("orion.client/bundles/org.eclipse.orion.client.editor/web"),
       path.resolve("orion.client/bundles/org.eclipse.orion.client.ui/web"),
     ],
-    alias: {
-      //"gcli": "gcli/gcli"
-      //"i18n": path.resolve("../../orion.client/bundles/org.eclipse.orion.client.core/web/requirejs/i18n.js"),
-    }
   },
   resolveLoader: {
-    //fallback: path.join(__dirname, "loaders")
-    fallback: [path.join(__dirname, "loaders"), path.join(__dirname, "node_modules")]
+    fallback: [path.join(__dirname, "loaders"), path.join(__dirname, "node_modules")],
   },
   plugins: [
     new ExtractTextPlugin("[name].css"),
 
-    new CommonsChunkPlugin("commons.js", ["ideAuth", "web"]),
-    new CommonsChunkPlugin("orion-plugin.js", ["fluxPlugin", "pageLinksPlugin", "webEditingPlugin", "imageViewerPlugin"]),
-    // move bluebird to common chunk
-    new CommonsChunkPlugin("lib.js", ["fluxPlugin", "commons.js"]),
+    new CommonsChunkPlugin({name: "commons", minChunks: 2}),
 
-    html("IDE login", "ide-auth.html", ["lib.js", "commons.js", "ideAuth"]),
-    html("Editor", "edit.html", ["lib.js", "commons.js", "web"], true),
+    html("IDE login", "ide-auth.html", ["commons", "ideAuth"]),
+    html("Editor", "edit.html", ["commons", "web"], true),
 
-    html("", "fluxPlugin.html", ["lib.js", "orion-plugin.js", "fluxPlugin"]),
-    html("", "pageLinksPlugin.html", ["orion-plugin.js", "pageLinksPlugin"]),
-    html("", "webEditingPlugin.html", ["orion-plugin.js", "webEditingPlugin"]),
-    html("", "imageViewerPlugin.html", ["orion-plugin.js", "imageViewerPlugin"], true),
+    html("", "fluxPlugin.html", ["commons", "fluxPlugin"]),
+    html("", "pageLinksPlugin.html", ["commons", "pageLinksPlugin"]),
+    html("", "webEditingPlugin.html", ["commons", "webEditingPlugin"]),
+    html("", "imageViewerPlugin.html", ["commons", "imageViewerPlugin"], true),
 
     new webpack.DefinePlugin({
       OAUTH_CLIENT_ID_DEV: '"d5d27f53-31b3-493f-ac9e-2c48da5661ea"',
