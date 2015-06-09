@@ -5,7 +5,6 @@ import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.impl.DefaultExceptionHandler
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
-import java.net.URI
 import java.util.concurrent.ExecutorService
 import javax.net.ssl.TrustManager
 
@@ -14,20 +13,11 @@ fun isProperty(name: String, default: Boolean = false): Boolean {
   return if (value == null) default else (value.isEmpty() || value.toBoolean())
 }
 
-val mqHost: String
-  get() {
-    var host = System.getenv("MQ_HOST")
-    if (host == null && isProperty("docker.host.as.mq.host")) {
-      host = URI(System.getenv("DOCKER_HOST")).getHost()!!
-    }
-    return host ?: "mq"
-  }
-
-public fun connectToMq(username: String, token: String, executor: ExecutorService, host: String = mqHost, trustManager: TrustManager? = null): Connection {
+public fun connectToMq(username: String, token: String, executor: ExecutorService, host: String = "mq", port: Int = ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT, trustManager: TrustManager? = null): Connection {
   val connectionFactory = ConnectionFactory()
   connectionFactory.setHost(host)
   if (trustManager != null) {
-    connectionFactory.setPort(System.getenv("MQ_PORT")?.toInt() ?: ConnectionFactory.DEFAULT_AMQP_OVER_SSL_PORT)
+    connectionFactory.setPort(port)
     connectionFactory.useSslProtocol(if (System.getProperty("java.version").startsWith("1.6.")) "TLSv1" else "TLSv1.2", trustManager)
   }
   connectionFactory.setUsername(username)

@@ -34,7 +34,7 @@ module.exports = {
   plugins: [
     new Clean(outDir),
 
-    new ExtractTextPlugin("[name].css"),
+    new ExtractTextPlugin(useHash ? "[name].[contenthash].css" : "[name].css"),
 
     new CommonsChunkPlugin({name: "commons", minChunks: 2}),
 

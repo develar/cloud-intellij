@@ -13,7 +13,7 @@ import org.jetbrains.flux.ProjectTopics
 import org.jetbrains.flux.ResourceTopics
 import org.jetbrains.json.map
 import org.jetbrains.json.nextNullableString
-import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.LinkedBlockingDeque
 
 private val LOG = Logger.getInstance("flux-idea")
 
@@ -212,7 +212,7 @@ class IdeaRepository(private val messageConnector: MessageConnector, private val
 //  }
 
 
-  private val repositoryListeners = ConcurrentLinkedDeque<RepositoryListener>()
+  private val repositoryListeners = LinkedBlockingDeque<RepositoryListener>()
 
   public fun addRepositoryListener(listener: RepositoryListener) {
     repositoryListeners.add(listener)

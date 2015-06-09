@@ -3,7 +3,7 @@ package org.jetbrains.flux
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicInteger
 
 public abstract class BaseMessageConnector() : MessageConnector {
@@ -39,7 +39,7 @@ public abstract class BaseMessageConnector() : MessageConnector {
   override fun replyOn(topic: Topic, handler: (message: ByteArray, replyTo: String, correlationId: String) -> Unit) {
     var list = eventHandlers.get(topic)
     if (list == null) {
-      list = ConcurrentLinkedDeque<(message: ByteArray, replyTo: String, correlationId: String) -> Unit>()
+      list = LinkedBlockingDeque<(message: ByteArray, replyTo: String, correlationId: String) -> Unit>()
       val existingList = eventHandlers.putIfAbsent(topic.name, list)
       if (existingList != null) {
         list = existingList

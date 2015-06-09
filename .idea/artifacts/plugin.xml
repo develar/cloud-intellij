@@ -5,6 +5,7 @@
       <element id="module-output" name="intellij-flux-client" />
       <element id="module-output" name="jvm-flux-client" />
       <element id="extracted-dir" path="$PROJECT_DIR$/jvm-flux-client/lib/amqp-client-3.5.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/kotlin-runtime.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
