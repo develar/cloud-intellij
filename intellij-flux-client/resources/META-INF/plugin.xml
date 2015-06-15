@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>org.intellij.cloudIde</id>
   <name>IntelliJ in the Cloud</name>
-  <version>0.1</version>
+  <version>0.2</version>
   <description>IntelliJ in the Cloud</description>
   <idea-version since-build="141.0"/>
 

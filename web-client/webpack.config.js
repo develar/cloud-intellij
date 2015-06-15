@@ -10,6 +10,10 @@ const production = process.env.MODE === "production"
 const outDir = production ? "dist" : "build"
 const useHash = production
 
+function abs(relativePath) {
+  return path.join(__dirname, relativePath)
+}
+
 module.exports = {
   entry: {
     ideAuth: "./modules/auth/ideAuth",
@@ -22,17 +26,20 @@ module.exports = {
   resolve: {
     extensions: ["", ".ts", ".js"],
     modulesDirectories: [],
-    root: [path.resolve("modules"), path.resolve("lib"), path.resolve("lib.d"),
-      path.resolve("orion.client/bundles/org.eclipse.orion.client.core/web"),
-      path.resolve("orion.client/bundles/org.eclipse.orion.client.editor/web"),
-      path.resolve("orion.client/bundles/org.eclipse.orion.client.ui/web"),
+    root: [
+      abs("modules"),
+      abs("lib"),
+      abs("lib.d"),
+      abs("orion.client/bundles/org.eclipse.orion.client.core/web"),
+      abs("orion.client/bundles/org.eclipse.orion.client.editor/web"),
+      abs("orion.client/bundles/org.eclipse.orion.client.ui/web"),
     ],
   },
   resolveLoader: {
-    fallback: [path.join(__dirname, "loaders"), path.join(__dirname, "node_modules")],
+    fallback: [abs("loaders"), abs("node_modules")],
   },
   plugins: [
-    new Clean(outDir),
+    new Clean(production ? [outDir]: []),
 
     new ExtractTextPlugin(useHash ? "[name].[contenthash].css" : "[name].css"),
 

@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="flux.dev" type="JavascriptDebugType" factoryName="JavaScript Debug" uri="https://flux.dev">
+    <mapping url="https://flux.dev" local-file="$PROJECT_DIR$/web-client/build" />
+    <mapping url="webpack:///." local-file="$PROJECT_DIR$/web-client" />
+    <method />
+  </configuration>
+</component>

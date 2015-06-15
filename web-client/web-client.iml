@@ -8,7 +8,19 @@
       <excludeFolder url="file://$MODULE_DIR$/lib" />
       <excludeFolder url="file://$MODULE_DIR$/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/orion" />
-      <excludeFolder url="file://$MODULE_DIR$/orion.client" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/bundles/org.eclipse.orion.client.cf" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/bundles/org.eclipse.orion.client.git" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/bundles/org.eclipse.orion.client.git.greasemonkey" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/bundles/org.eclipse.orion.client.help" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/bundles/org.eclipse.orion.client.jsdoc" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/bundles/org.eclipse.orion.client.users" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/bundles/org.eclipse.orion.client.webtools" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/features" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/lib" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/modules" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/releng" />
+      <excludeFolder url="file://$MODULE_DIR$/orion.client/target" />
       <excludeFolder url="file://$MODULE_DIR$/out" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
